@@ -56,8 +56,7 @@ function OrderConfirmationContent() {
               <ShoppingBag className="h-5 w-5 text-[#b07e3a] flex-shrink-0" />
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Order Reference</p>
-                <p className="text-sm font-serif font-bold text-foreground mt-0.5">{orderId}</p>
-                              <p className="text-sm font-serif font-bold text-foreground mt-0.5 break-all">{orderReference}</p>
+                <p className="text-sm font-serif font-bold text-foreground mt-0.5 break-all">{orderReference}</p>
               </div>
             </div>
 
