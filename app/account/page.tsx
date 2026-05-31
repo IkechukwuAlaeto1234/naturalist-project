@@ -145,6 +145,11 @@ export default function AccountPage() {
     if (mounted && status === "unauthenticated") router.push("/login");
   }, [mounted, status]);
 
+  const handleSignOut = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : process.env.NEXTAUTH_URL || "/";
+    signOut({ callbackUrl: `${origin}/` });
+  };
+
   /* fetch orders when tab opens — use stable user ID, not session object */
   useEffect(() => {
     const userId = (session?.user as any)?.id;
