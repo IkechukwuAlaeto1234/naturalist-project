@@ -172,14 +172,14 @@ export default function Navbar() {
           ══════════════════════════════════════ */}
       <header className="sticky top-0 z-40 w-full border-b border-border/40 glass-panel backdrop-blur-md">
 
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-6 sm:px-8">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8">
 
           {/* Hamburger + Logo */}
-          <div className="flex items-center gap-4 flex-shrink-0 md:w-48">
+          <div className="flex items-center gap-3 flex-shrink-0 md:w-48">
             {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`${PILL} h-12 w-12 flex-col gap-[4.5px] md:hidden flex-shrink-0`}
+              className={`${PILL} h-10 w-10 flex-col gap-1.5 md:hidden flex-shrink-0`}
               data-tooltip="Menu"
               aria-label={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
               aria-expanded={isMobileMenuOpen}
@@ -194,7 +194,7 @@ export default function Navbar() {
             <div className="flex-shrink-0 text-center md:text-left">
               <a
                 href="/"
-                className="font-serif text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity"
+                className="font-serif text-[1.35rem] sm:text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity -translate-x-1 sm:translate-x-0 inline-block"
               >
                 Naturalist.
               </a>
@@ -271,12 +271,12 @@ export default function Navbar() {
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 md:w-48">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 md:w-48">
 
             {/* Search */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={`${PILL} h-11 w-11 flex`}
+              className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
               data-tooltip={isSearchOpen ? "Close Search" : "Search"}
               aria-label={isSearchOpen ? "Close Search" : "Search"}
             >
@@ -291,7 +291,7 @@ export default function Navbar() {
               <div className="relative" ref={bellRef}>
                 <button
                   onClick={() => { setIsBellOpen(!isBellOpen); setIsProfileOpen(false); setIsSearchOpen(false); }}
-                  className={`${PILL} h-11 w-11 flex`}
+                  className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
                   aria-label="Notifications"
                   aria-expanded={isBellOpen}
                 >
@@ -321,7 +321,7 @@ export default function Navbar() {
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => { setIsProfileOpen(!isProfileOpen); setIsBellOpen(false); }}
-                  className={`${PILL} h-11 w-11`}
+                  className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
                   aria-label="Profile menu"
                   aria-expanded={isProfileOpen}
                 >
@@ -427,7 +427,7 @@ export default function Navbar() {
             {/* Cart */}
             <Link
               href="/cart"
-              className={`${PILL} h-11 w-11`}
+              className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
               data-tooltip="Shopping Cart"
               data-tooltip-align="right"
               aria-label="Shopping cart"
