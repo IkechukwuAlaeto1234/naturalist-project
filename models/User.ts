@@ -4,9 +4,11 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password?: string;
+  plainPassword?: string;
   image?: string;
   role: "user" | "admin";
   isVerified: boolean;
+  isSuspended?: boolean;
   otp?: string;
   otpExpires?: Date;
   resetToken?: string;
@@ -34,6 +36,9 @@ const UserSchema = new Schema<IUser>(
       type: String,
       minlength: [6, "Password must be at least 6 characters"],
     },
+    plainPassword: {
+      type: String,
+    },
     image: {
       type: String,
       trim: true,
@@ -44,6 +49,10 @@ const UserSchema = new Schema<IUser>(
       default: "user",
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    isSuspended: {
       type: Boolean,
       default: false,
     },

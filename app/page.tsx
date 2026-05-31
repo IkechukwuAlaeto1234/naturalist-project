@@ -377,7 +377,7 @@ export default function Home() {
                     </span>
                     <span className="inline-flex items-center gap-2">
                       <MessageCircle className="h-3.5 w-3.5" />
-                      {blogs[0].comments?.length || 0} comments
+                      {blogs[0].commentsCount || 0} comments
                     </span>
                   </div>
                 </div>

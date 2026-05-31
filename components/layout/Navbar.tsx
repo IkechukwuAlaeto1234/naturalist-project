@@ -50,6 +50,7 @@ const navLinks = [
   { href: "/bundles",        label: "Ritual Bundles",  num: "02" },
   { href: "/story",          label: "Our Story",       num: "03" },
   { href: "/sustainability", label: "Sustainability",  num: "04" },
+  { href: "/blog",           label: "Blog",           num: "05" },
 ];
 
 const socialLinks = [

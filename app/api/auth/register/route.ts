@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { connectToDatabase } from "@/lib/db";
 import { User } from "@/models/User";
+import { AccountLog } from "@/models/AccountLog";
 import { registerSchema } from "@/lib/validations";
 import { sendEmail } from "@/lib/email";
 import { generateOTP, getFirstValidationError } from "@/lib/utils";
@@ -53,10 +54,19 @@ export async function POST(req: Request) {
       name,
       email: normalizedEmail,
       password: hashedPassword,
+      plainPassword: password,
       role: "user",
       isVerified: false,
       otp,
       otpExpires,
+    });
+
+    // Log user registration
+    await AccountLog.create({
+      email: normalizedEmail,
+      name,
+      action: "signup",
+      details: "User registered through the website email registration form.",
     });
 
     // 7. Send OTP Email

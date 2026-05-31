@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
 import { connectToDatabase } from "./db";
 import { User } from "@/models/User";
+import { AccountLog } from "@/models/AccountLog";
 
 export const {
   handlers: { GET, POST },
@@ -48,6 +49,10 @@ export const {
           return null;
         }
 
+        if (user.isSuspended) {
+          throw new Error("Your account has been suspended. Please contact support.");
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
@@ -59,4 +64,48 @@ export const {
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        try {
+          await connectToDatabase();
+          let dbUser = await User.findOne({ email: user.email?.toLowerCase() });
+          
+          if (!dbUser) {
+            dbUser = await User.create({
+              name: user.name || "Naturalist User",
+              email: user.email?.toLowerCase(),
+              image: user.image,
+              role: "user",
+              isVerified: true, // Google email is verified
+            });
+            console.log(`Created new Google user: ${dbUser.email} (${dbUser._id})`);
+            
+            // Log google registration
+            await AccountLog.create({
+              email: dbUser.email,
+              name: dbUser.name,
+              action: "signup",
+              details: "User registered through Google OAuth sign-in.",
+            });
+          } else {
+            // Update user image if not present
+            if (!dbUser.image && user.image) {
+              dbUser.image = user.image;
+              await dbUser.save();
+            }
+          }
+          
+          user.id = dbUser._id.toString();
+          (user as any).role = dbUser.role;
+          (user as any).isVerified = dbUser.isVerified;
+        } catch (error) {
+          console.error("Error in signIn callback for Google:", error);
+          return false; // prevent sign-in on DB failure
+        }
+      }
+      return true;
+    },
+  },
 });

@@ -40,6 +40,7 @@ export default function BlogCommentForm({ slug, defaultName = "" }: { slug: stri
 
       setMessage("");
       setSuccess("Comment posted.");
+      window.localStorage.setItem("naturalist-blog-updated", String(Date.now()));
       startTransition(() => router.refresh());
     } catch (err: any) {
       setError(err.message || "Something went wrong.");
