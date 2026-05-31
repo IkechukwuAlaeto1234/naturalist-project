@@ -127,19 +127,26 @@ export default function BlogIndex() {
                       <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">{featured.excerpt}</p>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                      <span className="inline-flex items-center gap-2">
-                        <CalendarDays className="h-3.5 w-3.5" />
-                        {formatDate(featured.publishedAt)}
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <Clock3 className="h-3.5 w-3.5" />
-                        {featured.readTime}
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <MessageCircle className="h-3.5 w-3.5" />
-                        {featured.commentsCount || 0} comments
-                      </span>
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 dark:border-white/10 pt-5 mt-2">
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                        <span className="inline-flex items-center gap-2">
+                          <CalendarDays className="h-3.5 w-3.5" />
+                          {formatDate(featured.publishedAt)}
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <Clock3 className="h-3.5 w-3.5" />
+                          {featured.readTime}
+                        </span>
+                        <span className="inline-flex items-center gap-2">
+                          <MessageCircle className="h-3.5 w-3.5" />
+                          {featured.commentsCount || 0} comments
+                        </span>
+                      </div>
+                      
+                      <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#2d4c38] dark:text-emerald-400 group-hover:text-[#3a6349] dark:group-hover:text-emerald-300 transition-colors">
+                        Read Story
+                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -147,24 +154,50 @@ export default function BlogIndex() {
 
               <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {remaining.map((post) => (
-                  <Link key={post.slug} href={`/blog/${post.slug}`} className="group overflow-hidden rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                  <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col overflow-hidden rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                       <img src={post.coverImage} alt={post.coverImageAlt || post.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     </div>
 
-                    <div className="p-6 space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {post.tags?.slice(0, 2).map((tag: string) => (
-                          <span key={tag} className="inline-flex rounded-full bg-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300">{tag}</span>
-                        ))}
+                    <div className="p-6 space-y-5 flex flex-col justify-between flex-1">
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {post.tags?.slice(0, 2).map((tag: string) => (
+                            <span key={tag} className="inline-flex rounded-full bg-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300">{tag}</span>
+                          ))}
+                        </div>
+
+                        <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors leading-snug">{post.title}</h3>
+                        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">{post.excerpt}</p>
                       </div>
 
-                      <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors">{post.title}</h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">{post.excerpt}</p>
+                      <div className="space-y-4 pt-4 border-t border-border/40">
+                        {/* Rich Metadata matching the featured story */}
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          <span className="inline-flex items-center gap-1.5">
+                            <CalendarDays className="h-3.5 w-3.5" />
+                            {formatDate(post.publishedAt)}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock3 className="h-3.5 w-3.5" />
+                            {post.readTime}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <MessageCircle className="h-3.5 w-3.5" />
+                            {post.commentsCount || 0} Comments
+                          </span>
+                        </div>
 
-                      <div className="flex items-center justify-between gap-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        <span>{post.authorName}</span>
-                        <span className="inline-flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5" />{post.commentsCount || 0} comments</span>
+                        {/* Interactive Action Button */}
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            By {post.authorName || "Naturalist Team"}
+                          </span>
+                          <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#2d4c38] dark:text-emerald-400 group-hover:text-[#3a6349] dark:group-hover:text-emerald-300 transition-colors">
+                            Read Article
+                            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </Link>
