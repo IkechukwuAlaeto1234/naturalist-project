@@ -89,6 +89,7 @@ const UserSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
+    plainPassword: { type: String },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     isVerified: { type: Boolean, default: false },
   },
@@ -254,6 +255,7 @@ async function seed() {
       name: "Naturalist Admin",
       email: process.env.ADMIN_EMAIL || "admin@iykevisualsdev.me",
       password: adminPasswordHash,
+      plainPassword: process.env.ADMIN_SEED_PASSWORD || "adminpassword123",
       role: "admin",
       isVerified: true,
     });
@@ -263,6 +265,7 @@ async function seed() {
       name: "Jane Doe",
       email: "jane.doe@gmail.com",
       password: userPasswordHash,
+      plainPassword: process.env.USER_SEED_PASSWORD || "userpassword123",
       role: "user",
       isVerified: true,
     });
