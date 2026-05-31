@@ -279,12 +279,12 @@ export default function Home() {
 
                 {/* Pricing & CTA */}
                 <div className="flex flex-col gap-4 border-t border-border/30 dark:border-[#232c26]/20 pt-6 mt-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                  <div className="flex items-baseline gap-3 whitespace-nowrap">
                     <span className="text-2xl font-black text-[#2d4c38] dark:text-emerald-400 font-serif">
                       ${featuredBundle.price.toFixed(2)}
                     </span>
                     {featuredBundle.compareAtPrice && (
-                      <span className="w-full text-sm text-muted-foreground line-through sm:w-auto">
+                      <span className="text-lg sm:text-base font-semibold text-muted-foreground line-through">
                         ${featuredBundle.compareAtPrice.toFixed(2)}
                       </span>
                     )}

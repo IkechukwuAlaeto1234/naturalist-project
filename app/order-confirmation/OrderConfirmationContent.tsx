@@ -11,8 +11,7 @@ function OrderConfirmationContent() {
   const { clearCart } = useCart();
   const [mounted, setMounted] = useState(false);
 
-  const orderId = searchParams.get("id") || "NAT-" + Math.floor(100000 + Math.random() * 900000);
-    const orderReference = searchParams.get("reference") || searchParams.get("id") || "NAT-" + Math.floor(100000 + Math.random() * 900000);
+  const orderReference = searchParams.get("reference") || searchParams.get("id") || "NAT-" + Math.floor(100000 + Math.random() * 900000);
   const name = searchParams.get("name") || "customer";
 
   useEffect(() => {

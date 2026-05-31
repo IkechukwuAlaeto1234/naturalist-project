@@ -196,6 +196,7 @@ export default function Footer() {
                     <Link href="/shop" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">The Shop</Link>
                     <Link href="/bundles" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Ritual Bundles</Link>
                     <Link href="/story" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Our Story</Link>
+                    <Link href="/blog" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Blog</Link>
                     <Link href="/sustainability" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Sustainability</Link>
                   </nav>
                 </div>
