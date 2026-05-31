@@ -8,7 +8,9 @@ import { auth } from "@/lib/auth";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const user = session?.user as { id?: string; role?: string } | undefined;
+
+    if (!user || user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -27,7 +29,9 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const user = session?.user as { id?: string; role?: string } | undefined;
+
+    if (!user || user.role !== "admin" || !user.id) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -44,7 +48,7 @@ export async function POST(req: Request) {
       publicId,
       originalName,
       sizeBytes: sizeBytes || 0,
-      uploadedBy: session.user.id,
+      uploadedBy: user.id,
     });
 
     return NextResponse.json(image, { status: 201 });
