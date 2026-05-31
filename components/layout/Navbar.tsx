@@ -172,10 +172,10 @@ export default function Navbar() {
           ══════════════════════════════════════ */}
       <header className="sticky top-0 z-40 w-full border-b border-border/40 glass-panel backdrop-blur-md">
 
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
 
           {/* Hamburger + Logo */}
-          <div className="flex items-center gap-3 flex-shrink-0 md:w-48">
+          <div className="flex items-center gap-4 flex-shrink-0 md:w-48">
             {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -194,7 +194,7 @@ export default function Navbar() {
             <div className="flex-shrink-0 text-center md:text-left">
               <a
                 href="/"
-                className="font-serif text-[1.35rem] sm:text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity -translate-x-1 sm:translate-x-0 inline-block"
+                className="font-serif text-[1.35rem] sm:text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity inline-block"
               >
                 Naturalist.
               </a>
@@ -303,7 +303,7 @@ export default function Navbar() {
                 {isBellOpen && (
                   <>
                     <div onClick={() => setIsBellOpen(false)} className="fixed inset-0 z-30" />
-                    <div className="absolute right-0 mt-2.5 z-40 w-72 origin-top-right rounded-2xl border border-border/40 bg-card p-4 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
+                    <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-2xl border border-border/40 bg-card p-4 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
                       <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Notifications</p>
                       <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
                         <Bell className="h-8 w-8 text-muted-foreground/30" />

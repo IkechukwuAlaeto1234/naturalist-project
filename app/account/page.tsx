@@ -314,7 +314,7 @@ export default function AccountPage() {
             </div>
           </div>
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onClick={handleSignOut}
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-border/60 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-destructive hover:border-destructive/40 transition-all"
           >
             <LogOut className="h-3.5 w-3.5" /> Sign Out
