@@ -204,7 +204,7 @@ export default function Navbar() {
           {/* - Desktop Center: Nav Links and Inline Search - */}
           <div
             ref={desktopSearchWrapperRef}
-            className="hidden md:flex flex-1 items-center justify-between relative overflow-hidden h-12 mx-4"
+            className="hidden md:flex flex-1 items-center justify-center relative overflow-hidden h-12 px-6"
           >
             {/* Nav links - slides left when search opens, remains fully visible */}
             <nav
@@ -271,7 +271,7 @@ export default function Navbar() {
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
 
             {/* Search */}
             <button
