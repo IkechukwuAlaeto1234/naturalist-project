@@ -175,7 +175,7 @@ export default function Navbar() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-6 sm:px-8">
 
           {/* Hamburger + Logo */}
-          <div className="flex items-center gap-4 flex-shrink-0">
+          <div className="flex items-center gap-4 flex-shrink-0 md:w-48">
             {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -271,7 +271,7 @@ export default function Navbar() {
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
+          <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0 md:w-48">
 
             {/* Search */}
             <button
