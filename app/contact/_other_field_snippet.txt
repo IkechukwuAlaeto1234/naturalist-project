@@ -1,0 +1,23 @@
+                {/* Dynamic "Other" field */}
+                <div
+                  className="transition-all duration-300 ease-in-out"
+                  style={{
+                    maxHeight: showOtherField ? "110px" : "0px",
+                    opacity: showOtherField ? 1 : 0,
+                    overflow: showOtherField ? "visible" : "hidden",
+                  }}
+                >
+                  <div className="flex flex-col gap-2 pt-0.5 pb-px px-px">
+                    <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      Describe your topic <span className="text-[#b07e3a]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="otherTopic"
+                      value={form.otherTopic}
+                      onChange={handleChange}
+                      placeholder="e.g. Partnership opportunity…"
+                      className="px-4 py-3 text-sm rounded-xl border border-border/60 bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38]/40 transition-all placeholder:text-muted-foreground/50"
+                    />
+                  </div>
+                </div>
