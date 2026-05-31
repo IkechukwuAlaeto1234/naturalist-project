@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Sparkles, Leaf, Eye, ShieldCheck, ArrowRight, Loader2 } from "lucide-react";
+import { Sparkles, Leaf, Eye, ShieldCheck, ArrowRight, Loader2, CalendarDays, Clock3, MessageCircle, BookOpen } from "lucide-react";
 import ProductCard from "../components/store/ProductCard";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [featuredBundle, setFeaturedBundle] = useState<any>(null);
+  const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 100% Dynamic Client-Side Hydration Guard
@@ -19,9 +20,10 @@ export default function Home() {
     async function loadStorefrontData() {
       try {
         setLoading(true);
-        const [productsRes, bundlesRes] = await Promise.all([
+        const [productsRes, bundlesRes, blogsRes] = await Promise.all([
           fetch("/api/products"),
           fetch("/api/bundles"),
+          fetch("/api/blogs"),
         ]);
 
         if (productsRes.ok) {
@@ -34,6 +36,11 @@ export default function Home() {
           const bundlesData = await bundlesRes.json();
           const featuredB = bundlesData.find((b: any) => b.isActive && b.isFeatured);
           setFeaturedBundle(featuredB || null);
+        }
+
+        if (blogsRes.ok) {
+          const blogData = await blogsRes.json();
+          setBlogs(blogData.filter((post: any) => post.featured).concat(blogData.filter((post: any) => !post.featured)).slice(0, 3));
         }
       } catch (err) {
         console.error("Failed to load storefront data dynamically:", err);
@@ -306,7 +313,123 @@ export default function Home() {
         </section>
       )}
 
-      {/* 5. Editorial Story / Philosophy Quote Panel */}
+      {/* 5. Editorial Blog / Journal Section */}
+      {!loading && blogs.length > 0 && (
+        <section className="bg-gradient-to-b from-[#f8f5ef] to-white dark:from-[#0f1411] dark:to-[#0a0d0b] py-24 px-6 sm:px-8 border-b border-border/40 transition-colors duration-300">
+          <div className="mx-auto max-w-7xl flex flex-col gap-12">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-border/30 dark:border-[#232c26]/20 pb-6">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
+                  Naturalist Journal
+                </span>
+                <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mt-2 tracking-tight flex items-center gap-3">
+                  From the Blog
+                  <BookOpen className="h-6 w-6 text-[#b07e3a]" />
+                </h2>
+              </div>
+              <Link
+                href="/blog"
+                className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b07e3a] hover:opacity-85 border-b border-accent/40 pb-0.5 transition-all w-fit"
+              >
+                Explore Journal
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+            </div>
+
+            {blogs[0] && (
+              <Link
+                href={`/blog/${blogs[0].slug}`}
+                className="grid overflow-hidden rounded-[36px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-[0_24px_70px_rgba(20,31,25,0.08)] transition-transform duration-300 hover:-translate-y-1 md:grid-cols-12"
+              >
+                <div className="relative min-h-[280px] md:col-span-6">
+                  <img
+                    src={blogs[0].coverImage}
+                    alt={blogs[0].coverImageAlt || blogs[0].title}
+                    className="absolute inset-0 h-full w-full object-cover"
+                  />
+                </div>
+                <div className="md:col-span-6 p-7 sm:p-10 flex flex-col justify-between gap-6">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {blogs[0].tags?.slice(0, 3).map((tag: string) => (
+                        <span key={tag} className="inline-flex items-center rounded-full bg-[#2d4c38]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#2d4c38] dark:text-emerald-300">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    <h3 className="font-serif text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-[#141f19] dark:text-[#f4f6f4]">
+                      {blogs[0].title}
+                    </h3>
+                    <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
+                      {blogs[0].excerpt}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(blogs[0].publishedAt))}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Clock3 className="h-3.5 w-3.5" />
+                      {blogs[0].readTime}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <MessageCircle className="h-3.5 w-3.5" />
+                      {blogs[0].comments?.length || 0} comments
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )}
+
+            {blogs.length > 1 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                {blogs.slice(1).map((post) => (
+                  <Link
+                    key={post.slug}
+                    href={`/blog/${post.slug}`}
+                    className="group overflow-hidden rounded-[28px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                      <img
+                        src={post.coverImage}
+                        alt={post.coverImageAlt || post.title}
+                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                    </div>
+
+                    <div className="p-6 space-y-4">
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags?.slice(0, 2).map((tag: string) => (
+                          <span key={tag} className="inline-flex rounded-full bg-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors">
+                        {post.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {post.excerpt}
+                      </p>
+
+                      <div className="flex items-center justify-between gap-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        <span>{post.authorName}</span>
+                        <span>{post.readTime}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* 6. Editorial Story / Philosophy Quote Panel */}
       <section className="bg-[#fcfcfb] dark:bg-[#0a0d0b] py-28 px-6 sm:px-8 transition-colors duration-300 relative overflow-hidden">
         
         {/* Soft Organic Line Divider decor */}
