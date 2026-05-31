@@ -3,10 +3,11 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 
 function LoginContent() {
   const router = useRouter();
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +19,12 @@ function LoginContent() {
   const nextAuthError = searchParams.get("error");
   const isVerified = searchParams.get("verified") === "true";
   const isReset = searchParams.get("reset") === "true";
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callbackUrl);
+    }
+  }, [status, router, callbackUrl]);
 
   useEffect(() => {
     const titleTimeout = setTimeout(() => {
