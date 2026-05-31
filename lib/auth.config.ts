@@ -9,7 +9,8 @@ export const authConfig = {
     maxAge: 7 * 24 * 60 * 60, // 7 days matching JWT expiration
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request }) {
+      const { nextUrl } = request;
       const isLoggedIn = !!auth?.user;
       const isOnAdmin = nextUrl.pathname.startsWith("/admin");
       const isOnAccount = nextUrl.pathname.startsWith("/account");
@@ -18,7 +19,13 @@ export const authConfig = {
       if (isOnAdmin) {
         // Admin pages require user to be logged in and have the 'admin' role
         if (isLoggedIn && (auth.user as any).role === "admin") return true;
-        return Response.redirect(new URL("/login?callbackUrl=" + encodeURIComponent(nextUrl.pathname), nextUrl));
+        
+        // Extract forwarded host and protocol to avoid internal port redirect loop (e.g., localhost:10000)
+        const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
+        const proto = request.headers.get("x-forwarded-proto") || "https";
+        const redirectUrl = new URL(`/login?callbackUrl=${encodeURIComponent(nextUrl.pathname)}`, `${proto}://${host}`);
+        
+        return Response.redirect(redirectUrl);
       }
 
       if (isOnAccount || isOnCheckout) {
@@ -27,6 +34,16 @@ export const authConfig = {
       }
 
       return true;
+    },
+    async redirect({ url }) {
+      // Force relative redirects so the browser resolves them relative to the active public domain
+      try {
+        const parsed = new URL(url);
+        return `${parsed.pathname}${parsed.search}`;
+      } catch {
+        if (url.startsWith("/")) return url;
+        return "/";
+      }
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {
