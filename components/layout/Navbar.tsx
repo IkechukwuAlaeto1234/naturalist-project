@@ -157,7 +157,10 @@ export default function Navbar() {
     return <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/50 backdrop-blur-md h-20" />;
   }
 
-  const handleSignOut = () => signOut({ callbackUrl: "/" });
+  const handleSignOut = () => {
+    const origin = typeof window !== "undefined" ? window.location.origin : process.env.NEXTAUTH_URL || "/";
+    signOut({ callbackUrl: `${origin}/` });
+  };
 
   /* ─────────────────────────────────────────
      Render
@@ -205,15 +208,13 @@ export default function Navbar() {
           >
             {/* Nav links - slides left when search opens, remains fully visible */}
             <nav
-              className="flex items-center gap-6 lg:gap-8 absolute"
+              className="flex items-center gap-6 lg:gap-8 relative mx-auto"
               style={{
-                transition: "opacity 0.35s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+                transition: "opacity 0.25s ease",
                 opacity: 1,
-                left: isSearchOpen ? "48px" : "50%",
-                transform: isSearchOpen ? "translate(0%, -50%)" : "translate(-50%, -50%)",
-                top: "50%",
                 pointerEvents: "auto",
                 whiteSpace: "nowrap",
+                transform: isSearchOpen ? "translateX(0)" : "translateX(0)",
               }}
             >
               {navLinks.map((link) => {
