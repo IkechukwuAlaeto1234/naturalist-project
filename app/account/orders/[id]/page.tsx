@@ -31,6 +31,7 @@ interface ShippingAddress {
 
 interface Order {
   _id: string;
+  orderNumber?: string;
   items: OrderItem[];
   shippingAddress: ShippingAddress;
   paymentStatus: "pending" | "paid" | "failed";
@@ -85,7 +86,7 @@ export default function OrderDetailPage() {
   const [error,   setError]   = useState("");
 
   useEffect(() => {
-    document.title = "Order Details | Naturalist";
+    document.title = "Track Order | Naturalist";
   }, []);
 
   useEffect(() => {
@@ -132,6 +133,7 @@ export default function OrderDetailPage() {
 
   const isCancelled = order.shippingStatus === "cancelled";
   const currentStep = isCancelled ? -1 : stepIndex(order.shippingStatus);
+  const reference = order.orderNumber || order._id;
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0d0b] py-10 px-4 sm:px-6 lg:px-8 pb-32 transition-colors">
@@ -148,14 +150,14 @@ export default function OrderDetailPage() {
           </Link>
           <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
           <span className="text-xs font-bold uppercase tracking-wider text-foreground">
-            #{order._id.slice(-6).toUpperCase()}
+            {reference}
           </span>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
-              Order Details
+              Track Order
             </h1>
             <p className="text-xs text-muted-foreground mt-1">
               Placed on{" "}
@@ -206,6 +208,7 @@ export default function OrderDetailPage() {
                       done ? "text-[#2d4c38] dark:text-emerald-400" : "text-muted-foreground"
                     }`}>
                       {step.label}
+                      {reference}
                     </span>
                   </div>
                 );

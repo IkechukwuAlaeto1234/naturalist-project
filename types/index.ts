@@ -76,6 +76,7 @@ export interface OrderItemType {
 
 export interface OrderType {
   id: string;
+  orderNumber?: string;
   user: UserType | string;
   items: OrderItemType[];
   shippingAddress: ShippingAddressType;

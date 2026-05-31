@@ -10,7 +10,6 @@ import {
   User,
   MapPin,
   LogOut,
-  ChevronRight,
   ShoppingBag,
   ArrowRight,
   Loader2,
@@ -291,6 +290,40 @@ export default function AccountPage() {
   const user = session?.user as any;
   const isGoogleUser = !!user?.image && user.image.includes("googleusercontent.com");
   const displayImage = user?.image || null;
+  const savedAddresses = orders.reduce<Array<{
+    name: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+    phone: string;
+    reference: string;
+    updatedAt: string;
+  }>>((acc, order) => {
+    const shipping = order?.shippingAddress;
+    if (!shipping) return acc;
+
+    const key = [
+      shipping.name,
+      shipping.address,
+      shipping.city,
+      shipping.state,
+      shipping.zipCode,
+      shipping.country,
+      shipping.phone,
+    ].join("|");
+
+    if (!acc.some((item) => item.reference === key)) {
+      acc.push({
+        ...shipping,
+        reference: key,
+        updatedAt: order.updatedAt,
+      });
+    }
+
+    return acc;
+  }, []);
 
   return (
     <div className="flex flex-col w-full min-h-[70vh]">
@@ -372,6 +405,7 @@ export default function AccountPage() {
                   <div className="flex flex-col gap-3">
                     {orders.map((order: any) => {
                       const statusKey = order.shippingStatus || "pending";
+                      const reference = order.orderNumber || `#${order._id?.slice(-6).toUpperCase()}`;
                       const statusLabel =
                         statusKey === "pending"     ? "Pending" :
                         statusKey === "processing"  ? "Processing" :
@@ -384,35 +418,43 @@ export default function AccountPage() {
                         statusKey === "cancelled"  ? "bg-destructive/10 text-destructive" :
                         "bg-[#b07e3a]/10 text-[#b07e3a]";
                       return (
-                        <Link
+                        <div
                           key={order._id}
-                          href={`/account/orders/${order._id}`}
-                          className="flex items-center justify-between gap-4 p-5 rounded-2xl border border-border/40 dark:border-[#232c26] bg-white dark:bg-[#0f1411] hover:shadow-md hover:border-[#2d4c38]/30 dark:hover:border-emerald-500/20 transition-all group"
+                          className="flex flex-col gap-4 p-5 rounded-2xl border border-border/40 dark:border-[#232c26] bg-white dark:bg-[#0f1411] hover:shadow-md hover:border-[#2d4c38]/30 dark:hover:border-emerald-500/20 transition-all"
                         >
-                          <div className="flex items-center gap-4">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400 flex-shrink-0">
-                              <Package className="h-4 w-4" />
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400 flex-shrink-0">
+                                <Package className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-foreground truncate">Order {reference}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                  {" · "}{order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">Order #{order._id?.slice(-6).toUpperCase()}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
-                                {" · "}{order.items?.length || 0} {order.items?.length === 1 ? "item" : "items"}
-                              </p>
+
+                            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                              <div className="text-left sm:text-right">
+                                <p className="text-sm font-bold text-foreground">
+                                  ${order.totalAmount != null ? order.totalAmount.toFixed(2) : "0.00"}
+                                </p>
+                                <span className={`inline-flex text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusClass}`}>
+                                  {statusLabel}
+                                </span>
+                              </div>
+
+                              <Link
+                                href={`/account/orders/${order._id}`}
+                                className="inline-flex h-9 items-center justify-center rounded-full border border-[#2d4c38]/20 bg-[#2d4c38]/5 px-4 text-[11px] font-bold uppercase tracking-wider text-[#2d4c38] hover:bg-[#2d4c38] hover:text-white transition-all"
+                              >
+                                Track Order
+                              </Link>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            <div className="text-right hidden sm:block">
-                              <p className="text-sm font-bold text-foreground">
-                                ${order.totalAmount != null ? order.totalAmount.toFixed(2) : "0.00"}
-                              </p>
-                              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${statusClass}`}>
-                                {statusLabel}
-                              </span>
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[#2d4c38] dark:group-hover:text-emerald-400 transition-colors" />
-                          </div>
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>
@@ -610,7 +652,7 @@ export default function AccountPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold text-foreground">Two-Factor Authentication (2FA)</p>
                       <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#b07e3a]/15 text-[#b07e3a]">Coming Soon</span>
                     </div>
@@ -629,7 +671,7 @@ export default function AccountPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold text-foreground">Active Sessions</p>
                       <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400">Coming Soon</span>
                     </div>
@@ -647,7 +689,7 @@ export default function AccountPage() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm font-bold text-foreground">Login Activity Log</p>
                       <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400">Coming Soon</span>
                     </div>
@@ -664,15 +706,39 @@ export default function AccountPage() {
             {activeTab === "addresses" && (
               <div className="flex flex-col gap-6">
                 <h2 className="font-serif text-xl font-bold text-foreground">Saved Addresses</h2>
-                <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#e2dacd] dark:border-[#232c26] rounded-2xl bg-muted/10">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-primary mb-4">
-                    <MapPin className="h-5 w-5" />
+                {savedAddresses.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-[#e2dacd] dark:border-[#232c26] rounded-2xl bg-muted/10">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-primary mb-4">
+                      <MapPin className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-serif text-base font-bold text-foreground">No Addresses Saved</h3>
+                    <p className="text-xs text-muted-foreground max-w-xs mt-2 leading-relaxed">
+                      Your saved addresses will appear here after your first checkout. Address management is coming soon.
+                    </p>
                   </div>
-                  <h3 className="font-serif text-base font-bold text-foreground">No Addresses Saved</h3>
-                  <p className="text-xs text-muted-foreground max-w-xs mt-2 leading-relaxed">
-                    Your saved addresses will appear here after your first checkout. Address management is coming soon.
-                  </p>
-                </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-4">
+                    {savedAddresses.map((address) => (
+                      <div key={address.reference} className="rounded-2xl border border-border/40 dark:border-[#232c26] bg-white dark:bg-[#0f1411] p-5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-foreground">{address.name}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">Used on {new Date(address.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                          </div>
+                          <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-[#b07e3a]/10 text-[#b07e3a]">
+                            Order Address
+                          </span>
+                        </div>
+                        <div className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                          <p>{address.address}</p>
+                          <p>{address.city}, {address.state} {address.zipCode}</p>
+                          <p>{address.country}</p>
+                          {address.phone && <p className="mt-1 text-xs">{address.phone}</p>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

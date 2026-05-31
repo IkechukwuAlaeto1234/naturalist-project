@@ -202,6 +202,8 @@ export default function CheckoutPage() {
       const data = await res.json();
       setProcessing(false);
       router.push(`/order-confirmation?id=${data.orderId}&name=${encodeURIComponent(formData.name)}`);
+      const orderReference = data.orderNumber || data.orderId;
+      router.push(`/order-confirmation?id=${data.orderId}&reference=${encodeURIComponent(orderReference)}&name=${encodeURIComponent(formData.name)}`);
     } catch (err: any) {
       setProcessing(false);
       alert(err.message || "An unexpected error occurred. Please try again.");

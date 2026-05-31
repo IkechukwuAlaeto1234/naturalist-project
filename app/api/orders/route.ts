@@ -102,6 +102,7 @@ export async function POST(req: Request) {
       {
         message: "Order placed successfully",
         orderId: order._id,
+        orderNumber: order.orderNumber,
         checkoutUrl: stripeSession?.url || `/order-confirmation?order_id=${order._id}`,
       },
       { status: 201 }
