@@ -18,7 +18,8 @@ import {
   RefreshCw,
   Clock,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  X
 } from "lucide-react";
 
 interface UserType {
