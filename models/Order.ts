@@ -20,6 +20,7 @@ export interface IShippingAddress {
 }
 
 export interface IOrder extends Document {
+  orderNumber?: string;
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
