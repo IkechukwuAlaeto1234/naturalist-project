@@ -397,7 +397,7 @@ export default function Navbar() {
                 </button>
 
                 {isProfileOpen && (
-                  <div className="absolute right-0 mt-3 z-40 w-72 origin-top-right rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
+                  <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
                       {/* Greeting */}
                       <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
                       <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
