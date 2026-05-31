@@ -179,7 +179,7 @@ export default function Navbar() {
             {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`${PILL} h-10 w-10 flex-col gap-1.5 md:hidden flex-shrink-0`}
+              className={`${PILL} h-10 w-10 min-w-10 min-h-10 aspect-square flex-col gap-1.5 md:hidden flex-shrink-0`}
               data-tooltip="Menu"
               aria-label={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
               aria-expanded={isMobileMenuOpen}
@@ -276,7 +276,7 @@ export default function Navbar() {
             {/* Search */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
+              className={`${PILL} hidden md:flex h-10 w-10 sm:h-11 sm:w-11`}
               data-tooltip={isSearchOpen ? "Close Search" : "Search"}
               aria-label={isSearchOpen ? "Close Search" : "Search"}
             >
@@ -527,13 +527,24 @@ export default function Navbar() {
           <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#b07e3a]/60 to-transparent pointer-events-none z-10" />
 
           {/* Header (No close X button, styled exactly like normal desktop header logo) */}
-          <div className="relative z-10 flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#e2dacd]/60 dark:border-white/[0.07]">
+          <div className="relative z-10 flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#e2dacd]/60 dark:border-white/[0.07]">
             <a
               href="/"
               className="font-serif text-2xl font-bold tracking-tight text-primary dark:text-[#f4f6f4] hover:opacity-90 transition-opacity"
             >
               Naturalist.
             </a>
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsSearchOpen(true);
+              }}
+              className="md:hidden group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
+              aria-label="Search"
+            >
+              <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
+              <Search className="relative text-white/80 group-hover:text-white h-[18px] w-[18px] transition-colors" />
+            </button>
           </div>
 
           {/* Nav links */}
