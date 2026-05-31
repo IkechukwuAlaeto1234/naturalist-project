@@ -10,7 +10,8 @@ import bcrypt from "bcryptjs";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const adminUser = session?.user as { id?: string; role?: string; email?: string } | undefined;
+    if (!adminUser || adminUser.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -48,7 +49,8 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const adminUser = session?.user as { id?: string; role?: string; email?: string } | undefined;
+    if (!adminUser || adminUser.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
       email: newUser.email,
       name: newUser.name,
       action: "create_manual",
-      details: `Account manually created by Admin (${session.user.email}). Password stored and revealed.`,
+      details: `Account manually created by Admin (${adminUser.email || "System"}). Password stored and revealed.`,
     });
 
     return NextResponse.json(newUser, { status: 201 });

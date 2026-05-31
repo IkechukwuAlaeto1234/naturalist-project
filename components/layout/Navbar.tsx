@@ -159,8 +159,7 @@ export default function Navbar() {
   }
 
   const handleSignOut = () => {
-    const origin = typeof window !== "undefined" ? window.location.origin : process.env.NEXTAUTH_URL || "/";
-    signOut({ callbackUrl: `${origin}/` });
+    signOut({ callbackUrl: "/" });
   };
 
   /* ─────────────────────────────────────────
@@ -361,7 +360,7 @@ export default function Navbar() {
 
                       {(session.user as any)?.role === "admin" && (
                         <a
-                          href="http://admin.localhost:3000/admin"
+                          href="/admin"
                           onClick={() => setIsProfileOpen(false)}
                           className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-accent hover:text-accent-foreground rounded-xl hover:bg-accent/10 transition-colors font-medium"
                         >

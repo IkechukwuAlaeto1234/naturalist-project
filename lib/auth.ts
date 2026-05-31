@@ -76,7 +76,7 @@ export const {
             dbUser = await User.create({
               name: user.name || "Naturalist User",
               email: user.email?.toLowerCase(),
-              image: user.image,
+              image: user.image || undefined,
               role: "user",
               isVerified: true, // Google email is verified
             });
@@ -92,7 +92,7 @@ export const {
           } else {
             // Update user image if not present
             if (!dbUser.image && user.image) {
-              dbUser.image = user.image;
+              dbUser.image = user.image || undefined;
               await dbUser.save();
             }
           }

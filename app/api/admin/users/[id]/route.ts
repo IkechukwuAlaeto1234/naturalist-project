@@ -14,7 +14,8 @@ export async function PUT(
     const { id } = await params;
 
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const adminUser = session?.user as { id?: string; role?: string; email?: string } | undefined;
+    if (!adminUser || adminUser.role !== "admin" || !adminUser.id) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -29,7 +30,7 @@ export async function PUT(
     }
 
     // Don't let admin suspend themselves
-    if (user._id.toString() === session.user.id && isSuspended === true) {
+    if (user._id.toString() === adminUser.id && isSuspended === true) {
       return NextResponse.json({ error: "You cannot suspend your own admin account!" }, { status: 400 });
     }
 
@@ -77,7 +78,7 @@ export async function PUT(
         email: user.email,
         name: user.name,
         action: isSuspended !== undefined && isSuspended !== !user.isSuspended ? (isSuspended ? "suspend" : "unsuspend") : "update",
-        details: `Account modified by Admin (${session.user.email}). Changes: ${changes.join(", ")}.`,
+        details: `Account modified by Admin (${adminUser.email || "System"}). Changes: ${changes.join(", ")}.`,
       });
     }
 
@@ -98,7 +99,8 @@ export async function DELETE(
     const { id } = await params;
 
     const session = await auth();
-    if (!session || (session.user as any).role !== "admin") {
+    const adminUser = session?.user as { id?: string; role?: string; email?: string } | undefined;
+    if (!adminUser || adminUser.role !== "admin" || !adminUser.id) {
       return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
     }
 
@@ -109,7 +111,7 @@ export async function DELETE(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (user._id.toString() === session.user.id) {
+    if (user._id.toString() === adminUser.id) {
       return NextResponse.json({ error: "You cannot delete your own admin account!" }, { status: 400 });
     }
 
@@ -120,7 +122,7 @@ export async function DELETE(
       email: user.email,
       name: user.name,
       action: "delete",
-      details: `Account permanently deleted by Admin (${session.user.email}).`,
+      details: `Account permanently deleted by Admin (${adminUser.email || "System"}).`,
     });
 
     return NextResponse.json({ message: "User account deleted successfully" }, { status: 200 });
