@@ -14,7 +14,8 @@ import {
   X,
   Upload,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Search
 } from "lucide-react";
 
 interface BlogSection {
