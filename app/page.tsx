@@ -278,13 +278,13 @@ export default function Home() {
                 </div>
 
                 {/* Pricing & CTA */}
-                <div className="flex items-center justify-between border-t border-border/30 dark:border-[#232c26]/20 pt-6 mt-4">
-                  <div className="flex items-baseline gap-2.5">
+                <div className="flex flex-col gap-4 border-t border-border/30 dark:border-[#232c26]/20 pt-6 mt-4 sm:flex-row sm:items-end sm:justify-between">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                     <span className="text-2xl font-black text-[#2d4c38] dark:text-emerald-400 font-serif">
                       ${featuredBundle.price.toFixed(2)}
                     </span>
                     {featuredBundle.compareAtPrice && (
-                      <span className="text-sm text-muted-foreground line-through">
+                      <span className="w-full text-sm text-muted-foreground line-through sm:w-auto">
                         ${featuredBundle.compareAtPrice.toFixed(2)}
                       </span>
                     )}
@@ -292,7 +292,7 @@ export default function Home() {
 
                   <Link
                     href={`/bundles/${featuredBundle.slug}`}
-                    className="flex h-11 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#203628] px-6 text-xs font-bold uppercase tracking-wider text-white hover:translate-y-[-1px] transition-all shadow-md"
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#203628] px-6 text-xs font-bold uppercase tracking-wider text-white hover:translate-y-[-1px] transition-all shadow-md sm:w-auto"
                   >
                     View Ritual Set
                     <ArrowRight className="h-3.5 w-3.5" />
