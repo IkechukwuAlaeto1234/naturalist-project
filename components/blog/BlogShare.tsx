@@ -67,13 +67,13 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
   };
 
   return (
-    <div className="p-6 rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 transition-colors duration-300">
+    <div className="p-6 rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] shadow-sm flex flex-col items-center text-center sm:flex-row sm:items-center sm:justify-between sm:text-left gap-4 transition-colors duration-300">
       <div>
         <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a]">Spread the Ritual</span>
         <h3 className="font-serif text-lg font-bold text-[#141f19] dark:text-[#f4f6f4] mt-0.5">Share this Story</h3>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
         {/* Twitter / X */}
         <a
           href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`}

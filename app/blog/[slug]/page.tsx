@@ -87,9 +87,6 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                   {post.authorName?.[0]?.toUpperCase() || "N"}
                 </span>
                 <span className="font-bold">{post.authorName}</span>
-                <span className="text-[9px] opacity-70 font-black px-2 py-0.5 rounded-full bg-[#2d4c38]/10 dark:bg-[#2d4c38]/20 uppercase tracking-wider">
-                  {post.authorRole || "Naturalist Editorial Writer"}
-                </span>
               </div>
 
               {/* Date Pill */}
