@@ -102,7 +102,6 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
         isBundle: false,
       }, quantity);
       setAdding(false);
-      showToast("success", "Added to Cart", `${quantity} × ${product.name} successfully added to your skincare ritual.`);
     }, 600);
   };
 

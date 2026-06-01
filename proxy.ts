@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./lib/auth.config";
+import { hasAdminAccess } from "./lib/admin";
 
 const { auth } = NextAuth(authConfig);
+
+type ProxyUser = {
+  email?: string | null;
+  role?: string | null;
+};
 
 /**
  * Next.js 16 Proxy Router (replaces deprecated middleware)
@@ -29,7 +35,6 @@ export const proxy = auth((req) => {
   // Route: admin.mydomain.com/dashboard -> internally maps to /admin/dashboard
   if (isAdminSubdomain) {
     const isLoggedIn = !!req.auth?.user;
-    const role = (req.auth?.user as any)?.role;
 
     // Guard: Admin subdomain requires authentication
     if (!isLoggedIn) {
@@ -39,7 +44,7 @@ export const proxy = auth((req) => {
     }
 
     // Guard: Logged-in user must have 'admin' role
-    if (role !== "admin") {
+    if (!hasAdminAccess(req.auth?.user as ProxyUser)) {
       // Redirect unauthorized users to the main public site
       const mainDomain = hostname.replace("admin.", "");
       return NextResponse.redirect(new URL(`http://${mainDomain}`, req.url));

@@ -20,6 +20,7 @@ export const metadata: Metadata = {
   },
 };
 
+import React, { Suspense } from "react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import BackToTop from "../components/ui/BackToTop";
@@ -43,7 +44,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <Providers>
-          <BrandLoader />
+          <Suspense fallback={null}>
+            <BrandLoader />
+          </Suspense>
           <Navbar />
           <main className="flex-grow flex flex-col">
             {children}

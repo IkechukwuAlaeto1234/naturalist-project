@@ -204,17 +204,17 @@ export default function Navbar() {
           {/* - Desktop Center: Nav Links and Inline Search - */}
           <div
             ref={desktopSearchWrapperRef}
-            className="hidden md:flex flex-1 items-center justify-center relative overflow-hidden h-12 px-6"
+            className="hidden md:flex flex-1 items-center justify-between relative h-12 px-6"
           >
             {/* Nav links - slides left when search opens, remains fully visible */}
             <nav
-              className="flex items-center gap-6 lg:gap-8 relative mx-auto"
+              className="flex items-center gap-6 lg:gap-8 transition-all duration-500 ease-out"
               style={{
-                transition: "opacity 0.25s ease",
                 opacity: 1,
                 pointerEvents: "auto",
                 whiteSpace: "nowrap",
-                transform: isSearchOpen ? "translateX(0)" : "translateX(0)",
+                marginLeft: isSearchOpen ? "0px" : "auto",
+                marginRight: isSearchOpen ? "auto" : "auto",
               }}
             >
               {navLinks.map((link) => {
@@ -237,11 +237,13 @@ export default function Navbar() {
 
             {/* Inline premium search - slides in from right when open */}
             <div
-              className={`absolute right-0 top-1/2 -translate-y-1/2 flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 overflow-hidden transition-all duration-300 shadow-[0_2px_10px_rgba(28,46,36,0.06)] focus-within:border-[#b07e3a] ${
-                isSearchOpen
-                  ? "w-[240px] lg:w-[360px] opacity-100 translate-x-0 pointer-events-auto"
-                  : "w-0 opacity-0 translate-x-4 pointer-events-none"
-              }`}
+              className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 overflow-hidden transition-all duration-500 ease-out shadow-[0_2px_10px_rgba(28,46,36,0.06)] focus-within:border-[#b07e3a]"
+              style={{
+                width: isSearchOpen ? "320px" : "0px",
+                opacity: isSearchOpen ? 1 : 0,
+                pointerEvents: isSearchOpen ? "auto" : "none",
+                marginLeft: isSearchOpen ? "1.5rem" : "0px",
+              }}
             >
               <input
                 ref={desktopSearchInputRef}
@@ -362,7 +364,7 @@ export default function Navbar() {
                         <a
                           href="/admin"
                           onClick={() => setIsProfileOpen(false)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-accent hover:text-accent-foreground rounded-xl hover:bg-accent/10 transition-colors font-medium"
+                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[#b07e3a] dark:text-[#d4a362] rounded-xl hover:bg-[#b07e3a]/10 transition-colors font-medium"
                         >
                           <Settings className="h-4 w-4 flex-shrink-0" />
                           Admin Panel

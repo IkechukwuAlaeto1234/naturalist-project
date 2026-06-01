@@ -7,6 +7,24 @@ import { getFirstValidationError } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
+    const body = await req.json();
+
+    // ── LOCAL SIMULATION BYPASS ──
+    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+      const { email, otp } = body;
+      const normalizedEmail = (email || "").toLowerCase().trim();
+      if (!otp || otp.toString().trim().length !== 4) {
+        return NextResponse.json({ error: "The passcode must be exactly 4 characters" }, { status: 400 });
+      }
+      return NextResponse.json(
+        {
+          message: "Email verification successful! Your account is now active.",
+          isVerified: true,
+        },
+        { status: 200 }
+      );
+    }
+
     // 1. Rate Limiting (max 10 verification attempts per 15 minutes)
     const limiter = await rateLimit("verify-email", { limit: 10 });
     if (!limiter.success) {
@@ -17,7 +35,6 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse & Validate input
-    const body = await req.json();
     const result = verifyOTPSchema.safeParse(body);
     if (!result.success) {
       const errorMap = result.error.flatten().fieldErrors;

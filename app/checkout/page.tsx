@@ -41,7 +41,7 @@ type PhoneCountry = (typeof PHONE_COUNTRIES)[number];
 
 const inputCls = "px-4 py-2.5 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] focus:border-transparent transition-all placeholder:text-muted-foreground/40";
 const dropdownTriggerCls = "flex items-center justify-between px-4 py-2.5 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] transition-all w-full text-left cursor-pointer";
-const dropdownPanelCls = "absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl z-20 overflow-hidden animate-toast-pop";
+const dropdownPanelCls = "absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl z-[80] overflow-hidden animate-toast-pop";
 const searchInputCls = "w-full px-3 py-1.5 text-xs rounded-full border border-[#e2dacd] dark:border-white/10 bg-muted/20 dark:bg-white/5 focus:outline-none focus:ring-1 focus:ring-[#b07e3a] placeholder:text-muted-foreground/50";
 const optionCls = (active: boolean) => `w-full px-4 py-2 text-left text-xs font-semibold hover:bg-[#f4efe6] dark:hover:bg-[#1e2621] transition-colors cursor-pointer ${active ? "text-[#b07e3a] bg-[#f4efe6]/40 dark:bg-[#1e2621]/40" : "text-foreground"}`;
 
@@ -99,15 +99,23 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     const t = setTimeout(() => { document.title = "Checkout | Naturalist"; }, 120);
-    if (session?.user) {
-      setFormData(prev => ({ ...prev, name: session.user?.name || "", email: session.user?.email || "" }));
-    }
-    return () => clearTimeout(t);
+    const sessionTimer = session?.user
+      ? setTimeout(() => {
+          setFormData(prev => ({ ...prev, name: session.user?.name || "", email: session.user?.email || "" }));
+        }, 0)
+      : undefined;
+    return () => {
+      clearTimeout(t);
+      if (sessionTimer) clearTimeout(sessionTimer);
+    };
   }, [session]);
 
   useEffect(() => {
-    const match = PHONE_COUNTRIES.find(c => c.name === formData.country);
-    if (match) { setPhoneCountry(match); setLocalPhone(""); setFormData(prev => ({ ...prev, phone: "" })); }
+    const countryTimer = setTimeout(() => {
+      const match = PHONE_COUNTRIES.find(c => c.name === formData.country);
+      if (match) { setPhoneCountry(match); setLocalPhone(""); setFormData(prev => ({ ...prev, phone: "" })); }
+    }, 0);
+    return () => clearTimeout(countryTimer);
   }, [formData.country]);
 
   // Click-outside handlers
@@ -204,9 +212,10 @@ export default function CheckoutPage() {
       router.push(`/order-confirmation?id=${data.orderId}&name=${encodeURIComponent(formData.name)}`);
       const orderReference = data.orderNumber || data.orderId;
       router.push(`/order-confirmation?id=${data.orderId}&reference=${encodeURIComponent(orderReference)}&name=${encodeURIComponent(formData.name)}`);
-    } catch (err: any) {
+    } catch (err) {
       setProcessing(false);
-      alert(err.message || "An unexpected error occurred. Please try again.");
+      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      alert(message);
     }
   };
 

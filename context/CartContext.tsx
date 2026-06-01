@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "./ToastContext";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 export interface CartItem {
   id: string; // Dynamic identifier (Mongoose ID if sync'd, or productSlug)
@@ -42,9 +43,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
   const { showToast } = useToast();
 
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [successModalTitle, setSuccessModalTitle] = useState("");
+  const [successModalMessage, setSuccessModalMessage] = useState("");
+
   const isServer = typeof window === "undefined";
 
-  // Deferred toast so modals don't fire before the spinner has been visible
+  // Deferred success modal trigger
+  const delayedSuccessModal = useCallback(
+    (title: string, message: string, delay = TOAST_DELAY_MS) => {
+      setTimeout(() => {
+        setSuccessModalTitle(title);
+        setSuccessModalMessage(message);
+        setSuccessModalOpen(true);
+      }, delay);
+    },
+    []
+  );
+
+  // Deferred toast for other feedback
   const delayedToast = useCallback(
     (
       type: Parameters<typeof showToast>[0],
@@ -136,7 +153,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (res.ok) {
           await fetchRemoteCart();
-          delayedToast("success", "Added to ritual", `${newItem.name} has been added.`);
+          delayedSuccessModal("Added to Skincare Ritual", `${newItem.name} has been successfully added to your skincare ritual.`);
         } else {
           const errData = await res.json();
           delayedToast("error", "Failed to add", errData.error || "Please try again.");
@@ -165,7 +182,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         setCartItems(updatedCart);
         saveLocalCart(updatedCart);
-        delayedToast("success", "Added to ritual", `${newItem.name} has been added.`);
+        delayedSuccessModal("Added to Skincare Ritual", `${newItem.name} has been successfully added to your skincare ritual.`);
       }
     } catch (err) {
       delayedToast("error", "Error", "Could not modify cart. Please try again.");
@@ -275,6 +292,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }}
     >
       {children}
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        title={successModalTitle}
+        message={successModalMessage}
+      />
     </CartContext.Provider>
   );
 }

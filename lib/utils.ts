@@ -32,11 +32,11 @@ export function formatDate(date: Date | string): string {
 /**
  * Generates a random alphanumeric OTP code of a specific length
  */
-export function generateOTP(length: number = 6): string {
-  const digits = "0123456789";
+export function generateOTP(length: number = 4): string {
+  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   let otp = "";
   for (let i = 0; i < length; i++) {
-    otp += digits[Math.floor(Math.random() * 10)];
+    otp += chars[Math.floor(Math.random() * chars.length)];
   }
   return otp;
 }

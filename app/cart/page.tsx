@@ -19,11 +19,14 @@ export default function CartPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   useEffect(() => {
-    setMounted(true);
+    const mountedTimer = setTimeout(() => setMounted(true), 0);
     const titleTimeout = setTimeout(() => {
       document.title = "Shopping Cart | Naturalist";
     }, 120);
-    return () => clearTimeout(titleTimeout);
+    return () => {
+      clearTimeout(mountedTimer);
+      clearTimeout(titleTimeout);
+    };
   }, []);
 
   if (!mounted) {
@@ -48,7 +51,7 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1411] transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 pb-32">
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-5xl">
         
         {/* Breadcrumb / Title */}
         <div className="mb-10">
@@ -59,12 +62,14 @@ export default function CartPage() {
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Continue Shopping
           </Link>
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
-            Your Cart
-          </h1>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mt-2.5">
-            {cartItems.length} {cartItems.length === 1 ? "Item" : "Items"} in Cart
-          </p>
+          <div className="text-center">
+            <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
+              Your Cart
+            </h1>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold mt-2.5">
+              {cartItems.length} {cartItems.length === 1 ? "Item" : "Items"} in Cart
+            </p>
+          </div>
         </div>
 
         {cartItems.length === 0 ? (

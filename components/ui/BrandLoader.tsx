@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 // Minimum time (ms) the loader stays visible before it can start fading out
 const MIN_DISPLAY_TIME = 1500;
@@ -10,37 +10,62 @@ const FADE_DURATION = 300;
 
 export default function BrandLoader() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [visible, setVisible] = useState(true);
   const [fade, setFade] = useState(false);
 
-  // 1. Listen for pathname changes to trigger the minimum-display fade-out sequence
+  // 1. Listen for pathname or searchParams changes to trigger the minimum-display fade-out sequence
   useEffect(() => {
-    // Keep loader active immediately on route change
-    setVisible(true);
-    setFade(false);
-    
-    // Snap window viewport back to top during route transitions
-    if (typeof window !== "undefined") {
+    let startTimeout: NodeJS.Timeout | undefined;
+    let fadeTimeout: NodeJS.Timeout | undefined;
+    let hideTimeout: NodeJS.Timeout | undefined;
+
+    startTimeout = setTimeout(() => {
+      // Keep loader active immediately on route/step change
+      setVisible(true);
+      setFade(false);
+
+      // Snap window viewport back to top during route transitions
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
-    }
 
-    // Wait at least MIN_DISPLAY_TIME before starting the fade
-    const fadeTimeout = setTimeout(() => {
-      setFade(true);
-      const hideTimeout = setTimeout(() => {
-        setVisible(false);
-      }, FADE_DURATION);
-      return () => clearTimeout(hideTimeout);
-    }, MIN_DISPLAY_TIME);
+      // Wait at least MIN_DISPLAY_TIME before starting the fade
+      fadeTimeout = setTimeout(() => {
+        setFade(true);
+        hideTimeout = setTimeout(() => {
+          setVisible(false);
+        }, FADE_DURATION);
+      }, MIN_DISPLAY_TIME);
+    }, 0);
 
-    return () => clearTimeout(fadeTimeout);
-  }, [pathname]);
+    return () => {
+      if (startTimeout) clearTimeout(startTimeout);
+      if (fadeTimeout) clearTimeout(fadeTimeout);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
+  }, [pathname, searchParams]);
 
 
 
   // 3. Intercept local anchor clicks to show the loader *before* navigation starts
   useEffect(() => {
-    let failSafeTimeout: NodeJS.Timeout;
+    let failSafeTimeout: NodeJS.Timeout | undefined;
+
+    const showNavigationLoader = () => {
+      setVisible(true);
+      setFade(false);
+
+      if (failSafeTimeout) clearTimeout(failSafeTimeout);
+
+      // Fail-safe: if route transition takes more than 8 seconds, automatically hide loader
+      failSafeTimeout = setTimeout(() => {
+        setFade(true);
+        setTimeout(() => setVisible(false), FADE_DURATION);
+      }, 8000);
+    };
+
+    const handleNavigationStart = () => {
+      showNavigationLoader();
+    };
 
     const handleAnchorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -54,36 +79,28 @@ export default function BrandLoader() {
           anchor.target !== "_blank" &&
           !e.defaultPrevented
         ) {
-          const currentPath = window.location.pathname;
-          let targetPath = href.split("?")[0].split("#")[0];
+          const currentRoute = `${window.location.pathname}${window.location.search}`;
+          let targetRoute = href.split("#")[0];
           try {
             const url = new URL(href, window.location.origin);
-            targetPath = url.pathname;
-          } catch (err) {}
+            targetRoute = `${url.pathname}${url.search}`;
+          } catch {}
 
-          // Ignore self-navigation to avoid getting stuck
-          if (targetPath === currentPath) {
+          // Ignore exact self-navigation to avoid getting stuck.
+          // Query-string changes, such as /register?step=2, should still transition.
+          if (targetRoute === currentRoute) {
             return;
           }
 
-          // Instantly show the loader to cover the screen before the page changes
-          setVisible(true);
-          setFade(false);
-
-          // Clear any existing fail-safe
-          if (failSafeTimeout) clearTimeout(failSafeTimeout);
-
-          // Fail-safe: if route transition takes more than 8 seconds, automatically hide loader
-          failSafeTimeout = setTimeout(() => {
-            setFade(true);
-            setTimeout(() => setVisible(false), FADE_DURATION);
-          }, 8000);
+          showNavigationLoader();
         }
       }
     };
 
+    window.addEventListener("naturalist:navigation-start", handleNavigationStart);
     document.addEventListener("click", handleAnchorClick);
     return () => {
+      window.removeEventListener("naturalist:navigation-start", handleNavigationStart);
       document.removeEventListener("click", handleAnchorClick);
       if (failSafeTimeout) clearTimeout(failSafeTimeout);
     };

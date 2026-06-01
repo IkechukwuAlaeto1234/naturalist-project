@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -10,6 +11,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     const titleTimeout = setTimeout(() => {
@@ -45,9 +47,7 @@ export default function ForgotPasswordPage() {
       }
 
       setSuccess("A password reset passcode has been sent if a matching account exists.");
-      setTimeout(() => {
-        router.push(`/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}`);
-      }, 1500);
+      setSuccessModalOpen(true);
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
@@ -80,13 +80,6 @@ export default function ForgotPasswordPage() {
             <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-start gap-2.5 text-xs text-destructive font-semibold">
               <span className="material-icons text-sm select-none mt-0.5">error_outline</span>
               <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-[#2d4c38]/10 border border-[#2d4c38]/20 rounded-2xl flex items-start gap-2.5 text-xs text-[#2d4c38] dark:text-emerald-400 font-semibold">
-              <span className="material-icons text-sm select-none mt-0.5">check_circle_outline</span>
-              <span>{success}</span>
             </div>
           )}
 
@@ -137,6 +130,23 @@ export default function ForgotPasswordPage() {
         </div>
 
       </div>
+
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => {
+          setSuccessModalOpen(false);
+          router.push(`/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}`);
+        }}
+        title="Passcode Sent"
+        message={success}
+        actionText="Enter Passcode"
+        showCancel={false}
+        onAction={() => {
+          setSuccessModalOpen(false);
+          router.push(`/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}`);
+        }}
+        actionIcon={null}
+      />
     </div>
   );
 }

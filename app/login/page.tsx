@@ -4,16 +4,23 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
+import { Mail, Lock, RefreshCw, Key } from "lucide-react";
+import ErrorModal from "@/components/ui/ErrorModal";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 function LoginContent() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+
+  // Error modal state
+  const [errorModalOpen, setErrorModalOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const nextAuthError = searchParams.get("error");
@@ -21,10 +28,17 @@ function LoginContent() {
   const isReset = searchParams.get("reset") === "true";
 
   useEffect(() => {
-    if (status === "authenticated") {
-      router.replace(callbackUrl);
+    if (status === "authenticated" && session?.user) {
+      const userEmail = session.user.email?.toLowerCase().trim();
+      const userRole = (session.user as any).role;
+      
+      if (userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin") {
+        router.replace("/admin");
+      } else {
+        router.replace(callbackUrl);
+      }
     }
-  }, [status, router, callbackUrl]);
+  }, [status, session, router, callbackUrl]);
 
   useEffect(() => {
     const titleTimeout = setTimeout(() => {
@@ -32,15 +46,19 @@ function LoginContent() {
     }, 120);
 
     if (nextAuthError === "CredentialsSignin") {
-      setError("Invalid email address or passcode sequence. Please try again.");
+      setErrorMessage("Invalid email address or passcode sequence. Please try again.");
+      setErrorModalOpen(true);
     } else if (nextAuthError) {
-      setError("An error occurred during authentication. Please try again.");
+      setErrorMessage("An error occurred during authentication. Please try again.");
+      setErrorModalOpen(true);
     }
 
     if (isVerified) {
       setSuccess("Account activated successfully! Please sign in to access your rituals.");
+      setSuccessModalOpen(true);
     } else if (isReset) {
       setSuccess("Your password has been reset successfully! Please sign in with your new password.");
+      setSuccessModalOpen(true);
     }
 
     return () => clearTimeout(titleTimeout);
@@ -49,13 +67,15 @@ function LoginContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password.trim()) {
-      setError("Please enter both email and password.");
+      setErrorMessage("Please enter both email and password.");
+      setErrorModalOpen(true);
       return;
     }
 
     setLoading(true);
-    setError("");
     setSuccess("");
+
+    const startTime = Date.now();
 
     try {
       const res = await signIn("credentials", {
@@ -64,22 +84,25 @@ function LoginContent() {
         redirect: false,
       });
 
+      // Deliberate 1.5-second minimum spinner duration
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(1500 - elapsed, 0);
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+
+      setLoading(false);
+
       if (res?.error) {
-        setError("Invalid email or password. Please check your credentials.");
+        setErrorMessage("Invalid email or password. Please check your credentials.");
+        setErrorModalOpen(true);
       } else {
-        // Successful login
         setSuccess("Successfully signed in! Redirecting...");
-        setTimeout(() => {
-          router.push(callbackUrl);
-        }, 800);
       }
     } catch (err: any) {
-      setError("An unexpected error occurred. Please try again later.");
-    } finally {
       setLoading(false);
+      setErrorMessage("An unexpected error occurred. Please try again later.");
+      setErrorModalOpen(true);
     }
   };
-
 
   return (
     <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] transition-colors duration-300 py-20 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center">
@@ -101,26 +124,11 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* Feedback banners */}
-          {error && (
-            <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-start gap-2.5 text-xs text-destructive font-semibold">
-              <span className="material-icons text-sm select-none mt-0.5">error_outline</span>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-[#2d4c38]/10 border border-[#2d4c38]/20 rounded-2xl flex items-start gap-2.5 text-xs text-[#2d4c38] dark:text-emerald-400 font-semibold">
-              <span className="material-icons text-sm select-none mt-0.5">check_circle_outline</span>
-              <span>{success}</span>
-            </div>
-          )}
-
-          {/* Forms */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <span className="material-icons select-none" style={{ fontSize: "12px" }}>mail</span> Email Address
+                <Mail className="h-3 w-3 text-muted-foreground" /> Email Address
               </label>
               <input
                 type="email"
@@ -128,14 +136,14 @@ function LoginContent() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="px-5 py-3 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45"
+                className="px-5 py-3.5 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45 text-foreground"
               />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <div className="flex justify-between items-center">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <span className="material-icons select-none" style={{ fontSize: "12px" }}>lock</span> Password
+                  <Lock className="h-3 w-3 text-muted-foreground" /> Password
                 </label>
               </div>
               <input
@@ -144,7 +152,7 @@ function LoginContent() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter password"
-                className="px-5 py-3 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45"
+                className="px-5 py-3.5 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45 text-foreground"
               />
             </div>
 
@@ -153,20 +161,17 @@ function LoginContent() {
               disabled={loading}
               className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-85 disabled:cursor-not-allowed"
             >
-            {loading ? (
+              {loading ? (
                 <>
-                  <span className="material-icons animate-spin select-none" style={{ fontSize: "14px" }}>cached</span>
-                  Verifying...
+                  <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
                 </>
               ) : (
                 <>
-                  Sign In <span className="material-icons select-none" style={{ fontSize: "14px" }}>login</span>
+                  Sign In <span className="material-icons select-none animate-pulse" style={{ fontSize: "14px" }}>login</span>
                 </>
               )}
             </button>
           </form>
-
-          {/* Social sign-in removed per configuration */}
 
           {/* Footer Navigation */}
           <div className="mt-8 text-center text-xs text-muted-foreground">
@@ -192,6 +197,26 @@ function LoginContent() {
         </div>
 
       </div>
+
+      {/* Error modal feedback */}
+      <ErrorModal
+        isOpen={errorModalOpen}
+        onClose={() => setErrorModalOpen(false)}
+        title="Sign In Failed"
+        message={errorMessage}
+      />
+
+      {/* Success modal feedback */}
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        title="Account Activated"
+        message={success}
+        actionText="Sign In"
+        showCancel={false}
+        onAction={() => setSuccessModalOpen(false)}
+        actionIcon={null}
+      />
     </div>
   );
 }

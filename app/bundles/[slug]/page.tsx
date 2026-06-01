@@ -109,7 +109,6 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
         isBundle: true,
       }, quantity);
       setAdding(false);
-      showToast("success", "Added to Cart", `${quantity} × ${bundle.name} successfully added to your skincare ritual.`);
     }, 600);
   };
 

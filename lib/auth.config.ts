@@ -1,4 +1,21 @@
 import type { NextAuthConfig } from "next-auth";
+import { hasAdminAccess, resolveUserRole } from "./admin";
+
+type AuthUser = {
+  id?: string;
+  email?: string | null;
+  image?: string | null;
+  role?: string | null;
+  isVerified?: boolean;
+};
+
+type SessionUpdate = {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string | null;
+  isVerified?: boolean;
+};
 
 export const authConfig = {
   pages: {
@@ -18,7 +35,7 @@ export const authConfig = {
 
       if (isOnAdmin) {
         // Admin pages require user to be logged in and have the 'admin' role
-        if (isLoggedIn && (auth.user as any).role === "admin") return true;
+        if (isLoggedIn && hasAdminAccess(auth.user as AuthUser)) return true;
         
         // Extract forwarded host and protocol to avoid internal port redirect loop (e.g., localhost:10000)
         const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
@@ -47,25 +64,36 @@ export const authConfig = {
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {
+        const authUser = user as AuthUser;
         token.id = user.id;
-        token.role = (user as any).role || "user";
-        token.isVerified = (user as any).isVerified || false;
-        token.image = (user as any).image || user.image || null;
+        token.email = user.email || token.email;
+        token.role = resolveUserRole(authUser.role, user.email || token.email);
+        token.isVerified = authUser.isVerified || false;
+        token.image = authUser.image || user.image || null;
       }
       // Support session updates (e.g., after profile updates)
       if (trigger === "update" && session) {
-        token.name = session.name || token.name;
-        token.role = session.role || token.role;
-        token.image = session.image !== undefined ? session.image : token.image;
-        token.isVerified = session.isVerified !== undefined ? session.isVerified : token.isVerified;
+        const update = session as SessionUpdate;
+        token.name = update.name || token.name;
+        token.email = update.email || token.email;
+        token.role = resolveUserRole(update.role || (token.role as string | undefined), token.email as string | undefined);
+        token.image = update.image !== undefined ? update.image : token.image;
+        token.isVerified = update.isVerified !== undefined ? update.isVerified : token.isVerified;
       }
+      token.role = resolveUserRole(token.role as string | undefined, token.email as string | undefined);
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
-        (session.user as any).role = token.role as string;
-        (session.user as any).isVerified = token.isVerified as boolean;
+        const sessionUser = session.user as typeof session.user & {
+          id?: string;
+          role?: string;
+          isVerified?: boolean;
+        };
+
+        sessionUser.id = token.id as string;
+        sessionUser.role = resolveUserRole(token.role as string | undefined, session.user.email || token.email as string | undefined);
+        sessionUser.isVerified = token.isVerified as boolean;
         // Preserve image from token (could be Google picture or uploaded Cloudinary URL)
         if (token.image) {
           session.user.image = token.image as string;

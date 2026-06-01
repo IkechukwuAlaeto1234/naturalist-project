@@ -3,6 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import SuccessModal from "@/components/ui/SuccessModal";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -15,6 +16,7 @@ function ResetPasswordContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     const titleTimeout = setTimeout(() => {
@@ -64,9 +66,7 @@ function ResetPasswordContent() {
       }
 
       setSuccess("Password reset successful! Redirecting to login...");
-      setTimeout(() => {
-        router.push("/login?reset=true");
-      }, 1500);
+      setSuccessModalOpen(true);
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred. Please try again.");
     } finally {
@@ -99,13 +99,6 @@ function ResetPasswordContent() {
             <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl flex items-start gap-2.5 text-xs text-destructive font-semibold">
               <span className="material-icons text-sm select-none mt-0.5">error_outline</span>
               <span>{error}</span>
-            </div>
-          )}
-
-          {success && (
-            <div className="mb-6 p-4 bg-[#2d4c38]/10 border border-[#2d4c38]/20 rounded-2xl flex items-start gap-2.5 text-xs text-[#2d4c38] dark:text-emerald-400 font-semibold">
-              <span className="material-icons text-sm select-none mt-0.5">check_circle_outline</span>
-              <span>{success}</span>
             </div>
           )}
 
@@ -185,6 +178,23 @@ function ResetPasswordContent() {
         </div>
 
       </div>
+
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => {
+          setSuccessModalOpen(false);
+          router.push("/login?reset=true");
+        }}
+        title="Reset Successful"
+        message={success}
+        actionText="Go to Login"
+        showCancel={false}
+        onAction={() => {
+          setSuccessModalOpen(false);
+          router.push("/login?reset=true");
+        }}
+        actionIcon={null}
+      />
     </div>
   );
 }

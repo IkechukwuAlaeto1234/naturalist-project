@@ -8,6 +8,18 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    const body = await req.json();
+
+    // ── LOCAL SIMULATION BYPASS ──
+    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+      const { email } = body;
+      const normalizedEmail = (email || "").toLowerCase().trim();
+      return NextResponse.json(
+        { message: "A new passcode has been sent to your email address." },
+        { status: 200 }
+      );
+    }
+
     // 1. Rate Limiting (max 3 resends per 10 minutes)
     const limiter = await rateLimit("resend-otp", { limit: 3, windowMs: 10 * 60 * 1000 });
     if (!limiter.success) {
@@ -18,7 +30,6 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse & Validate input
-    const body = await req.json();
     const result = forgotPasswordSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
