@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Link2, Check, Share2 } from "lucide-react";
+import { Link2, Check } from "lucide-react";
 
 interface BlogShareProps {
   title: string;
@@ -128,16 +128,6 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
           )}
         </button>
 
-        {/* Native Web Share (Mobile fallback) */}
-        {isMounted && typeof navigator !== "undefined" && typeof navigator.share === "function" && (
-          <button
-            onClick={handleWebShare}
-            className="relative h-10 px-4 rounded-xl bg-[#2d4c38]/5 border border-[#2d4c38]/10 text-[#2d4c38] dark:text-emerald-400 hover:bg-[#2d4c38]/10 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
-            data-tooltip="System Share"
-          >
-            <Share2 className="h-3.5 w-3.5" /> Share
-          </button>
-        )}
       </div>
     </div>
   );
