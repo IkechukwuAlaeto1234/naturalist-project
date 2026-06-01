@@ -73,44 +73,47 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
         <h3 className="font-serif text-lg font-bold text-[#141f19] dark:text-[#f4f6f4] mt-0.5">Share this Story</h3>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-        {/* Twitter / X */}
-        <a
-          href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all"
-          data-tooltip="Share on X"
-        >
-          <XIcon />
-        </a>
+      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+        {/* Social Icons row grouped together */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Twitter / X */}
+          <a
+            href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all flex-shrink-0"
+            data-tooltip="Share on X"
+          >
+            <XIcon />
+          </a>
 
-        {/* Facebook */}
-        <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all"
-          data-tooltip="Share on Facebook"
-        >
-          <FacebookIcon />
-        </a>
+          {/* Facebook */}
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all flex-shrink-0"
+            data-tooltip="Share on Facebook"
+          >
+            <FacebookIcon />
+          </a>
 
-        {/* LinkedIn */}
-        <a
-          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all"
-          data-tooltip="Share on LinkedIn"
-        >
-          <LinkedinIcon />
-        </a>
+          {/* LinkedIn */}
+          <a
+            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all flex-shrink-0"
+            data-tooltip="Share on LinkedIn"
+          >
+            <LinkedinIcon />
+          </a>
+        </div>
 
-        {/* Copy Link */}
+        {/* Copy Link - w-[130px] fixed width to guarantee no layout jumps */}
         <button
           onClick={handleCopyLink}
-          className={`relative h-10 px-4 rounded-xl border flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+          className={`relative h-10 w-[130px] rounded-xl border flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex-shrink-0 ${
             copied
               ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400"
               : "bg-white dark:bg-[#0c100e] border-border/60 dark:border-white/10 hover:border-[#b07e3a] text-muted-foreground hover:text-[#b07e3a] hover:bg-[#b07e3a]/5"
@@ -119,11 +122,11 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
         >
           {copied ? (
             <>
-              <Check className="h-3.5 w-3.5" /> Copied!
+              <Check className="h-3.5 w-3.5 flex-shrink-0" /> Copied!
             </>
           ) : (
             <>
-              <Link2 className="h-3.5 w-3.5" /> Copy Link
+              <Link2 className="h-3.5 w-3.5 flex-shrink-0" /> Copy Link
             </>
           )}
         </button>
