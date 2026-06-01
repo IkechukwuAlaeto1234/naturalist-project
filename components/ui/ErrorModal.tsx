@@ -73,7 +73,7 @@ export default function ErrorModal({
           onClick={onClose}
           className="w-full flex h-12 items-center justify-center rounded-full bg-destructive hover:bg-destructive/90 hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-destructive/10 cursor-pointer"
         >
-          Acknowledge & Try Again
+          Try Again
         </button>
       </div>
     </div>

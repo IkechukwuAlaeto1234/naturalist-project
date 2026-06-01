@@ -98,6 +98,30 @@ function LoginContent() {
         setSuccess("Successfully signed in! Redirecting...");
       }
     } catch (err: any) {
+      console.error("Login catch block triggered with error:", err);
+      
+      // Deliberate 1.5-second minimum spinner duration
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(1500 - elapsed, 0);
+      await new Promise((resolve) => setTimeout(resolve, remaining));
+
+      try {
+        // Direct fetch to verify if the session was successfully established
+        const sessionRes = await fetch("/api/auth/session");
+        if (sessionRes.ok) {
+          const sessionData = await sessionRes.json();
+          if (sessionData && Object.keys(sessionData).length > 0 && sessionData.user) {
+            // Yes! The session was established successfully, ignore the false-positive error!
+            console.log("Session verified successfully on catch. Proceeding to auth redirect.");
+            setLoading(false);
+            setSuccess("Successfully signed in! Redirecting...");
+            return;
+          }
+        }
+      } catch (sessionErr) {
+        console.error("Session verification failed inside login catch block:", sessionErr);
+      }
+
       setLoading(false);
       setErrorMessage("An unexpected error occurred. Please try again later.");
       setErrorModalOpen(true);

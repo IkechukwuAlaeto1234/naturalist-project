@@ -64,7 +64,7 @@ const socialLinks = [
    Shared pill button classes
    ───────────────────────────────────────── */
 const PILL =
-  "group relative flex items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_16px_rgba(45,76,56,0.30)] hover:shadow-[0_2px_20px_rgba(176,126,58,0.20)] transition-all duration-300 cursor-pointer";
+  "group relative flex items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_16px_rgba(45,76,56,0.30)] hover:shadow-[0_2px_20px_rgba(176,126,58,0.20)] transition-all duration-300 cursor-pointer flex-shrink-0 aspect-square";
 const PILL_GLOW =
   "absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none";
 const PILL_ICON = "relative text-white/80 group-hover:text-white transition-colors";
@@ -273,7 +273,7 @@ export default function Navbar() {
           </div>
 
           {/* ── Action buttons ── */}
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 md:w-48">
+          <div className="flex items-center justify-end gap-2 sm:gap-3 flex-shrink-0 md:min-w-[192px] md:w-auto">
 
             {/* Search */}
             <button
