@@ -83,7 +83,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
             <div className="flex flex-wrap justify-center items-center gap-3 pt-3">
               {/* Author Pill */}
               <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#2d4c38]/5 dark:bg-emerald-500/5 border border-[#2d4c38]/10 dark:border-emerald-500/10 text-xs font-bold text-[#2d4c38] dark:text-emerald-400">
-                <span className="h-5 w-5 rounded-full bg-[#2d4c38] dark:bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[10px] font-black uppercase shadow-sm">
+                <span className="h-5 w-5 rounded-full bg-[#2d4c38] dark:bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[10px] font-black uppercase shadow-sm flex-shrink-0">
                   {post.authorName?.[0]?.toUpperCase() || "N"}
                 </span>
                 <span className="font-bold">{post.authorName}</span>
@@ -154,7 +154,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
               <div className="rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] p-6 shadow-sm">
                 <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-muted-foreground">About the Writer</p>
                 <div className="mt-4 flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-[#2d4c38] dark:text-emerald-400 font-black font-serif text-xl">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-[#2d4c38] dark:text-emerald-400 font-black font-serif text-xl flex-shrink-0">
                     {post.authorName?.[0]?.toUpperCase() || "N"}
                   </div>
                   <div>

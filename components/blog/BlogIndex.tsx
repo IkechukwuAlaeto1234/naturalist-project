@@ -22,6 +22,26 @@ function formatDateTime(date: string | Date) {
   return `${dateFormatted}, ${timeFormatted}`;
 }
 
+function formatDateTimeParts(date: string | Date) {
+  const d = new Date(date);
+  const dateFormatted = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  
+  const timeFormatted = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return {
+    date: dateFormatted,
+    time: timeFormatted,
+  };
+}
+
 export default function BlogIndex() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,18 +204,24 @@ export default function BlogIndex() {
                       {/* Bold simplified metadata section separated by divider line */}
                       <div className="flex items-center justify-between gap-3 pt-4 border-t border-border/40 text-xs font-bold text-foreground">
                         {/* Author section */}
-                        <div className="flex items-center gap-2">
-                          <span className="h-5.5 w-5.5 rounded-full bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[9px] font-black uppercase shadow-sm">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="h-5.5 w-5.5 rounded-full bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[9px] font-black uppercase shadow-sm flex-shrink-0">
                             {post.authorName?.[0]?.toUpperCase() || "N"}
                           </span>
-                          <span className="font-bold text-[#2d4c38] dark:text-emerald-400 uppercase tracking-wider text-[10px]">
+                          <span className="font-bold text-[#2d4c38] dark:text-emerald-400 uppercase tracking-wider text-[10px] truncate">
                             {post.authorName}
                           </span>
                         </div>
                         {/* Exact Published Date */}
-                        <span className="font-bold text-muted-foreground uppercase tracking-wider text-[10px]">
-                          {formatDateTime(post.publishedAt)}
-                        </span>
+                        {(() => {
+                          const { date, time } = formatDateTimeParts(post.publishedAt);
+                          return (
+                            <div className="flex flex-col items-end text-right flex-shrink-0">
+                              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">{date}</span>
+                              <span className="text-[9px] opacity-70 font-semibold text-muted-foreground/80 tracking-wide mt-0.5">{time}</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   </Link>
