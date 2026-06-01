@@ -2,19 +2,30 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight, CalendarDays, Clock3, MessageCircle } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3 } from "lucide-react";
 
-function formatDate(date: string | Date) {
-  return new Intl.DateTimeFormat("en-US", {
+// Format: May 31, 2026, 08:29 AM
+function formatDateTime(date: string | Date) {
+  const d = new Date(date);
+  const dateFormatted = d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
-  }).format(new Date(date));
+  });
+  
+  const timeFormatted = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${dateFormatted}, ${timeFormatted}`;
 }
 
 export default function BlogIndex() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const fetchPosts = async () => {
     try {
@@ -29,6 +40,15 @@ export default function BlogIndex() {
 
   useEffect(() => {
     fetchPosts();
+
+    // Client-side query tag check to prevent build-time suspense requirements
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tagParam = params.get("tag");
+      if (tagParam) {
+        setSelectedTag(tagParam);
+      }
+    }
 
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
@@ -61,8 +81,13 @@ export default function BlogIndex() {
     };
   }, []);
 
-  const featured = posts[0];
-  const remaining = posts.slice(1);
+  // Filter posts based on selected tag
+  const filteredPosts = selectedTag
+    ? posts.filter((post) => post.tags?.includes(selectedTag))
+    : posts;
+
+  const featured = filteredPosts[0];
+  const remaining = filteredPosts.slice(1);
 
   return (
     <div className="bg-white dark:bg-[#0a0d0b] text-foreground flex flex-col w-full pb-32">
@@ -101,6 +126,21 @@ export default function BlogIndex() {
       <section className="px-6 sm:px-8 py-20 bg-white dark:bg-[#0a0d0b] transition-colors duration-300">
         <div className="mx-auto max-w-7xl">
 
+          {selectedTag && (
+            <div className="mb-8 flex items-center justify-between p-4 rounded-2xl bg-[#2d4c38]/5 border border-[#2d4c38]/10 text-sm font-bold text-[#2d4c38] dark:text-emerald-400 animate-fade-in-up">
+              <div className="flex items-center gap-2">
+                <span>Showing stories tagged with</span>
+                <span className="px-3 py-1 rounded-full bg-[#2d4c38]/10 uppercase tracking-widest text-xs font-black">{selectedTag}</span>
+              </div>
+              <button
+                onClick={() => setSelectedTag(null)}
+                className="text-xs uppercase tracking-widest font-black underline hover:text-[#b07e3a] cursor-pointer"
+              >
+                Clear Filter
+              </button>
+            </div>
+          )}
+
           {loading ? (
             <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {[...Array(3)].map((_, index) => (
@@ -109,51 +149,8 @@ export default function BlogIndex() {
             </div>
           ) : (
             <>
-              {featured && (
-                <Link href={`/blog/${featured.slug}`} className="mt-10 grid overflow-hidden rounded-[32px] border border-border/40 bg-[#f8f5ef] dark:bg-[#111a14] shadow-[0_24px_70px_rgba(20,31,25,0.08)] transition-transform duration-300 hover:-translate-y-1 md:grid-cols-12">
-                  <div className="relative md:col-span-6 min-h-[280px]">
-                    <img src={featured.coverImage} alt={featured.coverImageAlt || featured.title} className="absolute inset-0 h-full w-full object-cover" />
-                  </div>
-
-                  <div className="md:col-span-6 p-7 sm:p-10 flex flex-col justify-between gap-6">
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {featured.tags?.slice(0, 3).map((tag: string) => (
-                          <span key={tag} className="inline-flex items-center rounded-full bg-white/70 dark:bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#2d4c38] dark:text-emerald-300">{tag}</span>
-                        ))}
-                      </div>
-
-                      <h2 className="font-serif text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-[#141f19] dark:text-[#f4f6f4]">{featured.title}</h2>
-                      <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">{featured.excerpt}</p>
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border/20 dark:border-white/10 pt-5 mt-2">
-                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                        <span className="inline-flex items-center gap-2">
-                          <CalendarDays className="h-3.5 w-3.5" />
-                          {formatDate(featured.publishedAt)}
-                        </span>
-                        <span className="inline-flex items-center gap-2">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {featured.readTime}
-                        </span>
-                        <span className="inline-flex items-center gap-2">
-                          <MessageCircle className="h-3.5 w-3.5" />
-                          {featured.commentsCount || 0} comments
-                        </span>
-                      </div>
-                      
-                      <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#2d4c38] dark:text-emerald-400 group-hover:text-[#3a6349] dark:group-hover:text-emerald-300 transition-colors">
-                        Read Story
-                        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )}
-
-              <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {remaining.map((post) => (
+              <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {filteredPosts.map((post) => (
                   <Link key={post.slug} href={`/blog/${post.slug}`} className="group flex flex-col overflow-hidden rounded-[28px] border border-border/40 bg-white dark:bg-[#0f1411] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
                     <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                       <img src={post.coverImage} alt={post.coverImageAlt || post.title} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105" />
@@ -161,43 +158,44 @@ export default function BlogIndex() {
 
                     <div className="p-6 space-y-5 flex flex-col justify-between flex-1">
                       <div className="space-y-4">
-                        <div className="flex flex-wrap gap-2">
-                          {post.tags?.slice(0, 2).map((tag: string) => (
-                            <span key={tag} className="inline-flex rounded-full bg-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300">{tag}</span>
-                          ))}
-                        </div>
-
                         <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors leading-snug">{post.title}</h3>
                         <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">{post.excerpt}</p>
+                        
+                        {/* Interactive Clickable Tags after the post */}
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1.5">
+                            {post.tags.slice(0, 3).map((tag: string) => (
+                              <button
+                                key={tag}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setSelectedTag(tag);
+                                }}
+                                className="inline-flex rounded-full bg-[#2d4c38]/5 hover:bg-[#2d4c38]/10 border border-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300 transition-colors cursor-pointer"
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      <div className="space-y-4 pt-4 border-t border-border/40">
-                        {/* Rich Metadata matching the featured story */}
-                        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                          <span className="inline-flex items-center gap-1.5">
-                            <CalendarDays className="h-3.5 w-3.5" />
-                            {formatDate(post.publishedAt)}
+                      {/* Bold simplified metadata section separated by divider line */}
+                      <div className="flex items-center justify-between gap-3 pt-4 border-t border-border/40 text-xs font-bold text-foreground">
+                        {/* Author section */}
+                        <div className="flex items-center gap-2">
+                          <span className="h-5.5 w-5.5 rounded-full bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[9px] font-black uppercase shadow-sm">
+                            {post.authorName?.[0]?.toUpperCase() || "N"}
                           </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {post.readTime}
-                          </span>
-                          <span className="inline-flex items-center gap-1.5">
-                            <MessageCircle className="h-3.5 w-3.5" />
-                            {post.commentsCount || 0} Comments
+                          <span className="font-bold text-[#2d4c38] dark:text-emerald-400 uppercase tracking-wider text-[10px]">
+                            {post.authorName}
                           </span>
                         </div>
-
-                        {/* Interactive Action Button */}
-                        <div className="flex items-center justify-between pt-1">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                            By {post.authorName || "Naturalist Team"}
-                          </span>
-                          <div className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-[#2d4c38] dark:text-emerald-400 group-hover:text-[#3a6349] dark:group-hover:text-emerald-300 transition-colors">
-                            Read Article
-                            <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                          </div>
-                        </div>
+                        {/* Exact Published Date */}
+                        <span className="font-bold text-muted-foreground uppercase tracking-wider text-[10px]">
+                          {formatDateTime(post.publishedAt)}
+                        </span>
                       </div>
                     </div>
                   </Link>

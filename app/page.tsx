@@ -336,61 +336,13 @@ export default function Home() {
               </Link>
             </div>
 
-            {blogs[0] && (
-              <Link
-                href={`/blog/${blogs[0].slug}`}
-                className="grid overflow-hidden rounded-[36px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-[0_24px_70px_rgba(20,31,25,0.08)] transition-transform duration-300 hover:-translate-y-1 md:grid-cols-12"
-              >
-                <div className="relative min-h-[280px] md:col-span-6">
-                  <img
-                    src={blogs[0].coverImage}
-                    alt={blogs[0].coverImageAlt || blogs[0].title}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                </div>
-                <div className="md:col-span-6 p-7 sm:p-10 flex flex-col justify-between gap-6">
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap gap-2">
-                      {blogs[0].tags?.slice(0, 3).map((tag: string) => (
-                        <span key={tag} className="inline-flex items-center rounded-full bg-[#2d4c38]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-[#2d4c38] dark:text-emerald-300">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <h3 className="font-serif text-3xl sm:text-4xl font-bold leading-tight tracking-tight text-[#141f19] dark:text-[#f4f6f4]">
-                      {blogs[0].title}
-                    </h3>
-                    <p className="text-sm sm:text-base leading-relaxed text-muted-foreground">
-                      {blogs[0].excerpt}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    <span className="inline-flex items-center gap-2">
-                      <CalendarDays className="h-3.5 w-3.5" />
-                      {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(blogs[0].publishedAt))}
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <Clock3 className="h-3.5 w-3.5" />
-                      {blogs[0].readTime}
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <MessageCircle className="h-3.5 w-3.5" />
-                      {blogs[0].commentsCount || 0} comments
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            )}
-
-            {blogs.length > 1 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                {blogs.slice(1).map((post) => (
+            {blogs.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                {blogs.map((post) => (
                   <Link
                     key={post.slug}
                     href={`/blog/${post.slug}`}
-                    className="group overflow-hidden rounded-[28px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                    className="group overflow-hidden rounded-[28px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col"
                   >
                     <div className="relative aspect-[16/10] overflow-hidden bg-muted">
                       <img
@@ -400,25 +352,55 @@ export default function Home() {
                       />
                     </div>
 
-                    <div className="p-6 space-y-4">
-                      <div className="flex flex-wrap gap-2">
-                        {post.tags?.slice(0, 2).map((tag: string) => (
-                          <span key={tag} className="inline-flex rounded-full bg-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300">
-                            {tag}
-                          </span>
-                        ))}
+                    <div className="p-6 space-y-4 flex flex-col justify-between flex-1">
+                      <div className="space-y-4">
+                        <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors leading-snug">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                          {post.excerpt}
+                        </p>
+                        
+                        {/* Interactive Clickable Tags after the post */}
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 pt-1.5">
+                            {post.tags.slice(0, 3).map((tag: string) => (
+                              <button
+                                key={tag}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  window.location.href = `/blog?tag=${encodeURIComponent(tag)}`;
+                                }}
+                                className="inline-flex rounded-full bg-[#2d4c38]/5 hover:bg-[#2d4c38]/10 border border-[#2d4c38]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.24em] text-[#2d4c38] dark:text-emerald-300 transition-colors cursor-pointer"
+                              >
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
-                      <h3 className="font-serif text-2xl font-bold tracking-tight text-[#141f19] dark:text-[#f4f6f4] group-hover:text-[#2d4c38] transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {post.excerpt}
-                      </p>
-
-                      <div className="flex items-center justify-between gap-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                        <span>{post.authorName}</span>
-                        <span>{post.readTime}</span>
+                      {/* Bold simplified metadata section separated by divider line */}
+                      <div className="flex items-center justify-between gap-3 pt-4 border-t border-border/30 dark:border-[#232c26]/20 text-xs font-bold text-foreground">
+                        {/* Author section */}
+                        <div className="flex items-center gap-2">
+                          <span className="h-5.5 w-5.5 rounded-full bg-[#2d4c38] text-white flex items-center justify-center font-serif text-[9px] font-black uppercase shadow-sm">
+                            {post.authorName?.[0]?.toUpperCase() || "N"}
+                          </span>
+                          <span className="font-bold text-[#2d4c38] dark:text-emerald-400 uppercase tracking-wider text-[10px]">
+                            {post.authorName}
+                          </span>
+                        </div>
+                        {/* Exact Published Date */}
+                        <span className="font-bold text-muted-foreground uppercase tracking-wider text-[10px]">
+                          {(() => {
+                            const d = new Date(post.publishedAt);
+                            const df = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                            const tf = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+                            return `${df}, ${tf}`;
+                          })()}
+                        </span>
                       </div>
                     </div>
                   </Link>
