@@ -68,13 +68,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User with this email already exists" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     const newUser = await User.create({
       name,
       email: email.toLowerCase().trim(),
       password: hashedPassword,
-      plainPassword: password, // Store plain password so admin can access/reveal it!
       role: role || "user",
       isVerified: isVerified !== undefined ? isVerified : true,
     });

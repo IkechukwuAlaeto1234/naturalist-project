@@ -4,15 +4,14 @@ import nodemailer from "nodemailer";
 const isDev = process.env.NODE_ENV === "development";
 
 const resend =
-  !isDev &&
   process.env.RESEND_API_KEY &&
   !process.env.RESEND_API_KEY.startsWith("re_12345")
     ? new Resend(process.env.RESEND_API_KEY)
     : null;
 
-// Setup SMTP Transporter fallback (production only)
+// Setup SMTP Transporter fallback
 const smtpTransporter =
-  !isDev && process.env.SMTP_HOST && process.env.SMTP_USER
+  process.env.SMTP_HOST && process.env.SMTP_USER
     ? nodemailer.createTransport({
         host: process.env.SMTP_HOST,
         port: parseInt(process.env.SMTP_PORT || "587"),
@@ -80,9 +79,8 @@ function printDevEmail({
 /**
  * Robust email dispatcher.
  *
- * – In **development** (`NODE_ENV=development`): always prints to terminal,
- *   never tries Resend or SMTP. Zero network calls, instant feedback.
- * – In **production**: tries Resend first, SMTP second, terminal last.
+ * – Tries Resend first, SMTP second.
+ * – In development or production, if no credentials are set, falls back to printing to terminal.
  */
 export async function sendEmail({
   to,
@@ -96,13 +94,7 @@ export async function sendEmail({
   const from      = `${fromName} <${fromEmail}>`;
   const plainText = text || "";
 
-  // ── DEV: print and return immediately ──────────────────────────────────
-  if (isDev) {
-    printDevEmail({ to, subject, text: plainText, devCode });
-    return { success: true, id: `dev-${Date.now()}`, provider: "terminal" };
-  }
-
-  // ── PRODUCTION: Resend primary ─────────────────────────────────────────
+  // ── Resend primary ──────────────────────────────────────────────────────
   if (resend) {
     try {
       const response = await resend.emails.send({
@@ -122,7 +114,7 @@ export async function sendEmail({
     }
   }
 
-  // ── PRODUCTION: SMTP secondary ─────────────────────────────────────────
+  // ── SMTP secondary ──────────────────────────────────────────────────────
   if (smtpTransporter) {
     try {
       const info = await smtpTransporter.sendMail({
@@ -135,11 +127,13 @@ export async function sendEmail({
       return { success: true, id: info.messageId, provider: "smtp" };
     } catch (err) {
       console.error("SMTP fallback failed...", err);
-      throw err;
+      if (!isDev) {
+        throw err;
+      }
     }
   }
 
-  // ── PRODUCTION: terminal last resort ───────────────────────────────────
+  // ── Fallback terminal print ────────────────────────────────────────────
   printDevEmail({ to, subject, text: plainText, devCode });
-  return { success: true, id: `simulated-${Date.now()}`, provider: "simulation" };
+  return { success: true, id: `dev-${Date.now()}`, provider: "terminal" };
 }

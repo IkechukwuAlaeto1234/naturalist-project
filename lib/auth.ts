@@ -121,6 +121,11 @@ export const {
           return null;
         }
 
+        // Block unverified accounts from signing in
+        if (!user.isVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         if (user.isSuspended) {
           throw new Error("Your account has been suspended. Please contact support.");
         }
@@ -133,7 +138,7 @@ export const {
         const { browser, os, deviceType } = parseUserAgent(ua);
 
         const newSession = {
-          id: Math.random().toString(36).substring(2, 15),
+          id: crypto.randomUUID(),
           ipAddress: ip,
           userAgent: ua,
           browser,
@@ -219,7 +224,7 @@ export const {
           const { browser, os, deviceType } = parseUserAgent(ua);
 
           const newSession = {
-            id: Math.random().toString(36).substring(2, 15),
+            id: crypto.randomUUID(),
             ipAddress: ip,
             userAgent: ua,
             browser,

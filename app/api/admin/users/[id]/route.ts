@@ -107,10 +107,9 @@ export async function PUT(
 
     if (plainPassword) {
       changes.push("updated password manually");
-      user.plainPassword = plainPassword;
       // Also hash it
       const bcrypt = require("bcryptjs");
-      user.password = await bcrypt.hash(plainPassword, 10);
+      user.password = await bcrypt.hash(plainPassword, 12);
     }
 
     if (changes.length > 0) {

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { Mail, Lock, RefreshCw, Key, HelpCircle } from "lucide-react";
+import { Mail, Lock, HelpCircle, Leaf } from "lucide-react";
 import ErrorModal from "@/components/ui/ErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
@@ -35,6 +35,7 @@ function LoginContent() {
   const isReset = searchParams.get("reset") === "true";
 
   useEffect(() => {
+    if (loading) return;
     if (status === "authenticated" && session?.user) {
       const userEmail = session.user.email?.toLowerCase().trim();
       const userRole = (session.user as any).role;
@@ -45,7 +46,7 @@ function LoginContent() {
         router.replace(callbackUrl);
       }
     }
-  }, [status, session, router, callbackUrl]);
+  }, [status, session, router, callbackUrl, loading]);
 
   useEffect(() => {
     const titleTimeout = setTimeout(() => {
@@ -91,43 +92,51 @@ function LoginContent() {
         redirect: false,
       });
 
-      // Deliberate 1.5-second minimum spinner duration
+      // Enforce 1.5s minimum spinner duration for UX polish
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(1500 - elapsed, 0);
       await new Promise((resolve) => setTimeout(resolve, remaining));
-
-      setLoading(false);
 
       if (res?.error) {
+        setLoading(false);
         setErrorMessage("Invalid email or password. Please check your credentials.");
         setErrorModalOpen(true);
-      } else {
-        setSuccess("Successfully signed in! Redirecting...");
+        return;
       }
+
+      // Success: verify session then fire brand loader and navigate — do NOT stop spinner
+      const sessionRes = await fetch("/api/auth/session");
+      const sessionData = sessionRes.ok ? await sessionRes.json() : null;
+      const userEmail = sessionData?.user?.email?.toLowerCase().trim();
+      const userRole = sessionData?.user?.role;
+      const targetUrl =
+        userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin"
+          ? "/admin"
+          : callbackUrl;
+
+      // Fire brand loader immediately, then navigate — spinner stays on until page unloads
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("naturalist:navigation-start"));
+      }
+      window.location.href = targetUrl;
     } catch (err: any) {
-      console.error("Login catch block triggered with error:", err);
-      
-      // Deliberate 1.5-second minimum spinner duration
+      // Enforce 1.5s minimum even on error path
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(1500 - elapsed, 0);
       await new Promise((resolve) => setTimeout(resolve, remaining));
 
+      // NextAuth sometimes throws on success (network quirk) — verify session before giving up
       try {
-        // Direct fetch to verify if the session was successfully established
         const sessionRes = await fetch("/api/auth/session");
         if (sessionRes.ok) {
           const sessionData = await sessionRes.json();
-          if (sessionData && Object.keys(sessionData).length > 0 && sessionData.user) {
-            // Yes! The session was established successfully, ignore the false-positive error!
-            console.log("Session verified successfully on catch. Proceeding to auth redirect.");
-            setLoading(false);
-            setSuccess("Successfully signed in! Redirecting...");
-            
+          if (sessionData?.user) {
             const userEmail = sessionData.user.email?.toLowerCase().trim();
             const userRole = sessionData.user.role;
-            const targetUrl = (userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin") ? "/admin" : callbackUrl;
-            
-            // Dispatch navigation-start to trigger premium brand page loader instantly!
+            const targetUrl =
+              userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin"
+                ? "/admin"
+                : callbackUrl;
             if (typeof window !== "undefined") {
               window.dispatchEvent(new Event("naturalist:navigation-start"));
             }
@@ -135,9 +144,7 @@ function LoginContent() {
             return;
           }
         }
-      } catch (sessionErr) {
-        console.error("Session verification failed inside login catch block:", sessionErr);
-      }
+      } catch (_) {}
 
       setLoading(false);
       setErrorMessage("An unexpected error occurred. Please try again later.");
@@ -154,8 +161,8 @@ function LoginContent() {
           
           {/* Header */}
           <div className="text-center mb-8">
-            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a] inline-flex items-center gap-1">
-              <span className="material-icons text-[11px]">spa</span> Welcome Back
+            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a] inline-flex items-center gap-1.5">
+              <Leaf className="h-3.5 w-3.5 select-none" /> Welcome Back
             </span>
             <h1 className="font-serif text-3xl font-black text-foreground mt-2 leading-none tracking-tight">
               Sign In
@@ -204,11 +211,16 @@ function LoginContent() {
             >
               {loading ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Verifying...
                 </>
               ) : (
                 <>
-                  Sign In <span className="material-icons select-none animate-pulse" style={{ fontSize: "14px" }}>login</span>
+                  Sign In
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
                 </>
               )}
             </button>
@@ -279,10 +291,10 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <span className="material-icons animate-spin text-3xl text-primary/40">cached</span>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Loading Form...</p>
-        </div>
+        <svg className="h-8 w-8 animate-spin text-primary/40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
       </div>
     }>
       <LoginContent />

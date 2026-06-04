@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ArrowLeft, Pencil, RefreshCw, Shield } from "lucide-react";
+import { ArrowLeft, Pencil, RefreshCw, Shield, Mail, Key, CheckCircle2 } from "lucide-react";
 import ErrorModal from "@/components/ui/ErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
@@ -283,7 +283,7 @@ function VerifyEmailContent() {
             {isEmailEditable && (
               <div className="flex flex-col gap-1.5 text-left">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <span className="material-icons text-[12.5px] select-none">mail</span> Email Address
+                  <Mail className="h-3.5 w-3.5 text-muted-foreground" /> Email Address
                 </label>
                 <input
                   type="email"
@@ -299,7 +299,7 @@ function VerifyEmailContent() {
             {/* 4 Digit Boxes Layout */}
             <div className="flex flex-col gap-1.5 text-left">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <span className="material-icons text-[12.5px] select-none">vpn_key</span> Verification Code
+                <Key className="h-3.5 w-3.5 text-muted-foreground" /> Verification Code
               </label>
               <div
                 onClick={handleOtpContainerClick}
@@ -329,11 +329,15 @@ function VerifyEmailContent() {
             >
               {loading ? (
                 <>
-                  <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                    <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Verifying...
                 </>
               ) : (
                 <>
-                  Verify Account <span className="material-icons select-none" style={{ fontSize: "14px" }}>check_circle</span>
+                  Verify Account <CheckCircle2 className="h-4 w-4 select-none" />
                 </>
               )}
             </button>
@@ -399,10 +403,10 @@ export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <span className="material-icons animate-spin text-3xl text-primary/40">cached</span>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Loading Page...</p>
-        </div>
+        <svg className="h-8 w-8 animate-spin text-primary/40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
       </div>
     }>
       <VerifyEmailContent />

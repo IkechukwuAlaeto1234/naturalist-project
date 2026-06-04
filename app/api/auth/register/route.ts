@@ -7,6 +7,9 @@ import { registerSchema } from "@/lib/validations";
 import { sendEmail } from "@/lib/email";
 import { generateOTP, getFirstValidationError } from "@/lib/utils";
 import { rateLimit } from "@/lib/rate-limit";
+import { render } from "@react-email/render";
+import { OTPEmail } from "@/emails/OTPEmail";
+import React from "react";
 
 export async function POST(req: Request) {
   try {
@@ -59,18 +62,17 @@ export async function POST(req: Request) {
     }
 
     // 4. Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // 5. Generate OTP for email verification
     const otp = generateOTP(6);
-    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // Expires in 15 minutes
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000);
 
-    // 6. Create User
+    // 6. Create User (never persist plaintext password)
     const user = await User.create({
       name,
       email: normalizedEmail,
       password: hashedPassword,
-      plainPassword: password,
       role: "user",
       isVerified: false,
       otp,
@@ -87,23 +89,12 @@ export async function POST(req: Request) {
 
     // 7. Send OTP Email
     try {
+      const html = await render(React.createElement(OTPEmail, { otp, name }));
       await sendEmail({
         to: normalizedEmail,
         subject: "Verify your Naturalist account",
         devCode: otp,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2dacd; border-radius: 8px; background-color: #fbfbf9;">
-            <h2 style="color: #2d4c38; font-family: Georgia, serif; text-align: center;">Welcome to Naturalist</h2>
-            <hr style="border: 0; border-top: 1px solid #e2dacd; margin: 20px 0;" />
-            <p>Thank you for registering with Naturalist. To complete your account registration, please verify your email address using the one-time passcode below:</p>
-            <div style="background-color: #f4efe6; padding: 15px; text-align: center; border-radius: 6px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2d4c38;">${otp}</span>
-            </div>
-            <p style="font-size: 14px; color: #5e6f64;">This passcode is valid for the next 15 minutes. If you did not request this registration, please ignore this email.</p>
-            <hr style="border: 0; border-top: 1px solid #e2dacd; margin: 20px 0;" />
-            <p style="font-size: 12px; color: #5e6f64; text-align: center;">Naturalist &copy; ${new Date().getFullYear()} | Premium Organic Skincare & Wellness</p>
-          </div>
-        `,
+        html,
         text: `Welcome to Naturalist. Your verification OTP is ${otp}. This code is valid for 15 minutes.`
       });
     } catch (emailError) {

@@ -531,10 +531,10 @@ export default function ResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <span className="material-icons animate-spin text-3xl text-primary/40">cached</span>
-          <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Loading Form...</p>
-        </div>
+        <svg className="h-8 w-8 animate-spin text-primary/40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
       </div>
     }>
       <ResetPasswordContent />

@@ -5,6 +5,9 @@ import { forgotPasswordSchema } from "@/lib/validations"; // just uses email val
 import { sendEmail } from "@/lib/email";
 import { generateOTP } from "@/lib/utils";
 import { rateLimit } from "@/lib/rate-limit";
+import { render } from "@react-email/render";
+import { OTPEmail } from "@/emails/OTPEmail";
+import React from "react";
 
 export async function POST(req: Request) {
   try {
@@ -60,23 +63,12 @@ export async function POST(req: Request) {
 
     // 5. Dispatch verification email
     try {
+      const html = await render(React.createElement(OTPEmail, { otp, name: user.name }));
       await sendEmail({
         to: normalizedEmail,
         subject: "Your new Naturalist verification passcode",
         devCode: otp,
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2dacd; border-radius: 8px; background-color: #fbfbf9;">
-            <h2 style="color: #2d4c38; font-family: Georgia, serif; text-align: center;">Verify your email</h2>
-            <hr style="border: 0; border-top: 1px solid #e2dacd; margin: 20px 0;" />
-            <p>You requested a new verification passcode for your Naturalist account. Please use the one-time passcode below to verify your email:</p>
-            <div style="background-color: #f4efe6; padding: 15px; text-align: center; border-radius: 6px; margin: 20px 0;">
-              <span style="font-size: 32px; font-weight: bold; letter-spacing: 6px; color: #2d4c38;">${otp}</span>
-            </div>
-            <p style="font-size: 14px; color: #5e6f64;">This passcode is valid for the next 15 minutes. If you did not request this, please ignore this email.</p>
-            <hr style="border: 0; border-top: 1px solid #e2dacd; margin: 20px 0;" />
-            <p style="font-size: 12px; color: #5e6f64; text-align: center;">Naturalist &copy; ${new Date().getFullYear()} | Premium Organic Skincare & Wellness</p>
-          </div>
-        `,
+        html,
         text: `Your new Naturalist verification passcode is ${otp}. This code is valid for 15 minutes.`
       });
     } catch (emailError) {

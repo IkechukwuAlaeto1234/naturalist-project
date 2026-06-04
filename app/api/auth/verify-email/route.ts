@@ -4,6 +4,10 @@ import { User } from "@/models/User";
 import { verifyOTPSchema } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
 import { getFirstValidationError } from "@/lib/utils";
+import { render } from "@react-email/render";
+import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { sendEmail } from "@/lib/email";
+import React from "react";
 
 export async function POST(req: Request) {
   try {
@@ -71,6 +75,19 @@ export async function POST(req: Request) {
     user.otp = undefined;
     user.otpExpires = undefined;
     await user.save();
+
+    // Send Welcome Email
+    try {
+      const html = await render(React.createElement(WelcomeEmail, { name: user.name }));
+      await sendEmail({
+        to: normalizedEmail,
+        subject: "Welcome to Naturalist",
+        html,
+        text: `Welcome to Naturalist, ${user.name}! Your account is now verified.`
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
 
     return NextResponse.json(
       {
