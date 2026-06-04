@@ -92,14 +92,13 @@ const ProductSchema = new Schema<IProduct>(
 );
 
 // Pre-validate slug generation if not provided
-ProductSchema.pre("validate", function (next: any) {
+ProductSchema.pre("validate", function () {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
   }
-  next();
 });
 
 export const Product: Model<IProduct> =

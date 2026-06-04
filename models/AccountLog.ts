@@ -5,6 +5,11 @@ export interface IAccountLog extends Document {
   name: string;
   action: string; // "signup" | "suspend" | "delete" | "create_manual" | "password_change"
   details: string;
+  ipAddress?: string;
+  userAgent?: string;
+  browser?: string;
+  os?: string;
+  deviceType?: string;
   createdAt: Date;
 }
 
@@ -14,6 +19,11 @@ const AccountLogSchema = new Schema<IAccountLog>(
     name: { type: String, required: true },
     action: { type: String, required: true },
     details: { type: String, required: true },
+    ipAddress: { type: String },
+    userAgent: { type: String },
+    browser: { type: String },
+    os: { type: String },
+    deviceType: { type: String },
   },
   { timestamps: true }
 );

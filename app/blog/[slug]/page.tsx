@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import Link from "next/link";
+
 import { notFound } from "next/navigation";
 import { CalendarDays, Clock3, ArrowLeft } from "lucide-react";
 import { connectToDatabase } from "@/lib/db";
@@ -41,6 +41,37 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+function renderSectionBody(text: string) {
+  if (!text) return null;
+  const blocks = text.split(/\n\n+/);
+  return (
+    <div className="space-y-4">
+      {blocks.map((block, bIdx) => {
+        const lines = block.split("\n");
+        const isList = lines.length > 0 && lines.every((line) => {
+          const trimmed = line.trim();
+          return trimmed.startsWith("-") || trimmed.startsWith("*") || trimmed.startsWith("•");
+        });
+        if (isList) {
+          return (
+            <ul key={bIdx} className="list-disc pl-6 space-y-2 text-sm sm:text-base leading-8 text-muted-foreground">
+              {lines.map((line, lIdx) => {
+                const cleanLine = line.trim().replace(/^[-*•]\s*/, "");
+                return <li key={lIdx}>{cleanLine}</li>;
+              })}
+            </ul>
+          );
+        }
+        return (
+          <p key={bIdx} className="text-sm sm:text-base leading-8 text-muted-foreground whitespace-pre-wrap">
+            {block}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function BlogDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   await connectToDatabase();
@@ -54,13 +85,13 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     <div className="bg-white dark:bg-[#0a0d0b] text-foreground transition-colors duration-300">
       <article className="mx-auto max-w-7xl px-6 sm:px-8 py-10 sm:py-14 pb-32">
         <div className="mx-auto max-w-4xl">
-          <Link
+          <a
             href="/blog"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
             Back to Blog
-          </Link>
+          </a>
 
           <header className="mt-5 text-center space-y-6">
             <div className="flex flex-wrap justify-center gap-2">
@@ -121,9 +152,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                       {section.heading}
                     </h2>
                   )}
-                  <p className="text-sm sm:text-base leading-8 text-muted-foreground">
-                    {section.body}
-                  </p>
+                  {renderSectionBody(section.body)}
                   {section.image && (
                     <figure className="overflow-hidden rounded-[28px] border border-border/40 bg-muted shadow-sm">
                       <img

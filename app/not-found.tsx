@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import { Compass, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -31,19 +30,19 @@ export default function NotFound() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full mt-4 justify-center">
-          <Link
+          <a
             href="/"
             className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-xs font-bold uppercase tracking-wider text-primary-foreground hover:opacity-95 shadow-sm transition-all"
           >
             Return to Garden
             <ArrowRight className="h-4 w-4" />
-          </Link>
-          <Link
+          </a>
+          <a
             href="/shop"
             className="flex h-12 items-center justify-center rounded-xl border border-border px-6 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted/50 transition-all"
           >
             Explore Rituals
-          </Link>
+          </a>
         </div>
 
       </div>

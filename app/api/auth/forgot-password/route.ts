@@ -8,6 +8,31 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   try {
+    const body = await req.json();
+
+    // ── LOCAL SIMULATION BYPASS ──
+    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+      const { email } = body;
+      const normalizedEmail = (email || "").toLowerCase().trim();
+      
+      // Simulate "account not found" if email contains 'nonexistent', 'missing', or 'notfound'
+      if (
+        normalizedEmail.includes("nonexistent") ||
+        normalizedEmail.includes("missing") ||
+        normalizedEmail.includes("notfound")
+      ) {
+        return NextResponse.json(
+          { error: "No botanical profile registered under this email." },
+          { status: 404 }
+        );
+      }
+
+      return NextResponse.json(
+        { message: "If an account matches that email, a password reset passcode has been sent." },
+        { status: 200 }
+      );
+    }
+
     // 1. Rate Limiting (max 3 forgot password requests per 15 minutes)
     const limiter = await rateLimit("forgot-password", { limit: 3 });
     if (!limiter.success) {
@@ -18,7 +43,6 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse & Validate input
-    const body = await req.json();
     const result = forgotPasswordSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 });

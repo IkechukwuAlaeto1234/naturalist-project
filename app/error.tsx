@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-import Link from "next/link";
 import { AlertOctagon, RotateCcw, Home } from "lucide-react";
 
 interface ErrorProps {
@@ -49,13 +48,13 @@ export default function ErrorPage({ error, reset }: ErrorProps) {
             <RotateCcw className="h-4 w-4" />
             Retry Ritual
           </button>
-          <Link
+          <a
             href="/"
             className="flex h-12 items-center justify-center gap-2 rounded-xl border border-border px-6 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:bg-muted/50 transition-all"
           >
             <Home className="h-4 w-4" />
             Return Home
-          </Link>
+          </a>
         </div>
 
       </div>

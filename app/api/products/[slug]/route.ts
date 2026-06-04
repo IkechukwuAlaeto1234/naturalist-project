@@ -63,14 +63,25 @@ export async function PUT(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Update fields
-    Object.assign(product, {
-      ...result.data,
-      compareAtPrice: result.data.compareAtPrice ?? undefined,
-    });
-    
+    // Save original name for slug comparison
+    const originalName = product.name;
+
+    // Update fields (only set provided fields to avoid overwriting Mongoose internals)
+    product.name = result.data.name;
+    product.description = result.data.description;
+    product.price = result.data.price;
+    product.compareAtPrice = result.data.compareAtPrice ?? undefined;
+    product.images = result.data.images;
+    product.category = result.data.category;
+    product.stock = result.data.stock;
+    product.isActive = result.data.isActive;
+    product.isFeatured = result.data.isFeatured;
+    if (result.data.benefits !== undefined) product.benefits = result.data.benefits;
+    if (result.data.ingredients !== undefined) product.ingredients = result.data.ingredients;
+    if (result.data.usage !== undefined) product.usage = result.data.usage;
+
     // Regenerate slug if name changed
-    if (result.data.name && result.data.name !== product.name) {
+    if (result.data.name && result.data.name !== originalName) {
       product.slug = result.data.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -81,7 +92,8 @@ export async function PUT(
     return NextResponse.json(product, { status: 200 });
   } catch (error) {
     console.error("PUT product error:", error);
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Failed to update product";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

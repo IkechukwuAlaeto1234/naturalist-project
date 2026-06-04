@@ -68,14 +68,13 @@ const BundleSchema = new Schema<IBundle>(
 );
 
 // Pre-validate slug generation
-BundleSchema.pre("validate", function (next: any) {
+BundleSchema.pre("validate", function () {
   if (this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
   }
-  next();
 });
 
 export const Bundle: Model<IBundle> =

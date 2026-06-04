@@ -2,7 +2,6 @@
 
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 
 interface ProductCardProps {
   product: {
@@ -70,12 +69,12 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {/* View Formula Detail Link */}
-          <Link
+          <a
             href={`/shop/${product.slug}`}
             className="inline-flex h-9 px-4 items-center justify-center rounded-full bg-primary hover:bg-[#b07e3a] text-primary-foreground hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer select-none"
           >
             View Formula
-          </Link>
+          </a>
         </div>
       </div>
     </div>

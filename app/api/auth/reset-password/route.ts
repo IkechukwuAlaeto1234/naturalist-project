@@ -8,6 +8,16 @@ import { getFirstValidationError } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
+    const body = await req.json();
+
+    // ── LOCAL SIMULATION BYPASS ──
+    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
+      return NextResponse.json(
+        { message: "Your password has been successfully reset. You can now log in." },
+        { status: 200 }
+      );
+    }
+
     // 1. Rate Limiting (max 5 password resets per 15 minutes)
     const limiter = await rateLimit("reset-password", { limit: 5 });
     if (!limiter.success) {
@@ -18,7 +28,6 @@ export async function POST(req: Request) {
     }
 
     // 2. Parse & Validate input
-    const body = await req.json();
     const result = resetPasswordSchema.safeParse(body);
     if (!result.success) {
       const errorMap = result.error.flatten().fieldErrors;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import Image from "next/image";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
 import { ShoppingBag, ArrowLeft, Loader2, ShieldCheck, CreditCard, Lock, ChevronDown, Search } from "lucide-react";
@@ -147,9 +147,9 @@ export default function CheckoutPage() {
           <p className="text-xs text-muted-foreground leading-relaxed">
             Please add products to your cart before entering checkout.
           </p>
-          <Link href="/shop" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md">
+          <a href="/shop" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md">
             Go to Shop
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -226,10 +226,10 @@ export default function CheckoutPage() {
       <div className="mx-auto max-w-7xl">
 
         <div className="mb-10">
-          <Link href="/cart" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group">
+          <a href="/cart" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group">
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Back to Cart
-          </Link>
+          </a>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
             Secure Checkout
           </h1>

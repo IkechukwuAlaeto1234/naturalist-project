@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "../../context/CartContext";
 import { LogOut, Settings, ShoppingBag, Search, Bell, X, ArrowRight, ChevronRight } from "lucide-react";
@@ -46,11 +45,11 @@ const LinkedinIcon = ({ className }: { className?: string }) => (
    ───────────────────────────────────────── */
 
 const navLinks = [
-  { href: "/shop",           label: "Shop",           num: "01" },
-  { href: "/bundles",        label: "Ritual Bundles",  num: "02" },
-  { href: "/story",          label: "Our Story",       num: "03" },
-  { href: "/sustainability", label: "Sustainability",  num: "04" },
-  { href: "/blog",           label: "Blog",           num: "05" },
+  { href: "/p/shop",           label: "Shop",           num: "01" },
+  { href: "/p/bundles",        label: "Ritual Bundles",  num: "02" },
+  { href: "/p/story",          label: "Our Story",       num: "03" },
+  { href: "/p/sustainability", label: "Sustainability",  num: "04" },
+  { href: "/p/blog",           label: "Blog",           num: "05" },
 ];
 
 const socialLinks = [
@@ -86,6 +85,7 @@ export default function Navbar() {
   const [isBellOpen, setIsBellOpen]             = useState(false);
   const [isSearchOpen, setIsSearchOpen]         = useState(false);
   const [mounted, setMounted]                   = useState(false);
+  const [customLinks, setCustomLinks]           = useState<any[]>([]);
   const searchRef               = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef    = useRef<HTMLInputElement>(null);
   const profileRef              = useRef<HTMLDivElement>(null);
@@ -93,7 +93,21 @@ export default function Navbar() {
   const searchWrapperRef        = useRef<HTMLDivElement>(null);
   const desktopSearchWrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    fetch("/api/custom-pages", { cache: "no-store" })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => {
+        if (Array.isArray(data)) {
+          setCustomLinks(data.map((page, idx) => ({
+            href: `/p/${page.metadata?.slug}`,
+            label: page.title,
+            num: String(6 + idx).padStart(2, '0')
+          })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   /* Close everything on route change */
   useEffect(() => {
@@ -162,9 +176,15 @@ export default function Navbar() {
     signOut({ callbackUrl: "/" });
   };
 
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   /* ─────────────────────────────────────────
      Render
      ───────────────────────────────────────── */
+  const allLinks = [...navLinks, ...customLinks];
+
   return (
     <>
       {/* ══════════════════════════════════════
@@ -175,7 +195,12 @@ export default function Navbar() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
 
           {/* Hamburger + Logo */}
-          <div className="flex items-center gap-4 flex-shrink-0 md:w-48">
+          <div
+            className="flex items-center gap-4 flex-shrink-0 transition-all duration-500 ease-out"
+            style={{
+              width: isSearchOpen ? "125px" : "192px",
+            }}
+          >
             {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -213,11 +238,12 @@ export default function Navbar() {
                 opacity: 1,
                 pointerEvents: "auto",
                 whiteSpace: "nowrap",
+                transform: isSearchOpen ? "translateX(-50px)" : "translateX(0px)",
                 marginLeft: isSearchOpen ? "0px" : "auto",
                 marginRight: isSearchOpen ? "auto" : "auto",
               }}
             >
-              {navLinks.map((link) => {
+              {allLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <a
@@ -253,14 +279,14 @@ export default function Navbar() {
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setIsSearchOpen(false);
                   if (e.key === "Enter") {
-                    window.location.href = `/shop?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
+                    window.location.href = `/search?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
                   }
                 }}
               />
               <button
                 onClick={() => {
                   if (desktopSearchInputRef.current?.value) {
-                    window.location.href = `/shop?q=${encodeURIComponent(desktopSearchInputRef.current.value)}`;
+                    window.location.href = `/search?q=${encodeURIComponent(desktopSearchInputRef.current.value)}`;
                   }
                 }}
                 className="group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
@@ -427,7 +453,7 @@ export default function Navbar() {
             )}
 
             {/* Cart */}
-            <Link
+            <a
               href="/cart"
               className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
               data-tooltip="Shopping Cart"
@@ -441,7 +467,7 @@ export default function Navbar() {
                   {cartCount}
                 </span>
               )}
-            </Link>
+            </a>
 
           </div>
         </div>
@@ -464,14 +490,14 @@ export default function Navbar() {
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setIsSearchOpen(false);
                   if (e.key === "Enter") {
-                    window.location.href = `/shop?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
+                    window.location.href = `/search?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
                   }
                 }}
               />
               <button
                 onClick={() => {
                   if (searchRef.current?.value) {
-                    window.location.href = `/shop?q=${encodeURIComponent(searchRef.current.value)}`;
+                    window.location.href = `/search?q=${encodeURIComponent(searchRef.current.value)}`;
                   }
                 }}
                 className="group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
@@ -551,7 +577,7 @@ export default function Navbar() {
 
           {/* Nav links */}
           <nav className="relative z-10 px-5 py-4 flex-1 overflow-y-auto flex flex-col justify-start">
-            {navLinks.map((link) => {
+            {allLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
                 <a

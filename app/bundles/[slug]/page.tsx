@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ShoppingBag, ArrowLeft, Loader2, Sparkles, Droplet, Heart, ChevronRight, Plus, Minus, Package } from "lucide-react";
@@ -85,12 +85,12 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
           <p className="text-xs text-muted-foreground leading-relaxed">
             This curated skincare ritual bundle does not exist or has been removed.
           </p>
-          <Link
+          <a
             href="/bundles"
             className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md"
           >
             Return to Bundles
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -121,13 +121,13 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
         
         {/* Breadcrumb Header */}
         <div className="mb-8">
-          <Link
+          <a
             href="/bundles"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Back to Bundles
-          </Link>
+          </a>
         </div>
 
         {/* Curation Details Section */}
@@ -256,12 +256,12 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
                           <h4 className="font-serif text-sm font-bold text-foreground truncate">{item.name}</h4>
                           <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{item.description}</p>
                         </div>
-                        <Link
+                        <a
                           href={`/shop/${item.slug}`}
                           className="text-[10px] font-bold text-[#b07e3a] uppercase hover:underline shrink-0 px-2"
                         >
                           Explore
-                        </Link>
+                        </a>
                       </div>
                     ))
                   ) : (

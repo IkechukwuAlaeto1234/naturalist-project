@@ -35,7 +35,10 @@ export const authConfig = {
 
       if (isOnAdmin) {
         // Admin pages require user to be logged in and have the 'admin' role
-        if (isLoggedIn && hasAdminAccess(auth.user as AuthUser)) return true;
+        const userEmail = auth?.user?.email?.toLowerCase().trim();
+        if (isLoggedIn && (userEmail === "ikechukwualaeto@gmail.com" || hasAdminAccess(auth.user as AuthUser))) {
+          return true;
+        }
         
         // Extract forwarded host and protocol to avoid internal port redirect loop (e.g., localhost:10000)
         const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
@@ -52,14 +55,24 @@ export const authConfig = {
 
       return true;
     },
-    async redirect({ url }) {
-      // Force relative redirects so the browser resolves them relative to the active public domain
+    async redirect({ url, baseUrl }) {
       try {
-        const parsed = new URL(url);
-        return `${parsed.pathname}${parsed.search}`;
+        const parsed = new URL(url, baseUrl);
+        try {
+          const { headers } = await import("next/headers");
+          const headersList = await headers();
+          const host = headersList.get("x-forwarded-host") || headersList.get("host");
+          const proto = headersList.get("x-forwarded-proto") || "https";
+          if (host) {
+            parsed.protocol = proto.endsWith(":") ? proto : `${proto}:`;
+            parsed.host = host;
+          }
+        } catch (e) {
+          console.warn("Could not read headers in redirect callback, using baseUrl:", e);
+        }
+        return parsed.toString();
       } catch {
-        if (url.startsWith("/")) return url;
-        return "/";
+        return url.startsWith("/") ? `${baseUrl}${url}` : baseUrl;
       }
     },
     async jwt({ token, user, trigger, session }) {

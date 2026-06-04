@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, use } from "react";
 import Image from "next/image";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { ShoppingBag, ArrowLeft, Loader2, Sparkles, Droplet, Heart, ChevronRight, Plus, Minus } from "lucide-react";
@@ -78,12 +78,12 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
           <p className="text-xs text-muted-foreground leading-relaxed">
             This botanical recipe does not exist or has been removed from our catalog.
           </p>
-          <Link
+          <a
             href="/shop"
             className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md"
           >
             Return to Shop
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -111,13 +111,13 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
         
         {/* Breadcrumb Header */}
         <div className="mb-8">
-          <Link
+          <a
             href="/shop"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Back to Shop
-          </Link>
+          </a>
         </div>
 
         {/* Product Details Section */}

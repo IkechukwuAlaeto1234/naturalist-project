@@ -19,13 +19,30 @@ import {
   Clock,
   Sparkles,
   ShieldCheck,
-  X
+  X,
+  Pencil,
+  Laptop,
+  Smartphone,
+  Check,
 } from "lucide-react";
+
+interface SessionType {
+  id: string;
+  ipAddress: string;
+  userAgent: string;
+  browser: string;
+  os: string;
+  deviceType: string;
+  lastActive: string;
+}
 
 interface UserType {
   _id: string;
   name: string;
   email: string;
+  secondaryEmail?: string;
+  isSecondaryEmailVerified?: boolean;
+  sessions?: SessionType[];
   plainPassword?: string;
   role: "user" | "admin";
   isVerified: boolean;
@@ -47,21 +64,28 @@ export default function AdminUsersPage() {
   const [logs, setLogs] = useState<AccountLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
   const [roleFilter, setRoleFilter] = useState("");
   const [activeTab, setActiveTab] = useState<"users" | "logs">("users");
 
-  // Manual Add Form State
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addName, setAddName] = useState("");
-  const [addEmail, setAddEmail] = useState("");
-  const [addPassword, setAddPassword] = useState("");
-  const [addRole, setAddRole] = useState<"user" | "admin">("user");
-  const [addModalError, setAddModalError] = useState("");
-  const [addModalSaving, setAddModalSaving] = useState(false);
-
   // Password visibility registry: map user ID -> boolean
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setDebouncedSearch("");
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setSearchLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     document.title = "User Directory & System Audit | Naturalist";
@@ -173,57 +197,15 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleGeneratePassword = () => {
-    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
-    let generated = "";
-    for (let i = 0; i < 12; i++) {
-      generated += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setAddPassword(generated);
-  };
-
-  const handleManualAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!addName || !addEmail || !addPassword) {
-      setAddModalError("Please complete all required fields.");
-      return;
-    }
-    try {
-      setAddModalSaving(true);
-      setAddModalError("");
-      const res = await fetch("/api/admin/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: addName.trim(),
-          email: addEmail.trim(),
-          password: addPassword,
-          role: addRole,
-          isVerified: true,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Registration failed.");
-
-      setUsers([data, ...users]);
-      setShowAddModal(false);
-      fetchLogs(); // refresh logs
-    } catch (err: any) {
-      setAddModalError(err.message || "Manual creation failed.");
-    } finally {
-      setAddModalSaving(false);
-    }
-  };
-
   const filteredUsers = users.filter((u) => {
-    const term = search.toLowerCase();
+    const term = debouncedSearch.toLowerCase();
     const matchesSearch = u.name.toLowerCase().includes(term) || u.email.toLowerCase().includes(term) || u._id.toLowerCase().includes(term);
     const matchesRole = !roleFilter || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 text-white">
       
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -234,25 +216,18 @@ export default function AdminUsersPage() {
         <div className="flex gap-3">
           <button
             onClick={() => { fetchUsers(); fetchLogs(); }}
-            className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all"
+            className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all cursor-pointer"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Reload Ledger
           </button>
-          <button
-            onClick={() => {
-              setAddName("");
-              setAddEmail("");
-              setAddPassword("");
-              setAddRole("user");
-              setAddModalError("");
-              setShowAddModal(true);
-            }}
+          <a
+            href="/admin/users/new"
             className="flex items-center justify-center gap-2 h-10 px-5 rounded-xl bg-[#2d4c38] text-xs font-bold text-white hover:bg-[#3a6349] transition-all shadow-[0_2px_12px_rgba(45,76,56,0.3)]"
           >
             <Plus className="h-4 w-4" />
             Manual Add User
-          </button>
+          </a>
         </div>
       </div>
 
@@ -260,7 +235,7 @@ export default function AdminUsersPage() {
       <div className="flex border-b border-[#1a241e] gap-6 text-sm font-semibold">
         <button
           onClick={() => setActiveTab("users")}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 ${
+          className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
             activeTab === "users"
               ? "border-[#b07e3a] text-white font-bold"
               : "border-transparent text-[#a3b2a9] hover:text-white"
@@ -271,7 +246,7 @@ export default function AdminUsersPage() {
         </button>
         <button
           onClick={() => setActiveTab("logs")}
-          className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 ${
+          className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
             activeTab === "logs"
               ? "border-[#b07e3a] text-white font-bold"
               : "border-transparent text-[#a3b2a9] hover:text-white"
@@ -290,10 +265,13 @@ export default function AdminUsersPage() {
             <input
               type="search"
               placeholder="Search users by name, email, account ID..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-11 pl-10 pr-10 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all"
             />
+            {searchLoading && (
+              <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#b07e3a]" />
+            )}
           </div>
           <select
             value={roleFilter}
@@ -362,24 +340,31 @@ export default function AdminUsersPage() {
                       >
                         <td className="p-4 sm:p-5">
                           <p className="font-semibold text-white truncate max-w-[150px]">{u.name}</p>
-                          <p className="text-[10px] text-[#a3b2a9] font-mono mt-0.5">{u._id}</p>
+                          <p className="text-[10px] text-[#a3b2a9] mt-0.5">{u._id}</p>
                         </td>
-                        <td className="p-4 sm:p-5 font-medium text-white">{u.email}</td>
+                        <td className="p-4 sm:p-5">
+                          <p className="font-medium text-white">{u.email}</p>
+                          {u.secondaryEmail && (
+                            <p className="text-[9px] text-muted-foreground mt-0.5 truncate max-w-[180px]">
+                              Backup: {u.secondaryEmail} {u.isSecondaryEmailVerified ? "✓" : "✗"}
+                            </p>
+                          )}
+                        </td>
                         <td className="p-4 sm:p-5 text-center">
                           <button
                             onClick={() => handleToggleRole(u)}
-                            className={`inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full hover:scale-105 transition-transform ${roleClass}`}
+                            className="inline-flex px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full hover:scale-105 transition-transform bg-transparent border-0 cursor-pointer"
                           >
-                            {u.role}
+                            <span className={`inline-block px-2.5 py-0.5 rounded-full ${roleClass}`}>{u.role}</span>
                           </button>
                         </td>
-                        <td className="p-4 sm:p-5 font-mono text-[11px]">
+                        <td className="p-4 sm:p-5 text-[11px]">
                           <div className="flex items-center gap-2 text-white">
                             <span>{pwdDisplay}</span>
                             {u.plainPassword && (
                               <button
                                 onClick={() => handleToggleReveal(u._id)}
-                                className="p-1 hover:bg-white/5 rounded text-[#a3b2a9] hover:text-white transition-colors"
+                                className="p-1 hover:bg-white/5 rounded text-[#a3b2a9] hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
                               >
                                 {isRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                               </button>
@@ -388,9 +373,15 @@ export default function AdminUsersPage() {
                         </td>
                         <td className="p-4 sm:p-5 text-center">
                           <div className="inline-flex gap-2">
+                            <a
+                              href={`/admin/users/edit/${u._id}`}
+                              className="h-8 px-3 rounded-lg border border-[#b07e3a]/30 bg-[#b07e3a]/5 text-[#b07e3a] hover:bg-[#b07e3a] hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1"
+                            >
+                              <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                            </a>
                             <button
                               onClick={() => handleToggleSuspend(u)}
-                              className={`h-8 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+                              className={`h-8 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer ${
                                 u.isSuspended
                                   ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
                                   : "border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10"
@@ -408,7 +399,7 @@ export default function AdminUsersPage() {
                             </button>
                             <button
                               onClick={() => handleDeleteUser(u._id)}
-                              className="h-8 w-8 rounded-lg border border-red-500/30 hover:bg-red-500/5 text-red-400 hover:text-red-300 flex items-center justify-center transition-all"
+                              className="h-8 w-8 rounded-lg border border-red-500/30 hover:bg-red-500/5 text-red-400 hover:text-red-300 flex items-center justify-center transition-all cursor-pointer"
                               title="Expunge Account"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -485,125 +476,6 @@ export default function AdminUsersPage() {
                 );
               })
             )}
-          </div>
-        </div>
-      )}
-
-      {/* ── Manual Add User Account Modal ── */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#070908]/80 backdrop-blur-md">
-          <div className="bg-[#0c100e] border border-[#1a241e] rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-scale-in">
-            
-            <div className="p-6 border-b border-[#1a241e] flex items-center justify-between">
-              <h3 className="font-serif text-lg font-bold flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-[#b07e3a]" />
-                Manually Add User Account
-              </h3>
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="text-[#a3b2a9] hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleManualAddSubmit} className="p-6 space-y-4 text-xs">
-              
-              {addModalError && (
-                <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{addModalError}</span>
-                </div>
-              )}
-
-              {/* Name */}
-              <div className="space-y-1.5">
-                <label className="font-bold text-[#a3b2a9] uppercase tracking-wider">Account Holder Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Alaeto Ikechukwu Miracle"
-                  value={addName}
-                  onChange={(e) => setAddName(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all"
-                />
-              </div>
-
-              {/* Email */}
-              <div className="space-y-1.5">
-                <label className="font-bold text-[#a3b2a9] uppercase tracking-wider">Email Address *</label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. user@email.com"
-                  value={addEmail}
-                  onChange={(e) => setAddEmail(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all"
-                />
-              </div>
-
-              {/* Password */}
-              <div className="space-y-1.5">
-                <label className="font-bold text-[#a3b2a9] uppercase tracking-wider">Manual or Generated Password *</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter raw password or click generate"
-                    value={addPassword}
-                    onChange={(e) => setAddPassword(e.target.value)}
-                    className="w-full h-11 pl-4 pr-10 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all font-mono"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleGeneratePassword}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-white/5 border border-[#1a241e] text-[#a3b2a9] hover:text-white rounded-lg hover:bg-white/10 transition-all flex items-center justify-center"
-                    title="Generate Random Password"
-                  >
-                    <Key className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Role */}
-              <div className="space-y-1.5">
-                <label className="font-bold text-[#a3b2a9] uppercase tracking-wider">System Role *</label>
-                <select
-                  value={addRole}
-                  onChange={(e) => setAddRole(e.target.value as any)}
-                  className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer"
-                >
-                  <option value="user">Standard User</option>
-                  <option value="admin">Administrator (Command Access)</option>
-                </select>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#1a241e]">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="h-11 rounded-xl border border-[#1a241e] text-xs font-bold uppercase tracking-wider text-[#a3b2a9] hover:bg-white/5 hover:text-white transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={addModalSaving}
-                  className="h-11 rounded-xl bg-[#2d4c38] text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3a6349] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                >
-                  {addModalSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-                    </>
-                  ) : (
-                    "Create Account"
-                  )}
-                </button>
-              </div>
-
-            </form>
-
           </div>
         </div>
       )}

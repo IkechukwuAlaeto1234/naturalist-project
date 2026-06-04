@@ -67,6 +67,11 @@ export default function BrandLoader() {
       showNavigationLoader();
     };
 
+    const handlePopState = () => {
+      showNavigationLoader();
+      window.location.reload();
+    };
+
     const handleAnchorClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       const anchor = target.closest("a");
@@ -97,9 +102,11 @@ export default function BrandLoader() {
       }
     };
 
+    window.addEventListener("popstate", handlePopState);
     window.addEventListener("naturalist:navigation-start", handleNavigationStart);
     document.addEventListener("click", handleAnchorClick);
     return () => {
+      window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("naturalist:navigation-start", handleNavigationStart);
       document.removeEventListener("click", handleAnchorClick);
       if (failSafeTimeout) clearTimeout(failSafeTimeout);

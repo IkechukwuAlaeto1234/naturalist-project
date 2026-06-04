@@ -1,13 +1,12 @@
-import React from "react";
-import type { Metadata } from "next";
-import LegalPageShell from "../../components/ui/LegalPageShell";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | Naturalist",
-  description: "How Naturalist collects, uses, and protects your personal information.",
-};
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import LegalPageShell from "@/components/ui/LegalPageShell";
+import { generateLegalPDF } from "@/lib/generateLegalPDF";
 
-const sections = [
+const DEFAULT_SECTIONS = [
   {
     heading: "1. Introduction",
     body: "Naturalist ('we', 'us', or 'our') is committed to protecting your personal information. This Privacy Policy explains what data we collect when you use our website (naturalist.com), how we use it, who we share it with, and the choices you have. By using our site, you agree to the terms described here.",
@@ -75,14 +74,65 @@ const sections = [
 ];
 
 export default function PrivacyPolicyPage() {
+  const [mounted, setMounted] = useState(false);
+  const [content, setContent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const sessionUser = session?.user as any;
+  const isAdmin = session?.user?.email?.toLowerCase().trim() === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
+
+  useEffect(() => {
+    setMounted(true);
+    document.title = "Privacy Policy | Naturalist";
+    async function loadContent() {
+      try {
+        const res = await fetch("/api/content?key=privacy-policy", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data) setContent(data);
+        }
+      } catch (err) {
+        console.error("Failed to load privacy policy content:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadContent();
+  }, []);
+
+  const handleDownloadPDF = async () => {
+    const t = content?.metadata?.title || "Privacy Policy";
+    const e = content?.metadata?.effectiveDate || "May 31, 2026";
+    const datePart = e.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    await generateLegalPDF({
+      title: t,
+      eyebrow: "Legal",
+      subtitle: content?.metadata?.subtitle || "How we collect, use, and protect your personal information.",
+      effectiveDate: e,
+      sections: content?.metadata?.sections || DEFAULT_SECTIONS,
+      filename: `naturalist-privacy-policy-${datePart || "latest"}.pdf`,
+    });
+  };
+
+  if (!mounted) return null;
+
+  const titleText = content?.metadata?.title || "Privacy Policy";
+  const subtitleText = content?.metadata?.subtitle || "How we collect, use, and protect your personal information.";
+  const effectiveDateText = content?.metadata?.effectiveDate || "May 31, 2026";
+  const sectionsList = content?.metadata?.sections || DEFAULT_SECTIONS;
+
   return (
     <LegalPageShell
       eyebrow="Legal"
-      title="Privacy Policy"
-      subtitle="How we collect, use, and protect your personal information."
-      lastUpdated="31 May 2026"
-      sections={sections}
+      title={titleText}
+      subtitle={subtitleText}
+      lastUpdated={effectiveDateText}
+      sections={sectionsList}
       patternId="privacyPattern"
+      versions={content?.versions}
+      slug="privacy-policy"
+      isAdmin={isAdmin}
+      onDownloadPDF={handleDownloadPDF}
     />
   );
 }

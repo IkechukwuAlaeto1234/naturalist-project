@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
+
 import { useSearchParams } from "next/navigation";
 import { Check, ShoppingBag, ArrowRight, ShieldCheck, Mail, Calendar } from "lucide-react";
 import { useCart } from "../../context/CartContext";
@@ -80,19 +80,19 @@ function OrderConfirmationContent() {
 
           {/* Action Row */}
           <div className="flex flex-col sm:flex-row gap-3 w-full">
-            <Link
+            <a
               href="/shop"
               className="flex-1 flex h-11 items-center justify-center gap-2 rounded-full border border-[#2d4c38]/40 hover:border-[#b07e3a] text-xs font-bold uppercase tracking-wider text-[#2d4c38] dark:text-white transition-all bg-white/20 hover:bg-[#b07e3a]/10 cursor-pointer select-none"
             >
               Continue Shopping
-            </Link>
-            <Link
+            </a>
+            <a
               href="/account"
               className="flex-grow flex h-11 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md cursor-pointer select-none group"
             >
               Go to Profile
               <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-            </Link>
+            </a>
           </div>
 
           <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground/60 mt-6 justify-center">

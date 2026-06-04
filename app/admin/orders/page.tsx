@@ -15,6 +15,7 @@ import {
   Search,
   ChevronDown
 } from "lucide-react";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 interface OrderItem {
   name: string;
@@ -55,10 +56,26 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [updatingId, setUpdatingId] = useState("");
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setDebouncedSearch("");
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setSearchLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     document.title = "Order Management | Naturalist";
@@ -108,7 +125,7 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter((o) => {
-    const term = search.toLowerCase();
+    const term = debouncedSearch.toLowerCase();
     const orderNum = o.orderNumber?.toLowerCase() || o._id.toLowerCase();
     const custName = o.user?.name.toLowerCase() || "guest";
     const custEmail = o.user?.email.toLowerCase() || "";
@@ -120,18 +137,18 @@ export default function AdminOrdersPage() {
   });
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 font-sans">
       
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b07e3a]">Fulfillment Center</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b07e3a] font-sans">Fulfillment Center</span>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-white mt-1">Orders</h1>
         </div>
         <button
           onClick={fetchOrders}
           disabled={loading}
-          className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white hover:bg-white/5 transition-all disabled:opacity-50"
+          className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white hover:bg-white/5 transition-all disabled:opacity-50 font-sans cursor-pointer"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh Registry
@@ -145,23 +162,27 @@ export default function AdminOrdersPage() {
           <input
             type="search"
             placeholder="Search by order #, customer name, email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-11 pl-10 pr-4 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-11 pl-10 pr-10 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all font-sans"
           />
+          {searchLoading && (
+            <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#b07e3a]" />
+          )}
         </div>
-        <select
+        <CustomDropdown
+          options={[
+            { value: "", label: "All Shipping Status" },
+            { value: "pending", label: "Pending" },
+            { value: "processing", label: "Processing" },
+            { value: "shipped", label: "Shipped" },
+            { value: "delivered", label: "Delivered" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer min-w-[160px]"
-        >
-          <option value="">All Shipping Status</option>
-          <option value="pending">Pending</option>
-          <option value="processing">Processing</option>
-          <option value="shipped">Shipped</option>
-          <option value="delivered">Delivered</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+          onChange={(val) => setStatusFilter(val)}
+          className="w-full sm:w-56"
+        />
       </div>
 
       {loading && orders.length === 0 ? (
@@ -214,7 +235,7 @@ export default function AdminOrdersPage() {
                         >
                           <td className="p-4 sm:p-5 font-bold text-white">
                             {orderNum}
-                            <span className="block text-[9px] font-normal text-[#a3b2a9] mt-1 font-mono">
+                            <span className="block text-[9px] font-normal text-[#a3b2a9] mt-1">
                               {new Date(o.createdAt).toLocaleDateString("en-US", {
                                 month: "short",
                                 day: "numeric",
@@ -235,7 +256,7 @@ export default function AdminOrdersPage() {
                               value={o.shippingStatus}
                               disabled={updatingId === o._id}
                               onChange={(e) => handleUpdateStatus(o._id, "shippingStatus", e.target.value)}
-                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-[#b07e3a] focus:outline-none cursor-pointer focus:border-[#b07e3a] disabled:opacity-50"
+                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-[#b07e3a] focus:outline-none cursor-pointer focus:border-[#b07e3a] disabled:opacity-50 font-sans"
                             >
                               <option value="pending">Pending</option>
                               <option value="processing">Processing</option>
@@ -249,7 +270,7 @@ export default function AdminOrdersPage() {
                               value={o.paymentStatus}
                               disabled={updatingId === o._id}
                               onChange={(e) => handleUpdateStatus(o._id, "paymentStatus", e.target.value)}
-                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-emerald-400 focus:outline-none cursor-pointer focus:border-emerald-500 disabled:opacity-50"
+                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-emerald-400 focus:outline-none cursor-pointer focus:border-emerald-500 disabled:opacity-50 font-sans"
                             >
                               <option value="pending">Pending</option>
                               <option value="paid">Paid</option>
@@ -281,7 +302,7 @@ export default function AdminOrdersPage() {
                   <h3 className="font-serif text-lg font-bold">
                     Order Details
                   </h3>
-                  <p className="text-xs text-[#a3b2a9] font-mono mt-1">
+                  <p className="text-xs text-[#a3b2a9] mt-1">
                     {selectedOrder.orderNumber || selectedOrder._id}
                   </p>
                 </div>
@@ -299,7 +320,7 @@ export default function AdminOrdersPage() {
                     </p>
                     <p className="text-[#a3b2a9]">{selectedOrder.shippingAddress.country}</p>
                     {selectedOrder.shippingAddress.phone && (
-                      <p className="text-[#a3b2a9] mt-2 font-mono text-[10px]">
+                      <p className="text-[#a3b2a9] mt-2 text-[10px]">
                         Phone: {selectedOrder.shippingAddress.phone}
                       </p>
                     )}
@@ -350,7 +371,7 @@ export default function AdminOrdersPage() {
                 {/* PDF generation link — future capability */}
                 <button
                   onClick={() => alert("Enterprise PDF Generation triggered.")}
-                  className="w-full py-2.5 rounded-xl border border-[#1a241e] bg-white/[0.01] hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-wider text-white"
+                  className="w-full py-2.5 rounded-xl border border-[#1a241e] bg-white/[0.01] hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-wider text-white font-sans cursor-pointer"
                 >
                   Download Invoice (PDF)
                 </button>

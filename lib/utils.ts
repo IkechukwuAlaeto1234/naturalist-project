@@ -71,3 +71,35 @@ export function getFirstValidationError(fieldErrors: Record<string, string[] | u
   }
   return "";
 }
+
+/**
+ * Parses user agent string to identify browser, OS, and device type
+ */
+export function parseUserAgent(ua: string) {
+  let browser = "Other";
+  let os = "Other";
+  let deviceType = "Desktop";
+
+  const uaLower = ua.toLowerCase();
+
+  // Parse OS
+  if (uaLower.includes("windows")) os = "Windows";
+  else if (uaLower.includes("macintosh") || uaLower.includes("mac os")) os = "macOS";
+  else if (uaLower.includes("iphone") || uaLower.includes("ipad")) {
+    os = "iOS";
+    deviceType = "Mobile";
+  }
+  else if (uaLower.includes("android")) {
+    os = "Android";
+    deviceType = "Mobile";
+  }
+  else if (uaLower.includes("linux")) os = "Linux";
+
+  // Parse Browser
+  if (uaLower.includes("chrome") || uaLower.includes("crios")) browser = "Chrome";
+  else if (uaLower.includes("safari") && !uaLower.includes("chrome")) browser = "Safari";
+  else if (uaLower.includes("firefox")) browser = "Firefox";
+  else if (uaLower.includes("edg")) browser = "Edge";
+
+  return { browser, os, deviceType };
+}

@@ -46,6 +46,18 @@ export default function BlogIndex() {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [pageContent, setPageContent] = useState<Record<string, string>>({});
+
+  const getValue = (key: string, defaultValue: string) => {
+    if (Object.keys(pageContent).length === 0) return defaultValue;
+    const val = pageContent[key];
+    return val !== undefined && val !== null ? val : defaultValue;
+  };
+
+  const heroBadge = getValue("heroBadge", "Rituals & Stories");
+  const heroHeadline = getValue("heroHeadline", "Our Journal");
+  const heroSubtext = getValue("heroSubtext", "Fresh editorial notes from the Naturalist team. Thoughtful ingredients, practical rituals, and a calm reading experience.");
+  const heroImage = getValue("heroImage", "");
 
   const fetchPosts = async () => {
     try {
@@ -60,6 +72,12 @@ export default function BlogIndex() {
 
   useEffect(() => {
     fetchPosts();
+
+    // Fetch CMS content for blog hero
+    fetch("/api/content?key=blog", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data?.metadata) setPageContent(data.metadata); })
+      .catch(() => {});
 
     // Client-side query tag check to prevent build-time suspense requirements
     if (typeof window !== "undefined") {
@@ -114,31 +132,42 @@ export default function BlogIndex() {
       
       {/* Hero */}
       <section className="relative w-full overflow-hidden bg-[#0d1510] flex items-center justify-center" style={{ minHeight: "380px" }}>
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <pattern id="blogPattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
-              <path d="M40 100 Q80 20 120 20 Q90 60 40 100Z" fill="#b07e3a" opacity="0.1" />
-              <path d="M40 100 Q80 180 120 180 Q90 140 40 100Z" fill="#b07e3a" opacity="0.07" />
-              <line x1="40" y1="100" x2="120" y2="100" stroke="#b07e3a" strokeWidth="0.5" opacity="0.12" />
-              <path d="M160 40 Q180 80 190 100 Q170 75 160 40Z" fill="#2d4c38" opacity="0.18" />
-              <path d="M160 160 Q180 120 190 100 Q170 125 160 160Z" fill="#2d4c38" opacity="0.14" />
-              <circle cx="120" cy="100" r="3" fill="#b07e3a" opacity="0.2" />
-              <circle cx="40" cy="100" r="1.5" fill="#2d4c38" opacity="0.15" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="#0d1510" />
-          <rect width="100%" height="100%" fill="url(#blogPattern)" />
-        </svg>
+        {heroImage ? (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={heroImage} alt="" className="absolute inset-0 w-full h-full object-cover opacity-25 pointer-events-none" />
+        ) : (
+          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="blogPattern" x="0" y="0" width="200" height="200" patternUnits="userSpaceOnUse">
+                <path d="M40 100 Q80 20 120 20 Q90 60 40 100Z" fill="#b07e3a" opacity="0.1" />
+                <path d="M40 100 Q80 180 120 180 Q90 140 40 100Z" fill="#b07e3a" opacity="0.07" />
+                <line x1="40" y1="100" x2="120" y2="100" stroke="#b07e3a" strokeWidth="0.5" opacity="0.12" />
+                <path d="M160 40 Q180 80 190 100 Q170 75 160 40Z" fill="#2d4c38" opacity="0.18" />
+                <path d="M160 160 Q180 120 190 100 Q170 125 160 160Z" fill="#2d4c38" opacity="0.14" />
+                <circle cx="120" cy="100" r="3" fill="#b07e3a" opacity="0.2" />
+                <circle cx="40" cy="100" r="1.5" fill="#2d4c38" opacity="0.15" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="#0d1510" />
+            <rect width="100%" height="100%" fill="url(#blogPattern)" />
+          </svg>
+        )}
         <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 50% 70% at 50% 50%, rgba(45,76,56,0.3) 0%, transparent 70%)" }} />
         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, #0d1510 0%, transparent 30%, transparent 70%, #0d1510 100%)" }} />
         <div className="relative z-10 flex flex-col items-center text-center gap-3 px-6 py-28">
-          <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a]">Rituals & Stories</span>
-          <h1 className="font-serif font-black text-white leading-none tracking-tight" style={{ fontSize: "clamp(3.5rem, 10vw, 7rem)" }}>
-            Our Journal
-          </h1>
-          <p className="text-sm text-white/40 max-w-md leading-relaxed mt-1">
-            Fresh editorial notes from the Naturalist team. Thoughtful ingredients, practical rituals, and a calm reading experience.
-          </p>
+          {heroBadge && (
+            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a]">{heroBadge}</span>
+          )}
+          {heroHeadline && (
+            <h1 className="font-serif font-black text-white leading-none tracking-tight" style={{ fontSize: "clamp(3.5rem, 10vw, 7rem)" }}>
+              {heroHeadline}
+            </h1>
+          )}
+          {heroSubtext && (
+            <p className="text-sm text-white/40 max-w-md leading-relaxed mt-1">
+              {heroSubtext}
+            </p>
+          )}
         </div>
       </section>
 

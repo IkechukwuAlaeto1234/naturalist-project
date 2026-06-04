@@ -14,6 +14,7 @@ import {
   Search,
   ExternalLink
 } from "lucide-react";
+import { proxyCloudinaryUrl } from "@/lib/utils";
 
 interface CdnImage {
   _id: string;
@@ -89,7 +90,7 @@ export default function AdminCdnPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          url: upData.secure_url,
+          url: proxyCloudinaryUrl(upData.secure_url),
           publicId: upData.public_id,
           originalName: file.name,
           sizeBytes: file.size,
@@ -255,7 +256,7 @@ export default function AdminCdnPage() {
                     <p className="font-semibold text-white truncate" title={img.originalName}>
                       {img.originalName}
                     </p>
-                    <div className="flex justify-between text-[#a3b2a9] font-mono text-[9px] pt-1">
+                    <div className="flex justify-between text-[#a3b2a9] text-[9px] pt-1">
                       <span>{sizeMB} MB</span>
                       <button
                         onClick={() => handleDeleteImage(img._id)}

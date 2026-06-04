@@ -1,5 +1,4 @@
 import React from "react";
-import Link from "next/link";
 import type { Metadata } from "next";
 import {
   ShoppingBag, Package, BookOpen, Leaf, HelpCircle,
@@ -103,7 +102,7 @@ export default function SitemapPage() {
               {/* Link cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {section.links.map(({ href, label, icon: Icon, desc }) => (
-                  <Link
+                  <a
                     key={href}
                     href={href}
                     className="group flex items-start gap-4 p-5 rounded-2xl border border-border/40 dark:border-[#232c26] bg-white dark:bg-[#0f1411] hover:border-[#2d4c38]/40 hover:shadow-md transition-all duration-200"
@@ -122,7 +121,7 @@ export default function SitemapPage() {
                       <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{desc}</p>
                       <p className="text-[10px] text-muted-foreground/50 mt-1.5 font-mono">{href}</p>
                     </div>
-                  </Link>
+                  </a>
                 ))}
               </div>
             </div>

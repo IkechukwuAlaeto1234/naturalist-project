@@ -8,6 +8,8 @@ interface ErrorModalProps {
   onClose: () => void;
   title?: string;
   message: string;
+  actionText?: string;
+  onAction?: () => void;
 }
 
 export default function ErrorModal({
@@ -15,6 +17,8 @@ export default function ErrorModal({
   onClose,
   title = "Authentication Error",
   message,
+  actionText = "Try Again",
+  onAction,
 }: ErrorModalProps) {
   // Lock body scroll when modal is active
   useEffect(() => {
@@ -40,7 +44,7 @@ export default function ErrorModal({
 
       {/* Modal Card Container */}
       <div
-        className="relative w-full max-w-md transform overflow-hidden rounded-[32px] border border-red-500/10 dark:border-white/10 bg-white/95 dark:bg-[#151c18]/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-300 animate-scale-up flex flex-col items-center text-center"
+        className="relative w-full max-w-md transform overflow-hidden rounded-[32px] border border-red-500/10 dark:border-white/10 bg-white/95 dark:bg-[#151c18]/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-300 animate-modal-slide-in flex flex-col items-center text-center"
         role="dialog"
         aria-modal="true"
       >
@@ -54,7 +58,7 @@ export default function ErrorModal({
         </button>
 
         {/* Brand Icon Header */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 dark:bg-red-500/10 text-destructive dark:text-red-400">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 dark:bg-red-500/10 text-destructive dark:text-red-400 animate-icon-pop">
           <AlertCircle className="h-9 w-9 stroke-[2]" />
         </div>
 
@@ -68,13 +72,15 @@ export default function ErrorModal({
           {message}
         </p>
 
-        {/* Premium Action Button */}
-        <button
-          onClick={onClose}
-          className="w-full flex h-12 items-center justify-center rounded-full bg-destructive hover:bg-destructive/90 hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-destructive/10 cursor-pointer"
-        >
-          Try Again
-        </button>
+        {/* Premium Action Buttons */}
+        <div className="w-full">
+          <button
+            onClick={onAction || onClose}
+            className="w-full flex h-12 items-center justify-center rounded-full bg-destructive hover:bg-destructive/90 hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-destructive/10 cursor-pointer"
+          >
+            {actionText}
+          </button>
+        </div>
       </div>
     </div>
   );

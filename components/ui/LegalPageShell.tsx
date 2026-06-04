@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import { Download, History } from "lucide-react";
 
 interface Section {
   heading: string;
@@ -13,6 +14,18 @@ interface LegalPageProps {
   lastUpdated: string;
   sections: Section[];
   patternId: string;
+  versions?: any[];
+  slug?: string;
+  isAdmin?: boolean;
+  onDownloadPDF?: () => void;
+  disclaimerUrl?: string;
+}
+
+// Returns the single most-recent archived version (the one immediately before current)
+function getPreviousVersion(versions?: any[]): any | null {
+  if (!versions || versions.length === 0) return null;
+  // versions array is chronological (oldest first); the last item is the most recent archived snapshot
+  return versions[versions.length - 1];
 }
 
 export default function LegalPageShell({
@@ -22,7 +35,13 @@ export default function LegalPageShell({
   lastUpdated,
   sections,
   patternId,
+  versions,
+  slug,
+  isAdmin,
+  onDownloadPDF,
+  disclaimerUrl,
 }: LegalPageProps) {
+  const previousVersion = getPreviousVersion(versions);
   return (
     <div className="flex flex-col w-full">
 
@@ -71,46 +90,87 @@ export default function LegalPageShell({
       <section className="w-full bg-[#fcfcfb] dark:bg-[#0a0d0b] py-20 px-6 sm:px-8 transition-colors duration-300">
         <div className="mx-auto max-w-2xl">
 
-          {/* Last updated pill */}
-          <div className="mb-10 flex items-center gap-2">
-            <span className="inline-flex items-center rounded-full border border-border/60 bg-muted/60 px-3 py-1 text-[11px] font-medium text-muted-foreground">
-              Last updated: {lastUpdated}
+          {/* Effective date + Previous Version link — Anthropic-style */}
+          <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-6">
+            {/* LHS: Effective date */}
+            <span className="inline-flex items-center rounded-full border border-[#b07e3a]/20 bg-[#b07e3a]/5 dark:bg-[#b07e3a]/10 px-3.5 py-1.5 text-xs font-bold text-[#b07e3a]">
+              Effective {lastUpdated}
             </span>
+
+            {/* RHS: Previous Version link (single — immediate predecessor only) */}
+            {slug && previousVersion && (
+              <Link
+                href={`/p/${slug}/archive/${previousVersion._id}`}
+                className="text-xs font-bold text-[#b07e3a] underline underline-offset-2 hover:text-[#d4a362] transition-colors"
+              >
+                Previous Version
+              </Link>
+            )}
           </div>
 
+          {/* Archived banner — only shown on archived version pages */}
+          {disclaimerUrl && (
+            <div className="mb-10 bg-[#2e3330] dark:bg-[#1a1f1c] text-white px-8 py-5 rounded-2xl text-base font-semibold border border-white/5 text-center leading-relaxed shadow-sm">
+              This document has been replaced by a{" "}
+              <Link href={disclaimerUrl} className="underline underline-offset-2 font-bold text-[#b07e3a] hover:text-[#d4a362] transition-colors">
+                newer version
+              </Link>
+              , and is available for archival purposes
+            </div>
+          )}
+
           {/* Sections */}
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-12">
             {sections.map((section, i) => (
               <div key={i} className="flex flex-col gap-3">
-                <h2 className="font-serif text-lg font-bold text-foreground tracking-tight">{section.heading}</h2>
+                <h2 className="font-serif text-xl font-bold text-foreground tracking-tight">{section.heading}</h2>
                 {Array.isArray(section.body) ? (
                   <ul className="flex flex-col gap-2">
                     {section.body.map((item, j) => (
-                      <li key={j} className="flex gap-3 text-sm text-muted-foreground leading-relaxed">
+                      <li key={j} className="flex gap-3 text-base text-muted-foreground leading-relaxed">
                         <span className="mt-[6px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#b07e3a]" />
                         {item}
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{section.body}</p>
+                  <p className="text-base text-muted-foreground leading-relaxed">{section.body}</p>
                 )}
               </div>
             ))}
           </div>
 
-          {/* Footer note */}
+          {/* Footer note + Contact Us */}
           <div className="mt-14 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               Questions about this policy? We're happy to explain anything in plain language.
             </p>
             <Link
               href="/contact"
-              className="flex-shrink-0 inline-flex h-10 items-center gap-2 rounded-full bg-[#2d4c38] px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3a6349] transition-all shadow-sm"
+              className="flex-shrink-0 inline-flex h-11 items-center gap-2 rounded-full bg-[#2d4c38] px-7 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3a6349] transition-all shadow-sm"
             >
               Contact Us
             </Link>
           </div>
+
+          {/* Download PDF CTA — sits below Contact Us section */}
+          {onDownloadPDF && (
+            <div className="mt-10 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-bold text-foreground">Download a copy</p>
+                <p className="text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                  Save a PDF of this document for your records.
+                </p>
+              </div>
+              <button
+                onClick={onDownloadPDF}
+                className="flex-shrink-0 flex h-11 items-center gap-2 rounded-full border border-border/80 bg-background/50 hover:bg-muted/80 px-6 text-xs font-bold uppercase tracking-wider text-foreground transition-all shadow-sm cursor-pointer hover:border-[#b07e3a]/40"
+              >
+                <Download className="h-3.5 w-3.5 text-[#b07e3a]" />
+                Download PDF
+              </button>
+            </div>
+          )}
 
         </div>
       </section>

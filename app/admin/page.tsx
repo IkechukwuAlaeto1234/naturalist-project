@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+
 import {
   TrendingUp,
   ShoppingBag,
@@ -201,8 +201,8 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="h-72 w-full text-xs">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-72 w-full text-xs min-w-0">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <AreaChart data={stats.revenueChart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
@@ -233,12 +233,12 @@ export default function AdminDashboardPage() {
               <h2 className="font-serif text-xl font-bold">Recent Orders</h2>
               <p className="text-xs text-[#a3b2a9] mt-0.5">Track live transactions in the system</p>
             </div>
-            <Link
+            <a
               href="/admin/orders"
               className="inline-flex items-center gap-1 text-xs font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
             >
               All Orders <ArrowRight className="h-3 w-3" />
-            </Link>
+            </a>
           </div>
 
           {stats.recentOrders.length === 0 ? (
@@ -293,13 +293,13 @@ export default function AdminDashboardPage() {
               <h2 className="font-serif text-xl font-bold">User Registrations</h2>
               <p className="text-xs text-[#a3b2a9] mt-0.5">Auditing accounts creation</p>
             </div>
-            <Link
+            <a
               href="/admin/users"
               className="h-8 w-8 rounded-lg border border-[#1a241e] flex items-center justify-center hover:bg-white/5 text-[#a3b2a9] hover:text-white transition-colors"
               title="Track in detail"
             >
               <Activity className="h-4 w-4" />
-            </Link>
+            </a>
           </div>
 
           {logs.length === 0 ? (
@@ -316,7 +316,7 @@ export default function AdminDashboardPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-white truncate">{log.name}</p>
                     <p className="text-[10px] text-[#a3b2a9] truncate">{log.email}</p>
-                    <p className="text-[9px] text-[#b07e3a] mt-1 font-mono uppercase">
+                    <p className="text-[9px] text-[#b07e3a] mt-1 uppercase">
                       {new Date(log.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                       {" · "}{log.action === "signup" ? "New Signup" : "Manual Add"}
                     </p>
@@ -326,12 +326,12 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          <Link
+          <a
             href="/admin/users?tab=logs"
             className="w-full text-center py-2.5 rounded-xl border border-[#1a241e] bg-white/[0.01] hover:bg-white/5 transition-all text-xs font-bold uppercase tracking-wider text-[#a3b2a9] hover:text-white mt-6 block"
           >
             Audit System Logs
-          </Link>
+          </a>
         </div>
 
       </div>

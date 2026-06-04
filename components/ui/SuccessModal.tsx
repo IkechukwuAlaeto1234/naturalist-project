@@ -14,6 +14,7 @@ interface SuccessModalProps {
   actionIcon?: React.ReactNode;
   cancelText?: string;
   showCancel?: boolean;
+  showClose?: boolean;
 }
 
 export default function SuccessModal({
@@ -26,6 +27,7 @@ export default function SuccessModal({
   actionIcon,
   cancelText = "Continue Browsing",
   showCancel = true,
+  showClose = true,
 }: SuccessModalProps) {
   const router = useRouter();
 
@@ -58,22 +60,23 @@ export default function SuccessModal({
 
       {/* Modal Card Container */}
       <div
-        className="relative w-full max-w-md transform overflow-hidden rounded-[32px] border border-[#b07e3a]/10 dark:border-white/10 bg-white/95 dark:bg-[#151c18]/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-300 animate-scale-up flex flex-col items-center text-center"
+        className="relative w-full max-w-md transform overflow-hidden rounded-[32px] border border-[#b07e3a]/10 dark:border-white/10 bg-white/95 dark:bg-[#151c18]/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-300 animate-modal-slide-in flex flex-col items-center text-center"
         role="dialog"
         aria-modal="true"
       >
         {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer flex-shrink-0"
-          aria-label="Close modal"
-          data-tooltip="Close"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        {showClose && (
+          <button
+            onClick={onClose}
+            className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer flex-shrink-0"
+            aria-label="Close modal"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
 
         {/* Brand Icon Header */}
-        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 animate-icon-pop">
           <CheckCircle2 className="h-9 w-9 stroke-[2]" />
         </div>
 
@@ -93,7 +96,6 @@ export default function SuccessModal({
             <button
               onClick={onClose}
               className="flex-1 flex h-12 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-xs font-bold uppercase tracking-widest text-foreground transition-all cursor-pointer"
-              data-tooltip="Close popup"
             >
               {cancelText}
             </button>
@@ -103,7 +105,6 @@ export default function SuccessModal({
             className={`flex-grow-[1.3] flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-[#2d4c38]/10 cursor-pointer ${
               !showCancel ? "w-full" : ""
             }`}
-            data-tooltip={actionText || "Proceed to checkout"}
           >
             {actionText || "View Shopping Bag"}{" "}
             {actionIcon === undefined ? <ShoppingBag className="h-3.5 w-3.5" /> : actionIcon}

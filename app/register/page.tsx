@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -86,6 +85,15 @@ function RegisterContent() {
   const [localPhone, setLocalPhone] = useState("");
   const [phone, setPhone] = useState("");
   const [country, setCountry] = useState("United States");
+  const [isHydrated, setIsHydrated] = useState(false);
+
+
+  // Auto-Focus First Empty OTP Input on Container Click
+  const handleOtpContainerClick = () => {
+    const firstEmptyIdx = otpFields.findIndex((f) => !f);
+    const targetIdx = firstEmptyIdx === -1 ? 3 : firstEmptyIdx;
+    otpRefs[targetIdx].current?.focus();
+  };
 
   // Phone Country Code Pickers
   const [phoneCountry, setPhoneCountry] = useState(PHONE_COUNTRIES[0]); // Default US
@@ -123,8 +131,14 @@ function RegisterContent() {
   const goToRoute = (href: string) => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("naturalist:navigation-start"));
+      setTimeout(() => {
+        const currentPath = window.location.pathname + window.location.search;
+        window.location.href = href;
+        if (currentPath === href || href.startsWith("/register")) {
+          window.location.reload();
+        }
+      }, 50);
     }
-    router.push(href);
   };
 
   useEffect(() => {
@@ -148,6 +162,8 @@ function RegisterContent() {
       const savedCode = sessionStorage.getItem("reg_phone_code") || "US";
       const match = PHONE_COUNTRIES.find((c) => c.code === savedCode);
       if (match) setPhoneCountry(match);
+
+      setIsHydrated(true);
     }
   }, []);
 
@@ -162,14 +178,16 @@ function RegisterContent() {
 
   // Stepper boundary guards: "must always start from the beginning of the stuff"
   useEffect(() => {
+    if (!isHydrated) return;
+
     if (step > 1 && (!name.trim() || !email.trim())) {
-      router.replace("/register?step=1");
+      goToRoute("/register?step=1");
     } else if (step > 3 && !password.trim()) {
-      router.replace("/register?step=1");
+      goToRoute("/register?step=1");
     } else if (step > 4 && (!phone.trim() || !country.trim())) {
-      router.replace("/register?step=1");
+      goToRoute("/register?step=1");
     }
-  }, [step, name, email, password, phone, country, router]);
+  }, [step, name, email, password, phone, country, isHydrated]);
 
   // Countdown timer for OTP resends
   useEffect(() => {
@@ -290,7 +308,8 @@ function RegisterContent() {
   };
 
   // Form step navigation triggers
-  const handleNextStep1 = () => {
+  const handleNextStep1 = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (!name.trim()) {
       triggerError("Please enter your full name.");
       return;
@@ -306,7 +325,8 @@ function RegisterContent() {
     }, 1200);
   };
 
-  const handleNextStep2 = async () => {
+  const handleNextStep2 = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     const otpCode = otpFields.join("").trim();
     if (otpCode.length !== 4) {
       triggerError("Please enter the complete 4-character passcode.");
@@ -330,7 +350,8 @@ function RegisterContent() {
     }, 1000);
   };
 
-  const handleNextStep3 = () => {
+  const handleNextStep3 = (e?: React.FormEvent) => {
+    e?.preventDefault();
     if (password.length < 6) {
       triggerError("Password must be at least 6 characters long.");
       return;
@@ -445,34 +466,38 @@ function RegisterContent() {
     <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] transition-colors duration-300 py-16 px-4 sm:px-6 lg:px-8 font-sans flex items-center justify-center pb-24">
       <div className="mx-auto max-w-lg w-full">
         
+        {/* Stepper Progress Bar (Outside Card) */}
+        <div className="mb-6 w-full flex items-center justify-between gap-2.5 px-4 sm:px-6">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className="flex-1 flex flex-col gap-1.5">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  s <= step
+                    ? "bg-[#2d4c38] dark:bg-emerald-500/70"
+                    : "bg-[#e2dacd] dark:bg-white/10"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+
         {/* Wizard Card Container */}
         <div className="relative overflow-visible bg-white/80 dark:bg-[#151c18]/80 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-[32px] p-8 sm:p-10 shadow-[0_20px_50px_rgba(20,31,25,0.03)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col">
           
-          {/* Stepper Progress Bar */}
-          <div className="mb-8 w-full flex items-center justify-between gap-2.5">
-            {[1, 2, 3, 4, 5].map((s) => (
-              <div key={s} className="flex-1 flex flex-col gap-1.5">
-                <div
-                  className={`h-1.5 rounded-full transition-all duration-500 ${
-                    s <= step
-                      ? "bg-[#2d4c38] dark:bg-emerald-500/70"
-                      : "bg-[#e2dacd] dark:bg-white/10"
-                  }`}
-                />
-              </div>
-            ))}
-          </div>
 
           {/* Header Title with PERFECT Circle Back Arrow */}
           <div className="text-center mb-8 relative">
-            <Link
+            <a
               href={getBackPath()}
+              onClick={(e) => {
+                e.preventDefault();
+                goToRoute(getBackPath());
+              }}
               className="absolute left-0 top-0 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer flex-shrink-0 aspect-square shadow-sm"
               aria-label="Previous Step"
-              data-tooltip="Previous Step"
             >
               <ArrowLeft className="h-4.5 w-4.5 stroke-[2]" />
-            </Link>
+            </a>
 
             {step === 1 && (
               <>
@@ -509,7 +534,6 @@ function RegisterContent() {
                     type="button"
                     onClick={() => goToRoute("/register?step=1")}
                     className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#b07e3a]/10 hover:bg-[#b07e3a]/20 text-[#b07e3a] transition-all cursor-pointer flex-shrink-0 aspect-square"
-                    data-tooltip="Edit Email"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
@@ -563,7 +587,7 @@ function RegisterContent() {
           {/* ── STEP 1: IDENTITY ── */}
           {step === 1 && (
             <div className="animate-fade-in space-y-6">
-              <div className="space-y-4">
+              <form onSubmit={handleNextStep1} noValidate className="space-y-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                     <User className="h-3 w-3 text-muted-foreground" /> Full Name
@@ -591,64 +615,67 @@ function RegisterContent() {
                     className="px-5 py-3.5 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45 text-foreground"
                   />
                 </div>
-              </div>
 
-              <button
-                type="button"
-                onClick={handleNextStep1}
-                disabled={loading}
-                className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-75 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
-                  </>
-                ) : (
-                  <>
-                    Continue & Verify Email <ArrowRight className="h-3.5 w-3.5" />
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-75 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
+                    </>
+                  ) : (
+                    <>
+                      Continue & Verify Email <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           )}
 
           {/* ── STEP 2: VERIFICATION (OTP) ── */}
           {step === 2 && (
             <div className="animate-fade-in space-y-6">
-              {/* 4 Digit Boxes Layout */}
-              <div className="flex justify-center gap-3.5 py-4">
-                {otpFields.map((field, idx) => (
-                  <input
-                    key={idx}
-                    ref={otpRefs[idx]}
-                    type="text"
-                    maxLength={1}
-                    value={field}
-                    onChange={(e) => handleOtpChange(idx, e.target.value)}
-                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                    onPaste={idx === 0 ? handleOtpPaste : undefined}
-                    placeholder="•"
-                    className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
-                  />
-                ))}
-              </div>
+              <form onSubmit={handleNextStep2} noValidate className="space-y-6">
+                {/* 4 Digit Boxes Layout */}
+                <div
+                  onClick={handleOtpContainerClick}
+                  className="flex justify-center gap-3.5 py-4 cursor-text"
+                >
+                  {otpFields.map((field, idx) => (
+                    <input
+                      key={idx}
+                      ref={otpRefs[idx]}
+                      type="text"
+                      maxLength={1}
+                      value={field}
+                      onChange={(e) => handleOtpChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                      onPaste={idx === 0 ? handleOtpPaste : undefined}
+                      placeholder="•"
+                      className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
+                    />
+                  ))}
+                </div>
 
-              <button
-                type="button"
-                onClick={handleNextStep2}
-                disabled={loading}
-                className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-85 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
-                  </>
-                ) : (
-                  <>
-                    Verify & Continue <ArrowRight className="h-3.5 w-3.5" />
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-85 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" /> Verifying...
+                    </>
+                  ) : (
+                    <>
+                      Verify & Continue <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </form>
 
               {/* Countdown timer */}
               <div className="text-center text-xs text-muted-foreground pt-4 border-t border-border/40">
@@ -673,7 +700,7 @@ function RegisterContent() {
           {/* ── STEP 3: SECURITY & GENERATOR ── */}
           {step === 3 && (
             <div className="animate-fade-in space-y-6">
-              <div className="space-y-4">
+              <form onSubmit={handleNextStep3} noValidate className="space-y-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><Key className="h-3 w-3" /> Password</span>
@@ -731,24 +758,23 @@ function RegisterContent() {
                     className="px-5 py-3.5 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45 text-foreground"
                   />
                 </div>
-              </div>
 
-              <button
-                type="button"
-                onClick={handleNextStep3}
-                disabled={loading}
-                className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none"
-              >
-                {loading ? (
-                  <>
-                    <RefreshCw className="h-4 w-4 animate-spin" /> Moving to Step 4...
-                  </>
-                ) : (
-                  <>
-                    Contact details <ArrowRight className="h-3.5 w-3.5" />
-                  </>
-                )}
-              </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none"
+                >
+                  {loading ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin" /> Moving to Step 4...
+                    </>
+                  ) : (
+                    <>
+                      Contact details <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </form>
             </div>
           )}
 
@@ -770,7 +796,6 @@ function RegisterContent() {
                         setPhoneSearchQuery("");
                       }}
                       className="flex items-center gap-1.5 pl-4 pr-3 py-3 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-xs font-semibold text-foreground h-full cursor-pointer"
-                      data-tooltip="Select Dial Code"
                     >
                       <span>{phoneCountry.code}</span>
                       <span className="text-muted-foreground tabular-nums">{phoneCountry.dial}</span>
@@ -790,6 +815,7 @@ function RegisterContent() {
                       className="flex-1 px-4 py-3 text-sm bg-transparent text-foreground focus:outline-none placeholder:text-muted-foreground/40 h-full font-medium"
                     />
                   </div>
+
 
                   {isPhoneDropdownOpen && (
                     <div className="absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl z-[80] overflow-hidden animate-toast-pop">
@@ -849,7 +875,6 @@ function RegisterContent() {
                       setCountrySearchQuery("");
                     }}
                     className="flex items-center justify-between px-5 py-3 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] transition-all w-full text-left h-12 cursor-pointer font-medium"
-                    data-tooltip="Select Country"
                   >
                     <span>{country}</span>
                     <ChevronDown
@@ -858,6 +883,7 @@ function RegisterContent() {
                       }`}
                     />
                   </button>
+
                   
                   {isCountryDropdownOpen && (
                     <div className="absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl z-[80] overflow-hidden animate-toast-pop">
@@ -955,7 +981,6 @@ function RegisterContent() {
                 onClick={handleFinalSubmit}
                 disabled={loading}
                 className="w-full flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-md cursor-pointer select-none disabled:opacity-85 disabled:cursor-not-allowed"
-                data-tooltip="Submit Registration"
               >
                 {loading ? (
                   <>
@@ -974,12 +999,12 @@ function RegisterContent() {
           {step === 1 && (
             <div className="mt-8 text-center text-xs text-muted-foreground">
               Already have an account?{" "}
-              <Link
+              <a
                 href="/login"
-                className="font-semibold text-[#b07e3a] hover:underline"
+                className="font-semibold text-[#b07e3a] hover:underline cursor-pointer"
               >
                 Sign In
-              </Link>
+              </a>
             </div>
           )}
 
@@ -987,12 +1012,12 @@ function RegisterContent() {
 
       </div>
 
-      {/* Error modal feedback */}
       <ErrorModal
         isOpen={errorModalOpen}
         onClose={() => setErrorModalOpen(false)}
         title="Registration Error"
         message={errorMessage}
+        actionText="Try Again"
       />
     </div>
   );

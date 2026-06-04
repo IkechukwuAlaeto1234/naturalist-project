@@ -4,6 +4,34 @@ import { User } from "@/models/User";
 import { AccountLog } from "@/models/AccountLog";
 import { auth } from "@/lib/auth";
 
+// GET /api/admin/users/[id]
+// Retrieve a single user account and sessions (Admin only)
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const session = await auth();
+    const adminUser = session?.user as { role?: string } | undefined;
+    if (!adminUser || adminUser.role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+    }
+
+    await connectToDatabase();
+
+    const user = await User.findById(id).lean();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(user, { status: 200 });
+  } catch (error) {
+    console.error("GET admin user error:", error);
+    return NextResponse.json({ error: "Failed to retrieve user" }, { status: 500 });
+  }
+}
+
 // PUT /api/admin/users/[id]
 // Suspend, unsuspend, verify or change role of a user
 export async function PUT(
@@ -20,7 +48,7 @@ export async function PUT(
     }
 
     const body = await req.json();
-    const { role, isVerified, isSuspended, name, email, plainPassword } = body;
+    const { role, isVerified, isSuspended, name, email, plainPassword, secondaryEmail, isSecondaryEmailVerified } = body;
 
     await connectToDatabase();
 
@@ -60,6 +88,21 @@ export async function PUT(
     if (isSuspended !== undefined && isSuspended !== user.isSuspended) {
       changes.push(isSuspended ? "suspended account" : "unsuspended account");
       user.isSuspended = isSuspended;
+    }
+
+    if (secondaryEmail !== undefined && secondaryEmail !== user.secondaryEmail) {
+      changes.push(`secondary recovery email changed from "${user.secondaryEmail || "none"}" to "${secondaryEmail}"`);
+      user.secondaryEmail = secondaryEmail.toLowerCase().trim();
+      user.isSecondaryEmailVerified = isSecondaryEmailVerified !== undefined ? isSecondaryEmailVerified : true;
+    }
+
+    if (body.revokeSessionId) {
+      const sessionToEvict = user.sessions?.find((s: any) => s.id === body.revokeSessionId);
+      const sessionInfo = sessionToEvict 
+        ? `${sessionToEvict.browser} on ${sessionToEvict.os} (${sessionToEvict.ipAddress})`
+        : body.revokeSessionId;
+      changes.push(`revoked session: ${sessionInfo}`);
+      user.sessions = user.sessions?.filter((s: any) => s.id !== body.revokeSessionId) || [];
     }
 
     if (plainPassword) {

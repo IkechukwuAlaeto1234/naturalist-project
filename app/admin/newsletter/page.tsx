@@ -15,6 +15,8 @@ import {
   RefreshCw
 } from "lucide-react";
 
+import CustomDropdown from "@/components/ui/CustomDropdown";
+
 interface Subscriber {
   _id: string;
   email: string;
@@ -27,13 +29,29 @@ export default function AdminNewsletterPage() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("");
 
   // Add Subscriber State
   const [addEmail, setAddEmail] = useState("");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState("");
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setDebouncedSearch("");
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setSearchLoading(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     document.title = "Newsletter Subscribers | Naturalist";
@@ -114,7 +132,7 @@ export default function AdminNewsletterPage() {
   };
 
   const filteredSubs = subscribers.filter((s) => {
-    const emailMatches = s.email.toLowerCase().includes(search.toLowerCase());
+    const emailMatches = s.email.toLowerCase().includes(debouncedSearch.toLowerCase());
     const statusMatches =
       !statusFilter ||
       (statusFilter === "active" && s.isActive) ||
@@ -123,18 +141,18 @@ export default function AdminNewsletterPage() {
   });
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-20 font-sans">
       
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b07e3a]">Audience Outreach</span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b07e3a] font-sans">Audience Outreach</span>
           <h1 className="font-serif text-3xl font-bold tracking-tight text-white mt-1">Newsletter</h1>
         </div>
         <button
           onClick={fetchSubscribers}
           disabled={loading}
-          className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all disabled:opacity-50"
+          className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all disabled:opacity-50 font-sans cursor-pointer"
         >
           <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} />
           Refresh Registry
@@ -148,19 +166,19 @@ export default function AdminNewsletterPage() {
         <div className="md:col-span-4 bg-[#0c100e] border border-[#1a241e] rounded-2xl p-6 h-fit space-y-4">
           <div>
             <h2 className="font-serif text-lg font-bold">Add Subscriber</h2>
-            <p className="text-xs text-[#a3b2a9] mt-0.5">Manually register a newsletter contact</p>
+            <p className="text-xs text-[#a3b2a9] mt-0.5 font-sans">Manually register a newsletter contact</p>
           </div>
 
-          <form onSubmit={handleAddSubmit} className="space-y-4 text-xs">
+          <form onSubmit={handleAddSubmit} className="space-y-4 text-xs font-sans">
             {addError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2 font-sans">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>{addError}</span>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="font-bold text-[#a3b2a9] uppercase tracking-wider">Email Address</label>
+              <label className="font-bold text-[#a3b2a9] uppercase tracking-wider font-sans">Email Address</label>
               <div className="relative">
                 <input
                   type="email"
@@ -168,7 +186,7 @@ export default function AdminNewsletterPage() {
                   placeholder="e.g. user@email.com"
                   value={addEmail}
                   onChange={(e) => setAddEmail(e.target.value)}
-                  className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all"
+                  className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all font-sans text-sm font-semibold"
                 />
               </div>
             </div>
@@ -176,7 +194,7 @@ export default function AdminNewsletterPage() {
             <button
               type="submit"
               disabled={addSaving || !addEmail}
-              className="w-full h-11 rounded-xl bg-[#2d4c38] text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3a6349] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full h-11 rounded-xl bg-[#2d4c38] text-xs font-bold uppercase tracking-wider text-white hover:bg-[#3a6349] transition-all flex items-center justify-center gap-2 disabled:opacity-50 font-sans cursor-pointer border-0"
             >
               {addSaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -195,7 +213,7 @@ export default function AdminNewsletterPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
             <div>
               <h2 className="font-serif text-lg font-bold">Subscribers List</h2>
-              <p className="text-xs text-[#a3b2a9] mt-0.5">Auditing subscribed audience registry</p>
+              <p className="text-xs text-[#a3b2a9] mt-0.5 font-sans">Auditing subscribed audience registry</p>
             </div>
           </div>
 
@@ -206,20 +224,24 @@ export default function AdminNewsletterPage() {
               <input
                 type="search"
                 placeholder="Search subscribers by email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full h-11 pl-10 pr-10 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all font-sans"
               />
+              {searchLoading && (
+                <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#b07e3a]" />
+              )}
             </div>
-            <select
+            <CustomDropdown
+              options={[
+                { value: "", label: "All Subscriptions" },
+                { value: "active", label: "Active" },
+                { value: "inactive", label: "Unsubscribed" },
+              ]}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-10 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-xs font-semibold text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer min-w-[140px]"
-            >
-              <option value="">All Subscriptions</option>
-              <option value="active">Active</option>
-              <option value="inactive">Unsubscribed</option>
-            </select>
+              onChange={(val) => setStatusFilter(val)}
+              className="w-full sm:w-52"
+            />
           </div>
 
           {loading && subscribers.length === 0 ? (
@@ -271,7 +293,7 @@ export default function AdminNewsletterPage() {
                               {s.isActive ? "Active" : "Inactive"}
                             </button>
                           </td>
-                          <td className="py-3.5 text-right text-[#a3b2a9] font-mono text-[10px]">
+                          <td className="py-3.5 text-right text-[#a3b2a9] text-[10px]">
                             {new Date(s.subscribedAt).toLocaleDateString("en-US", {
                               month: "short",
                               day: "numeric",

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useToast } from "../../context/ToastContext";
 import { ArrowRight, Loader2 } from "lucide-react";
 
@@ -30,14 +30,24 @@ const InstagramIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
+  const pathname = usePathname();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
   const [mounted, setMounted] = useState(false);
+  const [customPages, setCustomPages] = useState<any[]>([]);
 
   useEffect(() => {
     setMounted(true);
+    fetch("/api/custom-pages", { cache: "no-store" })
+      .then(res => res.ok ? res.json() : [])
+      .then(data => { if (Array.isArray(data)) setCustomPages(data); })
+      .catch(() => {});
   }, []);
+
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
 
   if (!mounted) {
     return <footer className="h-40 bg-[#111a14]" />;
@@ -147,18 +157,18 @@ export default function Footer() {
               {/* Legal Links Row */}
               <div className="flex flex-wrap gap-x-6 gap-y-2 pt-4 border-t border-white/5 max-w-md">
                 {[
-                  { href: "/privacy-policy", label: "Privacy" },
-                  { href: "/terms", label: "Terms" },
-                  { href: "/cookie-policy", label: "Cookies" },
+                  { href: "/p/privacy-policy", label: "Privacy" },
+                  { href: "/p/terms", label: "Terms" },
+                  { href: "/p/cookie-policy", label: "Cookies" },
                   { href: "/sitemap", label: "Sitemap" },
                 ].map(({ href, label }) => (
-                  <Link
+                  <a
                     key={href}
                     href={href}
                     className="text-sm text-white/45 hover:text-white font-medium transition-colors"
                   >
                     {label}
-                  </Link>
+                  </a>
                 ))}
               </div>
             </div>
@@ -193,11 +203,20 @@ export default function Footer() {
                 <div className="flex flex-col gap-4">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Explore</p>
                   <nav className="flex flex-col gap-3">
-                    <Link href="/shop" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">The Shop</Link>
-                    <Link href="/bundles" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Ritual Bundles</Link>
-                    <Link href="/story" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Our Story</Link>
-                    <Link href="/blog" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Blog</Link>
-                    <Link href="/sustainability" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Sustainability</Link>
+                    <a href="/p/shop" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">The Shop</a>
+                    <a href="/p/bundles" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Ritual Bundles</a>
+                    <a href="/p/story" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Our Story</a>
+                    <a href="/p/blog" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Blog</a>
+                    <a href="/p/sustainability" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Sustainability</a>
+                    {customPages.map((page) => (
+                      <a
+                        key={page.metadata?.slug}
+                        href={`/p/${page.metadata?.slug}`}
+                        className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight animate-fade-in"
+                      >
+                        {page.title}
+                      </a>
+                    ))}
                   </nav>
                 </div>
 
@@ -205,10 +224,10 @@ export default function Footer() {
                 <div className="flex flex-col gap-4">
                   <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/40">Help</p>
                   <nav className="flex flex-col gap-3">
-                    <Link href="/faq" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">FAQ</Link>
-                    <Link href="/contact" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Contact Us</Link>
-                    <Link href="/account" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">My Account</Link>
-                    <Link href="/refund-policy" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Refund Policy</Link>
+                    <a href="/p/faq" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">FAQ</a>
+                    <a href="/p/contact" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Contact Us</a>
+                    <a href="/account" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">My Account</a>
+                    <a href="/p/refund-policy" className="text-[15px] sm:text-base text-white/70 hover:text-[#b07e3a] transition-colors font-medium tracking-tight">Refund Policy</a>
                   </nav>
                 </div>
               </div>

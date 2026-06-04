@@ -1,16 +1,20 @@
 "use client";
 
 import React, { useState, useEffect, useRef, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { ArrowLeft, Pencil, RefreshCw, Shield } from "lucide-react";
 import ErrorModal from "@/components/ui/ErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
 function VerifyEmailContent() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
+  const emailFromQuery = searchParams.get("email") || "";
+
+  const [email, setEmail] = useState(emailFromQuery);
+  const [isEmailEditable, setIsEmailEditable] = useState(!emailFromQuery);
 
   // 4 characters alphanumeric OTP fields
   const [otpFields, setOtpFields] = useState<string[]>(["", "", "", ""]);
@@ -31,6 +35,22 @@ function VerifyEmailContent() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const goToRoute = (href: string) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("naturalist:navigation-start"));
+      setTimeout(() => {
+        window.location.href = href;
+      }, 50);
+    }
+  };
+
+  // Global Authenticated Guard: Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated") {
+      goToRoute("/");
+    }
+  }, [status]);
+
   // Countdown timer effect
   useEffect(() => {
     if (resendTimer <= 0) return;
@@ -44,16 +64,24 @@ function VerifyEmailContent() {
     const titleTimeout = setTimeout(() => {
       document.title = "Verify Email | Naturalist";
     }, 120);
-    if (!email) {
-      setErrorMessage("No email address provided. Please return to the registration screen.");
-      setErrorModalOpen(true);
-    }
     return () => clearTimeout(titleTimeout);
-  }, [email]);
+  }, []);
 
   const triggerError = (msg: string) => {
     setErrorMessage(msg);
     setErrorModalOpen(true);
+  };
+
+  // Google-Style Restart on failure
+  const handleRestart = () => {
+    setErrorModalOpen(false);
+    setOtpFields(["", "", "", ""]);
+    if (emailFromQuery) {
+      goToRoute("/register?step=1");
+    } else {
+      setIsEmailEditable(true);
+      setEmail("");
+    }
   };
 
   // Handle OTP Inputs
@@ -91,8 +119,19 @@ function VerifyEmailContent() {
     otpRefs[focusIndex].current?.focus();
   };
 
+  // Auto-Focus First Empty OTP Input on Container Click
+  const handleOtpContainerClick = () => {
+    const firstEmptyIdx = otpFields.findIndex((f) => !f);
+    const targetIdx = firstEmptyIdx === -1 ? 3 : firstEmptyIdx;
+    otpRefs[targetIdx].current?.focus();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim()) {
+      triggerError("Please enter a valid email address.");
+      return;
+    }
     const otpCode = otpFields.join("").trim();
     if (otpCode.length !== 4) {
       triggerError("Please enter the complete 4-character passcode.");
@@ -149,7 +188,10 @@ function VerifyEmailContent() {
   };
 
   const handleResendOtp = async () => {
-    if (!email) return;
+    if (!email.trim()) {
+      triggerError("Please enter an email address before resending.");
+      return;
+    }
 
     setResending(true);
     setSuccess("");
@@ -202,51 +244,82 @@ function VerifyEmailContent() {
           
           {/* Header */}
           <div className="text-center mb-8 relative">
-            <Link
+            <a
               href="/register"
               className="absolute left-0 top-0 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer"
               aria-label="Back to Registration"
             >
               <ArrowLeft className="h-4 w-4" />
-            </Link>
+            </a>
             
             <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a] inline-flex items-center gap-1">
               <Shield className="h-3 w-3 stroke-[2.5]" /> Verification Required
             </span>
             <h1 className="font-serif text-3xl font-black text-foreground mt-2 leading-none tracking-tight">
-              We just sent an email
+              Account Verification
             </h1>
-            <p className="text-xs text-muted-foreground mt-3.5 leading-relaxed max-w-xs mx-auto flex items-center justify-center gap-1.5">
-              Enter the security code we sent to <strong className="text-foreground">{email || "your email"}</strong>
-              <Link
-                href="/register"
-                className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#b07e3a]/10 hover:bg-[#b07e3a]/20 text-[#b07e3a] transition-all"
-                title="Edit Email"
-              >
-                <Pencil className="h-3 w-3" />
-              </Link>
-            </p>
+
+            {!isEmailEditable ? (
+              <p className="text-xs text-muted-foreground mt-3.5 leading-relaxed max-w-xs mx-auto flex items-center justify-center gap-1.5">
+                Enter the security code we sent to <strong className="text-foreground">{email}</strong>
+                <button
+                  type="button"
+                  onClick={() => setIsEmailEditable(true)}
+                  className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#b07e3a]/10 hover:bg-[#b07e3a]/20 text-[#b07e3a] transition-all cursor-pointer"
+                  title="Edit Email"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </p>
+            ) : (
+              <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
+                Enter your email address and verification code below.
+              </p>
+            )}
           </div>
 
-
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 4 Digit Boxes Layout */}
-            <div className="flex justify-center gap-3.5 py-2">
-              {otpFields.map((field, idx) => (
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
+            {isEmailEditable && (
+              <div className="flex flex-col gap-1.5 text-left">
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <span className="material-icons text-[12.5px] select-none">mail</span> Email Address
+                </label>
                 <input
-                  key={idx}
-                  ref={otpRefs[idx]}
-                  type="text"
-                  maxLength={1}
-                  value={field}
-                  onChange={(e) => handleOtpChange(idx, e.target.value)}
-                  onKeyDown={(e) => handleOtpKeyDown(idx, e)}
-                  onPaste={idx === 0 ? handleOtpPaste : undefined}
-                  placeholder="•"
-                  className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="px-5 py-3.5 text-sm rounded-full border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#2d4c38] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all placeholder:text-muted-foreground/45 text-foreground w-full"
                 />
-              ))}
+              </div>
+            )}
+
+            {/* 4 Digit Boxes Layout */}
+            <div className="flex flex-col gap-1.5 text-left">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <span className="material-icons text-[12.5px] select-none">vpn_key</span> Verification Code
+              </label>
+              <div
+                onClick={handleOtpContainerClick}
+                className="flex justify-center gap-3.5 py-2 cursor-text"
+              >
+                {otpFields.map((field, idx) => (
+                  <input
+                    key={idx}
+                    ref={otpRefs[idx]}
+                    type="text"
+                    maxLength={1}
+                    value={field}
+                    onChange={(e) => handleOtpChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(idx, e)}
+                    onPaste={idx === 0 ? handleOtpPaste : undefined}
+                    placeholder="•"
+                    className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
+                  />
+                ))}
+              </div>
             </div>
 
             <button
@@ -288,12 +361,12 @@ function VerifyEmailContent() {
 
       </div>
 
-      {/* Error modal feedback */}
       <ErrorModal
         isOpen={errorModalOpen}
         onClose={() => setErrorModalOpen(false)}
         title="Verification Failed"
         message={errorMessage}
+        actionText="Try Again"
       />
 
       {/* Success modal feedback */}
@@ -302,17 +375,18 @@ function VerifyEmailContent() {
         onClose={() => {
           setSuccessModalOpen(false);
           if (success.includes("verified")) {
-            router.push("/login?verified=true");
+            goToRoute("/login?verified=true");
           }
         }}
         title={success.includes("verified") ? "Verification Successful" : "Passcode Sent"}
         message={success}
         actionText={success.includes("verified") ? "Go to Login" : "Continue"}
         showCancel={false}
+        showClose={false}
         onAction={() => {
           setSuccessModalOpen(false);
           if (success.includes("verified")) {
-            router.push("/login?verified=true");
+            goToRoute("/login?verified=true");
           }
         }}
         actionIcon={null}

@@ -1,13 +1,12 @@
-import React from "react";
-import type { Metadata } from "next";
-import LegalPageShell from "../../components/ui/LegalPageShell";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Terms of Service | Naturalist",
-  description: "The terms and conditions governing your use of the Naturalist website and services.",
-};
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
+import LegalPageShell from "@/components/ui/LegalPageShell";
+import { generateLegalPDF } from "@/lib/generateLegalPDF";
 
-const sections = [
+const DEFAULT_SECTIONS = [
   {
     heading: "1. Acceptance of Terms",
     body: "By accessing or using the Naturalist website (naturalist.com) or placing an order, you agree to be bound by these Terms of Service. If you do not agree, please do not use our site. We reserve the right to update these terms at any time; continued use constitutes acceptance of any changes.",
@@ -81,14 +80,69 @@ const sections = [
 ];
 
 export default function TermsPage() {
+  const [mounted, setMounted] = useState(false);
+  const [content, setContent] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
+  const sessionUser = session?.user as any;
+  const isAdmin = session?.user?.email?.toLowerCase().trim() === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
+
+  useEffect(() => {
+    setMounted(true);
+    document.title = "Terms of Service | Naturalist";
+    async function loadContent() {
+      try {
+        const res = await fetch("/api/content?key=terms", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data) setContent(data);
+        }
+      } catch (err) {
+        console.error("Failed to load terms of service content:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadContent();
+  }, []);
+
+  const handleDownloadPDF = async () => {
+    const t = content?.metadata?.title || "Terms of Service";
+    const e = content?.metadata?.effectiveDate || "May 31, 2026";
+    const datePart = e.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    await generateLegalPDF({
+      title: t,
+      eyebrow: "Legal",
+      subtitle: content?.metadata?.subtitle || "The rules and guidelines that govern your use of Naturalist.",
+      effectiveDate: e,
+      sections: content?.metadata?.sections || DEFAULT_SECTIONS,
+      filename: `naturalist-terms-of-service-${datePart || "latest"}.pdf`,
+      siteUrl: typeof window !== "undefined" ? window.location.origin : undefined,
+      contactUrl: typeof window !== "undefined" ? `${window.location.origin}/p/contact` : "/p/contact",
+      contactEmail: "hello@naturalist.com",
+      year: new Date().getFullYear(),
+    });
+  };
+
+  if (!mounted) return null;
+
+  const titleText = content?.metadata?.title || "Terms of Service";
+  const subtitleText = content?.metadata?.subtitle || "The rules and guidelines that govern your use of Naturalist.";
+  const effectiveDateText = content?.metadata?.effectiveDate || "May 31, 2026";
+  const sectionsList = content?.metadata?.sections || DEFAULT_SECTIONS;
+
   return (
     <LegalPageShell
       eyebrow="Legal"
-      title="Terms of Service"
-      subtitle="The rules and guidelines that govern your use of Naturalist."
-      lastUpdated="31 May 2026"
-      sections={sections}
+      title={titleText}
+      subtitle={subtitleText}
+      lastUpdated={effectiveDateText}
+      sections={sectionsList}
       patternId="termsPattern"
+      versions={content?.versions}
+      slug="terms"
+      isAdmin={isAdmin}
+      onDownloadPDF={handleDownloadPDF}
     />
   );
 }

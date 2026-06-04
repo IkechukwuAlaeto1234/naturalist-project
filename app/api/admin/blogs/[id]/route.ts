@@ -3,6 +3,34 @@ import { connectToDatabase } from "@/lib/db";
 import { Blog } from "@/models/Blog";
 import { auth } from "@/lib/auth";
 
+// GET /api/admin/blogs/[id]
+// Fetch a single blog post
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+
+    const session = await auth();
+    if (!session || (session.user as any).role !== "admin") {
+      return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+    }
+
+    await connectToDatabase();
+
+    const blog = await Blog.findById(id);
+    if (!blog) {
+      return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(blog, { status: 200 });
+  } catch (error) {
+    console.error("GET admin blog error:", error);
+    return NextResponse.json({ error: "Failed to fetch blog post" }, { status: 500 });
+  }
+}
+
 // PUT /api/admin/blogs/[id]
 // Update a blog post
 export async function PUT(

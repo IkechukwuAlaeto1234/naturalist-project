@@ -1,15 +1,22 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
-import { Mail, Lock, RefreshCw, Key } from "lucide-react";
+import { Mail, Lock, RefreshCw, Key, HelpCircle } from "lucide-react";
 import ErrorModal from "@/components/ui/ErrorModal";
 import SuccessModal from "@/components/ui/SuccessModal";
 
 function LoginContent() {
   const router = useRouter();
+  const goToRoute = (href: string) => {
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("naturalist:navigation-start"));
+      setTimeout(() => {
+        window.location.href = href;
+      }, 50);
+    }
+  };
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -115,6 +122,16 @@ function LoginContent() {
             console.log("Session verified successfully on catch. Proceeding to auth redirect.");
             setLoading(false);
             setSuccess("Successfully signed in! Redirecting...");
+            
+            const userEmail = sessionData.user.email?.toLowerCase().trim();
+            const userRole = sessionData.user.role;
+            const targetUrl = (userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin") ? "/admin" : callbackUrl;
+            
+            // Dispatch navigation-start to trigger premium brand page loader instantly!
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("naturalist:navigation-start"));
+            }
+            window.location.href = targetUrl;
             return;
           }
         }
@@ -149,7 +166,7 @@ function LoginContent() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} noValidate className="space-y-5">
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Mail className="h-3 w-3 text-muted-foreground" /> Email Address
@@ -200,22 +217,22 @@ function LoginContent() {
           {/* Footer Navigation */}
           <div className="mt-8 text-center text-xs text-muted-foreground">
             Don't have an account?{" "}
-            <Link
+            <a
               href="/register"
-              className="font-semibold text-[#b07e3a] hover:underline"
+              className="font-semibold text-[#b07e3a] hover:underline cursor-pointer"
             >
               Sign Up
-            </Link>
+            </a>
           </div>
 
           {/* Centralized Muted Forgot Password Link */}
           <div className="mt-4 text-center">
-            <Link
+            <a
               href="/forgot-password"
-              className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65 hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65 hover:text-foreground transition-colors cursor-pointer"
             >
-              <span className="material-icons select-none" style={{ fontSize: "12px" }}>help_outline</span> Forgot Password?
-            </Link>
+              <HelpCircle className="h-3.5 w-3.5" /> Forgot Password?
+            </a>
           </div>
 
         </div>
@@ -233,12 +250,25 @@ function LoginContent() {
       {/* Success modal feedback */}
       <SuccessModal
         isOpen={successModalOpen}
-        onClose={() => setSuccessModalOpen(false)}
+        onClose={() => {
+          setSuccessModalOpen(false);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("naturalist:navigation-start"));
+          }
+          router.replace("/login");
+        }}
         title="Account Activated"
         message={success}
         actionText="Sign In"
         showCancel={false}
-        onAction={() => setSuccessModalOpen(false)}
+        showClose={false}
+        onAction={() => {
+          setSuccessModalOpen(false);
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("naturalist:navigation-start"));
+          }
+          router.replace("/login");
+        }}
         actionIcon={null}
       />
     </div>

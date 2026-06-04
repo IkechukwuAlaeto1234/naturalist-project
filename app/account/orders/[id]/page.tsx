@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -124,9 +124,9 @@ export default function OrderDetailPage() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
         <XCircle className="h-10 w-10 text-destructive/50" />
         <p className="font-serif text-lg font-bold">{error || "Order not found"}</p>
-        <Link href="/account" className="text-xs font-semibold text-[#b07e3a] hover:underline">
+        <a href="/account" className="text-xs font-semibold text-[#b07e3a] hover:underline">
           ← Back to Account
-        </Link>
+        </a>
       </div>
     );
   }
@@ -149,13 +149,13 @@ export default function OrderDetailPage() {
 
         {/* ── Back + heading ── */}
         <div className="flex items-center justify-center gap-3 text-center flex-wrap">
-          <Link
+          <a
             href="/account"
             className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Orders
-          </Link>
+          </a>
           <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
           <span className="text-xs font-bold uppercase tracking-wider text-foreground">
             Track Order
@@ -353,9 +353,9 @@ export default function OrderDetailPage() {
         {/* ── Help note ── */}
         <p className="text-center text-xs text-muted-foreground pb-4">
           Need help with this order?{" "}
-          <Link href="/contact" className="text-[#b07e3a] hover:text-[#c89348] font-semibold transition-colors">
+          <a href="/contact" className="text-[#b07e3a] hover:text-[#c89348] font-semibold transition-colors">
             Contact Support →
-          </Link>
+          </a>
         </p>
 
       </div>

@@ -7,6 +7,7 @@ import { connectToDatabase } from "./db";
 import { User } from "@/models/User";
 import { AccountLog } from "@/models/AccountLog";
 import { isAdminEmail, resolveUserRole } from "./admin";
+import { parseUserAgent } from "./utils";
 
 export const {
   handlers: { GET, POST },
@@ -33,34 +34,73 @@ export const {
           return null;
         }
 
-        // ── LOCAL SIMULATION BYPASS ──
+        // ── LOCAL SIMULATION BYPASS (Seeded dynamically in database for real-time tracking) ──
         if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
           const email = credentials.email.toString().toLowerCase().trim();
           const password = credentials.password.toString();
 
+          let mockRole: "user" | "admin" = "user";
+          let mockName = "Naturalist User";
+
           if (isAdminEmail(email)) {
             const adminPass = process.env.ADMIN_SEED_PASSWORD || "NaturalistSecureAdmin2026!";
-            if (password === adminPass) {
-              return {
-                id: "mock-admin-id",
-                email,
-                name: "Naturalist Admin",
-                image: null,
-                role: "admin",
-                isVerified: true,
-              };
-            }
-            return null; // Invalid credentials
+            if (password !== adminPass) return null;
+            mockRole = "admin";
+            mockName = "Naturalist Admin";
           }
 
-          // Regular users can log in with any password in mock mode
+          await connectToDatabase();
+          let dbUser = await User.findOne({ email });
+          if (!dbUser) {
+            dbUser = await User.create({
+              name: mockName,
+              email,
+              role: mockRole,
+              isVerified: true,
+            });
+          }
+
+          // Generate real-time session
+          const { headers } = await import("next/headers");
+          const headersList = await headers();
+          const ua = headersList.get("user-agent") || "";
+          const ip = headersList.get("x-forwarded-for")?.split(",")[0].trim() || headersList.get("x-real-ip") || "127.0.0.1";
+          const { browser, os, deviceType } = parseUserAgent(ua);
+
+          const newSession = {
+            id: Math.random().toString(36).substring(2, 15),
+            ipAddress: ip,
+            userAgent: ua,
+            browser,
+            os,
+            deviceType,
+            lastActive: new Date(),
+          };
+
+          dbUser.sessions = dbUser.sessions || [];
+          dbUser.sessions.push(newSession as any);
+          await dbUser.save();
+
+          // Log in AccountLog
+          await AccountLog.create({
+            email,
+            name: dbUser.name,
+            action: "login",
+            details: `User signed in successfully from ${browser} on ${os} (${ip}).`,
+            ipAddress: ip,
+            userAgent: ua,
+            browser,
+            os,
+            deviceType,
+          });
+
           return {
-            id: "mock-user-id",
-            email: email,
-            name: "Naturalist User",
-            image: null,
-            role: "user",
-            isVerified: true,
+            id: dbUser._id.toString(),
+            email: dbUser.email,
+            name: dbUser.name,
+            image: dbUser.image || null,
+            role: dbUser.role,
+            isVerified: dbUser.isVerified,
           };
         }
 
@@ -84,6 +124,40 @@ export const {
         if (user.isSuspended) {
           throw new Error("Your account has been suspended. Please contact support.");
         }
+
+        // Generate real-time session
+        const { headers } = await import("next/headers");
+        const headersList = await headers();
+        const ua = headersList.get("user-agent") || "";
+        const ip = headersList.get("x-forwarded-for")?.split(",")[0].trim() || headersList.get("x-real-ip") || "127.0.0.1";
+        const { browser, os, deviceType } = parseUserAgent(ua);
+
+        const newSession = {
+          id: Math.random().toString(36).substring(2, 15),
+          ipAddress: ip,
+          userAgent: ua,
+          browser,
+          os,
+          deviceType,
+          lastActive: new Date(),
+        };
+
+        user.sessions = user.sessions || [];
+        user.sessions.push(newSession as any);
+        await user.save();
+
+        // Log in AccountLog
+        await AccountLog.create({
+          email: user.email,
+          name: user.name,
+          action: "login",
+          details: `User signed in successfully from ${browser} on ${os} (${ip}).`,
+          ipAddress: ip,
+          userAgent: ua,
+          browser,
+          os,
+          deviceType,
+        });
 
         if (isAdminEmail(user.email) && user.role !== "admin") {
           user.role = "admin";
@@ -135,10 +209,41 @@ export const {
             if (isAdminEmail(dbUser.email) && dbUser.role !== "admin") {
               dbUser.role = "admin";
             }
-            if (dbUser.isModified()) {
-              await dbUser.save();
-            }
           }
+
+          // Generate real-time session
+          const { headers } = await import("next/headers");
+          const headersList = await headers();
+          const ua = headersList.get("user-agent") || "";
+          const ip = headersList.get("x-forwarded-for")?.split(",")[0].trim() || headersList.get("x-real-ip") || "127.0.0.1";
+          const { browser, os, deviceType } = parseUserAgent(ua);
+
+          const newSession = {
+            id: Math.random().toString(36).substring(2, 15),
+            ipAddress: ip,
+            userAgent: ua,
+            browser,
+            os,
+            deviceType,
+            lastActive: new Date(),
+          };
+
+          dbUser.sessions = dbUser.sessions || [];
+          dbUser.sessions.push(newSession as any);
+          await dbUser.save();
+
+          // Log in AccountLog
+          await AccountLog.create({
+            email: dbUser.email,
+            name: dbUser.name,
+            action: "login",
+            details: `User signed in successfully via Google OAuth from ${browser} on ${os} (${ip}).`,
+            ipAddress: ip,
+            userAgent: ua,
+            browser,
+            os,
+            deviceType,
+          });
           
           const signedInUser = user as typeof user & {
             role?: string;

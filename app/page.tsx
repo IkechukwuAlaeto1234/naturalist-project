@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Sparkles, Leaf, Eye, ShieldCheck, ArrowRight, Loader2, CalendarDays, Clock3, MessageCircle, BookOpen } from "lucide-react";
-import ProductCard from "../components/store/ProductCard";
+import ProductCard from "@/components/store/ProductCard";
+import ImageWithSkeleton from "@/components/ui/ImageWithSkeleton";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -12,6 +12,7 @@ export default function Home() {
   const [featuredBundle, setFeaturedBundle] = useState<any>(null);
   const [blogs, setBlogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageContent, setPageContent] = useState<Record<string, string>>({});
 
   // 100% Dynamic Client-Side Hydration Guard
   useEffect(() => {
@@ -20,10 +21,11 @@ export default function Home() {
     async function loadStorefrontData() {
       try {
         setLoading(true);
-        const [productsRes, bundlesRes, blogsRes] = await Promise.all([
-          fetch("/api/products"),
-          fetch("/api/bundles"),
-          fetch("/api/blogs"),
+        const [productsRes, bundlesRes, blogsRes, contentRes] = await Promise.all([
+          fetch("/api/products", { cache: "no-store" }),
+          fetch("/api/bundles", { cache: "no-store" }),
+          fetch("/api/blogs", { cache: "no-store" }),
+          fetch("/api/content?key=home", { cache: "no-store" }),
         ]);
 
         if (productsRes.ok) {
@@ -42,6 +44,11 @@ export default function Home() {
           const blogData = await blogsRes.json();
           setBlogs(blogData.filter((post: any) => post.featured).concat(blogData.filter((post: any) => !post.featured)).slice(0, 3));
         }
+
+        if (contentRes.ok) {
+          const contentData = await contentRes.json();
+          if (contentData?.metadata) setPageContent(contentData.metadata);
+        }
       } catch (err) {
         console.error("Failed to load storefront data dynamically:", err);
       } finally {
@@ -58,28 +65,52 @@ export default function Home() {
     return null;
   }
 
+  const getValue = (key: string, defaultValue: string) => {
+    if (Object.keys(pageContent).length === 0) return defaultValue;
+    const val = pageContent[key];
+    // Treat "", null, undefined all as "not set" — always return default for blank fields
+    return val !== undefined && val !== null && val !== "" ? val : defaultValue;
+  };
+
+  const heroBadge = getValue("heroBadge", "The Skin Ritual Revolution");
+  const heroHeadline = getValue("heroHeadline", "Pure Botanicals.\nModern Efficacy.");
+  const heroSubtext = getValue("heroSubtext", "Formulated with high-efficacy, wild-harvested white sage, bakuchiol, and organic seaweed to unleash your skin's natural radiance.");
+  const heroPrimaryCta = getValue("heroPrimaryCta", "Shop All Rituals");
+  const heroSecondaryCta = getValue("heroSecondaryCta", "Our Botanical Ethos");
+  const heroImage = getValue("heroImage", "/cdn/hero-banner.jpg");
+
+  const sectionBadge = getValue("sectionBadge", "Formulation Ethos");
+  const sectionHeadline = getValue("sectionHeadline", "The Naturalist Standard");
+  const sectionSubtext = getValue("sectionSubtext", "Experience organic beauty crafted with absolute precision. High efficacy meets planet-first preservation.");
+
+  const philosophyBadge = getValue("philosophyBadge", "Our Commitment");
+  const philosophyHeadline = getValue("philosophyHeadline", "Nourish Your Body.\nRespect Our Planet.");
+  const philosophyQuote = getValue("philosophyQuote", "We believe that beauty is formed through pure, natural balance. That's why we source our white sage, aloe, and seaweed from local wild farms, utilizing zero-waste packaging to ensure your beauty ritual is perfectly in harmony with nature.");
+  const philosophyAttribution = getValue("philosophyAttribution", "The Naturalist Ethos");
+  const philosophyImage = getValue("philosophyImage", "");
+
   const standards = [
     {
       icon: Leaf,
-      title: "Wild-Harvested",
-      desc: "Distilled entirely from organic, raw botanicals sourced responsibly from their native habitats.",
+      title: getValue("feature1Title", "Wild-Harvested"),
+      desc: getValue("feature1Body", "Distilled entirely from organic, raw botanicals sourced responsibly from their native habitats."),
     },
     {
       icon: Sparkles,
-      title: "Clinical Efficacy",
-      desc: "Scientific concentrations of active botanical acids designed to nourish and regenerate skin cells.",
+      title: getValue("feature2Title", "Clinical Efficacy"),
+      desc: getValue("feature2Body", "Scientific concentrations of active botanical acids designed to nourish and regenerate skin cells."),
     },
     {
       icon: Eye,
-      title: "Total Transparency",
-      desc: "Every single batch undergoes rigorous dermatological checks. 100% vegan, clean, and cruelty-free.",
+      title: getValue("feature3Title", "Total Transparency"),
+      desc: getValue("feature3Body", "Every single batch undergoes rigorous dermatological checks. 100% vegan, clean, and cruelty-free."),
     },
     {
       icon: ShieldCheck,
-      title: "Eco-Conscious Packaging",
-      desc: "Presented exclusively in recyclable glass bottles and organic wood caps. Never any single-use plastics.",
+      title: getValue("feature4Title", "Eco-Conscious Packaging"),
+      desc: getValue("feature4Body", "Presented exclusively in recyclable glass bottles and organic wood caps. Never any single-use plastics."),
     },
-  ];
+  ].filter((s) => s.title || s.desc);
 
   return (
     <div className="flex flex-col w-full min-h-screen">
@@ -95,81 +126,96 @@ export default function Home() {
           
           {/* Content Column */}
           <div className="lg:col-span-7 flex flex-col gap-6 text-center lg:text-left items-center lg:items-start animate-fade-in-up">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#b07e3a] bg-[#b07e3a]/10 dark:bg-amber-500/10 px-3 py-1 rounded-full">
-              The Skin Ritual Revolution
-            </span>
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7.5xl font-black text-[#2d4c38] dark:text-emerald-400 leading-[1.08] tracking-tight">
-              Pure Botanicals.<br />
-              Modern Efficacy.
+            {heroBadge && (
+              <span className="text-[11px] font-bold uppercase tracking-widest text-[#b07e3a] bg-[#b07e3a]/10 dark:bg-amber-500/10 px-3 py-1 rounded-full">
+                {heroBadge}
+              </span>
+            )}
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7.5xl font-black text-[#2d4c38] dark:text-emerald-400 leading-[1.08] tracking-tight" style={{ whiteSpace: "pre-line" }}>
+              {heroHeadline}
             </h1>
-            <p className="max-w-xl text-base sm:text-lg text-[#5e6f64] dark:text-emerald-200/60 leading-relaxed">
-              Formulated with high-efficacy, wild-harvested white sage, bakuchiol, and organic seaweed to unleash your skin's natural radiance. 
-            </p>
+            {heroSubtext && (
+              <p className="max-w-xl text-base sm:text-lg text-[#5e6f64] dark:text-emerald-200/60 leading-relaxed">
+                {heroSubtext}
+              </p>
+            )}
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mt-6 w-full sm:w-auto">
-              <Link
-                href="/shop"
-                className="flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#203628] px-8 text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition-all duration-300 hover:translate-y-[-1px]"
-              >
-                Shop All Rituals
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/story"
-                className="flex h-12 items-center justify-center rounded-full border border-[#2d4c38]/40 hover:border-[#2d4c38] dark:border-emerald-500/40 px-8 text-xs font-bold uppercase tracking-wider text-[#2d4c38] dark:text-emerald-400 hover:bg-[#2d4c38]/5 transition-all duration-300"
-              >
-                Our Botanical Ethos
-              </Link>
+              {heroPrimaryCta && (
+                <a
+                  href="/p/shop"
+                  className="flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#203628] px-8 text-xs font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition-all duration-300 hover:translate-y-[-1px]"
+                >
+                  {heroPrimaryCta}
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              )}
+              {heroSecondaryCta && (
+                <a
+                  href="/p/story"
+                  className="flex h-12 items-center justify-center rounded-full border border-[#2d4c38]/40 hover:border-[#2d4c38] dark:border-emerald-500/40 px-8 text-xs font-bold uppercase tracking-wider text-[#2d4c38] dark:text-emerald-400 hover:bg-[#2d4c38]/5 transition-all duration-300"
+                >
+                  {heroSecondaryCta}
+                </a>
+              )}
             </div>
           </div>
 
           {/* Large Editorial Hero Image Column */}
-          <div className="lg:col-span-5 relative w-full aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl border-8 border-white/60 dark:border-white/5 hover:scale-[1.01] hover:rotate-[0.5deg] hover:shadow-3xl transition-all duration-700 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
-            <Image
-              src="/cdn/hero-banner.jpg"
-              alt="Premium organic skincare ritual bottles"
-              fill
-              priority
-              className="object-cover transition-transform duration-1000 hover:scale-105"
-              sizes="(max-w-7xl) 33vw, 50vw"
-            />
-            {/* Ambient shadow gradient */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#2d4c38]/30 via-transparent to-transparent pointer-events-none" />
-          </div>
+          {heroImage && (
+            <div className="lg:col-span-5 relative w-full aspect-[4/5] rounded-[32px] overflow-hidden shadow-2xl border-8 border-white/60 dark:border-white/5 hover:scale-[1.01] hover:rotate-[0.5deg] hover:shadow-3xl transition-all duration-700 flex-shrink-0 animate-fade-in-up" style={{ animationDelay: "150ms" }}>
+              <ImageWithSkeleton
+                src={heroImage}
+                alt="Premium organic skincare ritual bottles"
+                className="w-full h-full object-cover transition-transform duration-1000 hover:scale-105"
+                style={{ width: "100%", height: "100%" }}
+              />
+              {/* Ambient shadow gradient */}
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2d4c38]/30 via-transparent to-transparent pointer-events-none" />
+            </div>
+          )}
 
         </div>
       </section>
 
       {/* 2. Brand Standard / Values Section */}
-      <section className="bg-gradient-to-b from-white to-white dark:from-[#0f1411] dark:to-[#0a0d0b] py-24 px-6 sm:px-8 border-b border-border/40 transition-colors duration-300">
-        <div className="mx-auto max-w-7xl text-center flex flex-col gap-5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
-            Formulation Ethos
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#2d4c38] dark:text-emerald-400 leading-snug">
-            The Naturalist Standard
-          </h2>
-          <p className="max-w-md text-sm text-muted-foreground mx-auto leading-relaxed">
-            Experience organic beauty crafted with absolute precision. High efficacy meets planet-first preservation.
-          </p>
+      {standards.length > 0 && (
+        <section className="bg-gradient-to-b from-white to-white dark:from-[#0f1411] dark:to-[#0a0d0b] py-24 px-6 sm:px-8 border-b border-border/40 transition-colors duration-300">
+          <div className="mx-auto max-w-7xl text-center flex flex-col gap-5">
+            {sectionBadge && (
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
+                {sectionBadge}
+              </span>
+            )}
+            {sectionHeadline && (
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-[#2d4c38] dark:text-emerald-400 leading-snug">
+                {sectionHeadline}
+              </h2>
+            )}
+            {sectionSubtext && (
+              <p className="max-w-md text-sm text-muted-foreground mx-auto leading-relaxed">
+                {sectionSubtext}
+              </p>
+            )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 mt-16 text-left relative z-10">
-            {standards.map((standard, idx) => (
-              <div 
-                key={idx} 
-                className="flex flex-col gap-4 p-6 rounded-3xl border border-border/30 dark:border-[#232c26]/20 bg-white/40 dark:bg-[#151c18]/40 backdrop-blur-md hover:translate-y-[-6px] hover:shadow-xl hover:border-[#2d4c38]/40 dark:hover:border-emerald-500/40 transition-all duration-300 group"
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400 transition-colors duration-300 group-hover:bg-[#2d4c38] group-hover:text-white">
-                  <standard.icon className="h-5 w-5" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 mt-16 text-left relative z-10">
+              {standards.map((standard, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex flex-col gap-4 p-6 rounded-3xl border border-border/30 dark:border-[#232c26]/20 bg-white/40 dark:bg-[#151c18]/40 backdrop-blur-md hover:translate-y-[-6px] hover:shadow-xl hover:border-[#2d4c38]/40 dark:hover:border-emerald-500/40 transition-all duration-300 group"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2d4c38]/10 text-[#2d4c38] dark:bg-emerald-500/10 dark:text-emerald-400 transition-colors duration-300 group-hover:bg-[#2d4c38] group-hover:text-white">
+                    <standard.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground tracking-tight">{standard.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{standard.desc}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground tracking-tight">{standard.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{standard.desc}</p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* 3. Featured Products Grid Section */}
       <section className="bg-[#fcfcfb] dark:bg-[#0a0d0b] py-24 px-6 sm:px-8 border-b border-border/40 transition-colors duration-300">
@@ -185,13 +231,13 @@ export default function Home() {
                 Featured Spotlights
               </h2>
             </div>
-            <Link
+            <a
               href="/shop"
               className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b07e3a] hover:opacity-85 border-b border-accent/40 pb-0.5 transition-all w-fit"
             >
               Explore Shop
               <ArrowRight className="h-3 w-3" />
-            </Link>
+            </a>
           </div>
 
           {/* Product Grid / Skeleton Loaders */}
@@ -218,12 +264,12 @@ export default function Home() {
               <p className="text-xs text-muted-foreground max-w-sm mt-2 leading-relaxed">
                 Our active botanical formulas are currently being freshly distilled and prepared. Check back shortly for our curated collection of best sellers.
               </p>
-              <Link
+              <a
                 href="/shop"
                 className="mt-6 flex h-10 items-center justify-center rounded-full bg-[#2d4c38] px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#203628] shadow-sm transition-all"
               >
                 Explore Catalog
-              </Link>
+              </a>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 animate-fade-in-up">
@@ -275,10 +321,10 @@ export default function Home() {
                     Ritual Inclusions:
                   </h4>
                   <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {featuredBundle.products.map((item: any, idx: number) => (
+                    {featuredBundle.products.filter(Boolean).map((item: any, idx: number) => (
                       <li key={idx} className="flex items-center gap-2.5 text-xs text-muted-foreground">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#b07e3a]" />
-                        {item.name}
+                        {item?.name || "Product"}
                       </li>
                     ))}
                   </ul>
@@ -297,13 +343,13 @@ export default function Home() {
                     )}
                   </div>
 
-                  <Link
+                  <a
                     href={`/bundles/${featuredBundle.slug}`}
                     className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#203628] px-6 text-xs font-bold uppercase tracking-wider text-white hover:translate-y-[-1px] transition-all shadow-md sm:w-auto"
                   >
                     View Ritual Set
                     <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
+                  </a>
                 </div>
 
               </div>
@@ -327,19 +373,19 @@ export default function Home() {
                   <BookOpen className="h-6 w-6 text-[#b07e3a]" />
                 </h2>
               </div>
-              <Link
+              <a
                 href="/blog"
                 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#b07e3a] hover:opacity-85 border-b border-accent/40 pb-0.5 transition-all w-fit"
               >
                 Explore Journal
                 <ArrowRight className="h-3 w-3" />
-              </Link>
+              </a>
             </div>
 
             {blogs.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
                 {blogs.map((post) => (
-                  <Link
+                  <a
                     key={post.slug}
                     href={`/blog/${post.slug}`}
                     className="group overflow-hidden rounded-[28px] border border-border/30 dark:border-[#232c26]/20 bg-white dark:bg-[#151c18] shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col"
@@ -406,7 +452,7 @@ export default function Home() {
                         })()}
                       </div>
                     </div>
-                  </Link>
+                  </a>
                 ))}
               </div>
             )}
@@ -415,29 +461,67 @@ export default function Home() {
       )}
 
       {/* 6. Editorial Story / Philosophy Quote Panel */}
-      <section className="bg-[#fcfcfb] dark:bg-[#0a0d0b] py-28 px-6 sm:px-8 transition-colors duration-300 relative overflow-hidden">
-        
-        {/* Soft Organic Line Divider decor */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[1px] bg-gradient-to-r from-transparent via-[#e2dacd] to-transparent" />
+      {philosophyQuote && (
+        <section className="bg-[#fcfcfb] dark:bg-[#0a0d0b] py-28 px-6 sm:px-8 transition-colors duration-300 relative overflow-hidden">
 
-        <div className="mx-auto max-w-3xl text-center flex flex-col gap-6 relative z-10 animate-fade-in-up">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
-            Our Commitment
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#2d4c38] dark:text-emerald-400 leading-[1.15] tracking-tight">
-            Nourish Your Body.<br />
-            Respect Our Planet.
-          </h2>
-          <p className="text-base text-muted-foreground leading-relaxed mt-2 italic font-serif max-w-2xl mx-auto">
-            "We believe that beauty is formed through pure, natural balance. That’s why we source our white sage, aloe, and seaweed from local wild farms, utilizing zero-waste packaging to ensure your beauty ritual is perfectly in harmony with nature."
-          </p>
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <span className="h-px w-8 bg-border" />
-            <span className="font-serif italic text-sm text-muted-foreground/80">The Naturalist Ethos</span>
-            <span className="h-px w-8 bg-border" />
-          </div>
-        </div>
-      </section>
+          {/* Soft Organic Line Divider decor */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-[1px] bg-gradient-to-r from-transparent via-[#e2dacd] to-transparent" />
+
+          {philosophyImage ? (
+            /* Side-by-side layout when image is present */
+            <div className="mx-auto max-w-6xl grid grid-cols-1 lg:grid-cols-2 items-center gap-12 relative z-10">
+              <div className="flex flex-col gap-6 animate-fade-in-up text-left">
+                {philosophyBadge && (
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
+                    {philosophyBadge}
+                  </span>
+                )}
+                {philosophyHeadline && (
+                  <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#2d4c38] dark:text-emerald-400 leading-[1.15] tracking-tight" style={{ whiteSpace: "pre-line" }}>
+                    {philosophyHeadline}
+                  </h2>
+                )}
+                <p className="text-base text-muted-foreground leading-relaxed italic font-serif">
+                  {philosophyQuote.startsWith('"') ? philosophyQuote : `"${philosophyQuote}"`}
+                </p>
+                <div className="flex items-center gap-3">
+                  <span className="h-px w-8 bg-border" />
+                  <span className="font-serif italic text-sm text-muted-foreground/80">{philosophyAttribution || "The Naturalist Ethos"}</span>
+                </div>
+              </div>
+              <div className="rounded-3xl overflow-hidden border border-border/30 shadow-2xl animate-fade-in-up" style={{ animationDelay: "120ms" }}>
+                <ImageWithSkeleton
+                  src={philosophyImage}
+                  alt="Philosophy section visual"
+                  className="w-full object-cover max-h-[520px] transition-transform duration-700 hover:scale-105"
+                />
+              </div>
+            </div>
+          ) : (
+            /* Centered layout when no image */
+            <div className="mx-auto max-w-3xl text-center flex flex-col gap-6 relative z-10 animate-fade-in-up">
+              {philosophyBadge && (
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#b07e3a]">
+                  {philosophyBadge}
+                </span>
+              )}
+              {philosophyHeadline && (
+                <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-[#2d4c38] dark:text-emerald-400 leading-[1.15] tracking-tight" style={{ whiteSpace: "pre-line" }}>
+                  {philosophyHeadline}
+                </h2>
+              )}
+              <p className="text-base text-muted-foreground leading-relaxed mt-2 italic font-serif max-w-2xl mx-auto">
+                {philosophyQuote.startsWith('"') ? philosophyQuote : `"${philosophyQuote}"`}
+              </p>
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <span className="h-px w-8 bg-border" />
+                <span className="font-serif italic text-sm text-muted-foreground/80">{philosophyAttribution || "The Naturalist Ethos"}</span>
+                <span className="h-px w-8 bg-border" />
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
     </div>
   );

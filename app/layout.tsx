@@ -12,13 +12,21 @@ export const metadata: Metadata = {
   title: "Naturalist | Premium Organic Skincare & Wellness",
   description: "Experience premium, sustainable organic skincare crafted with precision. Empowering your natural glow while protecting our planet.",
   keywords: "organic skincare, natural beauty, eco-friendly cosmetics, premium wellness, vegan beauty",
-  authors: [{ name: "Naturalist Team" }],
+  // Author field omitted — do not expose team or internal names in page source
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
+  referrer: "strict-origin-when-cross-origin",
   openGraph: {
     title: "Naturalist | Premium Organic Skincare & Wellness",
     description: "Premium, sustainable organic skincare crafted with precision.",
     type: "website",
+    siteName: "Naturalist",
   },
 };
+
 
 import React, { Suspense } from "react";
 import Navbar from "../components/layout/Navbar";

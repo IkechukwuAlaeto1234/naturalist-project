@@ -13,6 +13,26 @@ export interface IUser extends Document {
   otpExpires?: Date;
   resetToken?: string;
   resetTokenExpires?: Date;
+  secondaryEmail?: string;
+  isSecondaryEmailVerified?: boolean;
+  sessions?: Array<{
+    id: string;
+    ipAddress: string;
+    userAgent: string;
+    browser: string;
+    os: string;
+    deviceType: string;
+    lastActive: Date;
+  }>;
+  shippingAddress?: {
+    name: string;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+    phone: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +87,35 @@ const UserSchema = new Schema<IUser>(
     },
     resetTokenExpires: {
       type: Date,
+    },
+    secondaryEmail: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+    isSecondaryEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    sessions: [
+      {
+        id: { type: String, required: true },
+        ipAddress: { type: String, required: true },
+        userAgent: { type: String, required: true },
+        browser: { type: String, required: true },
+        os: { type: String, required: true },
+        deviceType: { type: String, required: true },
+        lastActive: { type: Date, default: Date.now },
+      },
+    ],
+    shippingAddress: {
+      name: { type: String, trim: true },
+      street: { type: String, trim: true },
+      city: { type: String, trim: true },
+      state: { type: String, trim: true },
+      zip: { type: String, trim: true },
+      country: { type: String, trim: true },
+      phone: { type: String, trim: true },
     },
   },
   {

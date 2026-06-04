@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
+
 import { Mail, MessageSquare, Clock, ArrowRight, Loader2, CheckCircle, ChevronDown, Check } from "lucide-react";
 
 const topics = [
@@ -218,9 +218,9 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-foreground">FAQ</p>
-                  <Link href="/faq" className="text-sm text-[#b07e3a] hover:underline mt-0.5 inline-flex items-center gap-1">
+                  <a href="/faq" className="text-sm text-[#b07e3a] hover:underline mt-0.5 inline-flex items-center gap-1">
                     Browse common answers <ArrowRight className="h-3 w-3" />
-                  </Link>
+                  </a>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShieldCheck, Truck, RotateCcw } from "lucide-react";
@@ -55,13 +55,13 @@ export default function CartPage() {
         
         {/* Breadcrumb / Title */}
         <div className="mb-10">
-          <Link
+          <a
             href="/shop"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-3 group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Continue Shopping
-          </Link>
+          </a>
           <div className="text-center">
             <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
               Your Cart
@@ -84,12 +84,12 @@ export default function CartPage() {
                 Nourish your skin. Add botanical cleansers, restorative tonics, and sets to your daily ritual.
               </p>
             </div>
-            <Link
+            <a
               href="/shop"
               className="mt-2 inline-flex items-center justify-center h-11 px-6 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md select-none cursor-pointer"
             >
               Start Shopping
-            </Link>
+            </a>
           </div>
         ) : (
           /* Main Layout */

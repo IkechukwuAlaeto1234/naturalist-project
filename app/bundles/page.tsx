@@ -1,14 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
+
 import Image from "next/image";
 import { ArrowRight, Leaf, Package } from "lucide-react";
+import ImageWithSkeleton from "@/components/ui/ImageWithSkeleton";
 
 export default function BundlesPage() {
   const [mounted, setMounted] = useState(false);
   const [bundles, setBundles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pageContent, setPageContent] = useState<Record<string, string>>({});
+
+  const getValue = (key: string, defaultValue: string) => {
+    if (Object.keys(pageContent).length === 0) return defaultValue;
+    const val = pageContent[key];
+    return val !== undefined && val !== null ? val : defaultValue;
+  };
+
+  const heroBadge = getValue("heroBadge", "Curated Sets");
+  const heroHeadline = getValue("heroHeadline", "Ritual Bundles");
+  const heroSubtext = getValue("heroSubtext", "Complete skincare ceremonies, thoughtfully assembled for maximum botanical efficacy.");
 
   useEffect(() => {
     setMounted(true);
@@ -17,10 +29,17 @@ export default function BundlesPage() {
     }, 120);
     async function loadBundles() {
       try {
-        const res = await fetch("/api/bundles");
-        if (res.ok) {
-          const data = await res.json();
+        const [bundlesRes, contentRes] = await Promise.all([
+          fetch("/api/bundles", { cache: "no-store" }),
+          fetch("/api/content?key=bundles", { cache: "no-store" }),
+        ]);
+        if (bundlesRes.ok) {
+          const data = await bundlesRes.json();
           setBundles(data.filter((b: any) => b.isActive));
+        }
+        if (contentRes.ok) {
+          const contentData = await contentRes.json();
+          if (contentData?.metadata) setPageContent(contentData.metadata);
         }
       } catch (err) {
         console.error("Failed to load bundles:", err);
@@ -39,29 +58,42 @@ export default function BundlesPage() {
 
       {/* Hero */}
       <section className="relative w-full overflow-hidden bg-[#0d1510] flex items-center justify-center" style={{ minHeight: "320px" }}>
-        <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-          <defs>
-            <pattern id="bundlesPattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
-              <circle cx="60" cy="60" r="30" fill="none" stroke="#b07e3a" strokeWidth="0.5" opacity="0.12" />
-              <circle cx="60" cy="60" r="20" fill="none" stroke="#2d4c38" strokeWidth="0.5" opacity="0.15" />
-              <circle cx="60" cy="60" r="3" fill="#b07e3a" opacity="0.2" />
-              <path d="M20 60 Q40 20 60 20 Q45 42 20 60Z" fill="#2d4c38" opacity="0.18" />
-              <path d="M100 60 Q80 100 60 100 Q75 78 100 60Z" fill="#b07e3a" opacity="0.12" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="#0d1510" />
-          <rect width="100%" height="100%" fill="url(#bundlesPattern)" />
-        </svg>
+        {pageContent.heroImage ? (
+          <ImageWithSkeleton
+            src={pageContent.heroImage}
+            alt=""
+            className="w-full h-full object-cover opacity-25 pointer-events-none"
+            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+          />
+        ) : (
+          <svg className="absolute inset-0 w-full h-full" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+            <defs>
+              <pattern id="bundlesPattern" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <circle cx="60" cy="60" r="30" fill="none" stroke="#b07e3a" strokeWidth="0.5" opacity="0.12" />
+                <circle cx="60" cy="60" r="20" fill="none" stroke="#2d4c38" strokeWidth="0.5" opacity="0.15" />
+                <circle cx="60" cy="60" r="3" fill="#b07e3a" opacity="0.2" />
+                <path d="M20 60 Q40 20 60 20 Q45 42 20 60Z" fill="#2d4c38" opacity="0.18" />
+                <path d="M100 60 Q80 100 60 100 Q75 78 100 60Z" fill="#b07e3a" opacity="0.12" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="#0d1510" />
+            <rect width="100%" height="100%" fill="url(#bundlesPattern)" />
+          </svg>
+        )}
         <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 80% at 50% 50%, rgba(176,126,58,0.15) 0%, transparent 70%)" }} />
         <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, #0d1510 0%, transparent 35%, transparent 65%, #0d1510 100%)" }} />
         <div className="relative z-10 flex flex-col items-center text-center gap-3 px-6 py-24">
-          <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a]">Curated Sets</span>
+          {heroBadge && (
+            <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-[#b07e3a]">{heroBadge}</span>
+          )}
           <h1 className="font-serif font-black text-white leading-none tracking-tight" style={{ fontSize: "clamp(3rem, 9vw, 6.5rem)" }}>
-            Ritual Bundles
+            {heroHeadline}
           </h1>
-          <p className="text-sm text-white/40 max-w-sm leading-relaxed mt-1">
-            Complete skincare ceremonies, thoughtfully assembled for maximum botanical efficacy.
-          </p>
+          {heroSubtext && (
+            <p className="text-sm text-white/40 max-w-sm leading-relaxed mt-1">
+              {heroSubtext}
+            </p>
+          )}
         </div>
       </section>
 
@@ -92,14 +124,14 @@ export default function BundlesPage() {
               <p className="text-xs text-muted-foreground max-w-xs mt-2 leading-relaxed">
                 Our curators are assembling new ritual bundles. Check back soon or explore individual products.
               </p>
-              <Link href="/shop" className="mt-6 flex h-10 items-center justify-center gap-2 rounded-full bg-[#2d4c38] px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#203628] transition-all">
+              <a href="/shop" className="mt-6 flex h-10 items-center justify-center gap-2 rounded-full bg-[#2d4c38] px-6 text-xs font-bold uppercase tracking-wider text-white hover:bg-[#203628] transition-all">
                 Browse the Shop <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
+              </a>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-fade-in-up">
               {bundles.map((bundle) => (
-                <Link
+                <a
                   key={bundle._id}
                   href={`/bundles/${bundle.slug}`}
                   className="group flex flex-col rounded-3xl border border-border/40 dark:border-[#232c26] bg-white dark:bg-[#0f1411] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
@@ -107,12 +139,11 @@ export default function BundlesPage() {
                   {/* Image */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
                     {bundle.images?.[0] ? (
-                      <Image
+                      <ImageWithSkeleton
                         src={bundle.images[0]}
                         alt={bundle.name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, width: "100%", height: "100%" }}
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -138,14 +169,14 @@ export default function BundlesPage() {
                     {/* Inclusions */}
                     {bundle.products?.length > 0 && (
                       <ul className="flex flex-col gap-1.5 mt-1">
-                        {bundle.products.slice(0, 3).map((item: any, i: number) => (
+                        {bundle.products.filter(Boolean).slice(0, 3).map((item: any, i: number) => (
                           <li key={i} className="flex items-center gap-2 text-[11px] text-muted-foreground">
                             <span className="h-1 w-1 rounded-full bg-[#b07e3a] flex-shrink-0" />
-                            {item.name}
+                            {item?.name || "Product"}
                           </li>
                         ))}
-                        {bundle.products.length > 3 && (
-                          <li className="text-[11px] text-[#b07e3a] font-semibold">+{bundle.products.length - 3} more</li>
+                        {bundle.products.filter(Boolean).length > 3 && (
+                          <li className="text-[11px] text-[#b07e3a] font-semibold">+{bundle.products.filter(Boolean).length - 3} more</li>
                         )}
                       </ul>
                     )}
@@ -163,7 +194,7 @@ export default function BundlesPage() {
                       </span>
                     </div>
                   </div>
-                </Link>
+                </a>
               ))}
             </div>
           )}

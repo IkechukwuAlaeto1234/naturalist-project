@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx scripts/seed.ts",
-    "db:migrate:atlas": "tsx scripts/migrate-to-atlas.ts"
+    "db:migrate:atlas": "tsx scripts/migrate-to-atlas.ts",
+    "security-check": "node scripts/security-check.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.2",
@@ -25,6 +26,7 @@
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
     "dotenv": "^17.4.2",
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.17.0",
     "mongoose": "^9.6.3",
     "next": "16.2.6",
@@ -42,6 +44,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@fontsource/host-grotesk": "^5.2.8",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
     "@types/react": "^19",
