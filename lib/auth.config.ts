@@ -42,7 +42,10 @@ export const authConfig = {
         }
         
         // Extract forwarded host and protocol to avoid internal port redirect loop (e.g., localhost:10000)
-        const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
+        let host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
+        if (host && host.includes(":10000")) {
+          host = host.replace(/:10000$/, "");
+        }
         const proto = request.headers.get("x-forwarded-proto") || "https";
         const redirectUrl = new URL(`/login?callbackUrl=${encodeURIComponent(nextUrl.pathname)}`, `${proto}://${host}`);
         
@@ -62,7 +65,10 @@ export const authConfig = {
         try {
           const { headers } = await import("next/headers");
           const headersList = await headers();
-          const host = headersList.get("x-forwarded-host") || headersList.get("host");
+          let host = headersList.get("x-forwarded-host") || headersList.get("host");
+          if (host && host.includes(":10000")) {
+            host = host.replace(/:10000$/, "");
+          }
           const proto = headersList.get("x-forwarded-proto") || "https";
           if (host) {
             parsed.protocol = proto.endsWith(":") ? proto : `${proto}:`;

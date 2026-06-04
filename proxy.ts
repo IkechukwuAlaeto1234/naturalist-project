@@ -22,9 +22,11 @@ const ADMIN_API_PATHS = /^\/api\/admin(\/|$)/;
  * and executes secure Auth.js route guards.
  */
 export const proxy = auth((req) => {
+  // Clean internal port :10000 from URLs to avoid redirect loop issues in production
+  const cleanReqUrl = req.url.replace(/:10000($|\/)/, "$1");
   const url = req.nextUrl;
   const { pathname } = url;
-  const hostname = req.headers.get("host") || "";
+  const hostname = (req.headers.get("host") || "").replace(/:10000$/, "");
 
   console.log("PROXY INTERCEPTED pathname:", pathname, "hostname:", hostname);
 
@@ -60,8 +62,8 @@ export const proxy = auth((req) => {
 
     // Guard: Admin subdomain requires authentication
     if (!isLoggedIn) {
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", req.url);
+      const loginUrl = new URL("/login", cleanReqUrl);
+      loginUrl.searchParams.set("callbackUrl", cleanReqUrl);
       return withTracing(NextResponse.redirect(loginUrl));
     }
 
@@ -69,7 +71,7 @@ export const proxy = auth((req) => {
     if (!hasAdminAccess(req.auth?.user as ProxyUser)) {
       // Redirect unauthorized users to the main public site
       const mainDomain = hostname.replace("admin.", "");
-      return withTracing(NextResponse.redirect(new URL(`http://${mainDomain}`, req.url)));
+      return withTracing(NextResponse.redirect(new URL(`http://${mainDomain}`, cleanReqUrl)));
     }
 
     // Rewrite request internally to the admin directory
@@ -83,14 +85,14 @@ export const proxy = auth((req) => {
   if (ADMIN_PAGE_PATHS.test(pathname)) {
     const isLoggedIn = !!req.auth?.user;
     if (!isLoggedIn) {
-      const loginUrl = new URL("/login", req.url);
+      const loginUrl = new URL("/login", cleanReqUrl);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return withTracing(NextResponse.redirect(loginUrl));
     }
 
     if (!hasAdminAccess(req.auth?.user as ProxyUser)) {
       // Authenticated but not admin — send to home page
-      return withTracing(NextResponse.redirect(new URL("/", req.url)));
+      return withTracing(NextResponse.redirect(new URL("/", cleanReqUrl)));
     }
   }
 
