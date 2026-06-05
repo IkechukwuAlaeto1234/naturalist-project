@@ -5,18 +5,11 @@ import { User } from "@/models/User";
 import { resetPasswordSchema } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
 import { getFirstValidationError } from "@/lib/utils";
+import { verifyLookupToken, hashEmail } from "@/lib/lookup-token";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
-    // ── LOCAL SIMULATION BYPASS ──
-    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-      return NextResponse.json(
-        { message: "Your password has been successfully reset. You can now log in." },
-        { status: 200 }
-      );
-    }
 
     // 1. Rate Limiting (max 5 password resets per 15 minutes)
     const limiter = await rateLimit("reset-password", { limit: 5 });
@@ -36,17 +29,39 @@ export async function POST(req: Request) {
     }
 
     const { token, password } = result.data;
-    // We expect the client to also provide the email to guarantee uniqueness and prevent collisions
-    const email = body.email ? body.email.toString().toLowerCase().trim() : null;
+    const { ref } = body;
 
-    if (!email) {
-      return NextResponse.json({ error: "Email address is required" }, { status: 400 });
+    if (!ref) {
+      return NextResponse.json({ error: "Security reference token is required" }, { status: 400 });
+    }
+
+    const payload = await verifyLookupToken(ref);
+    if (!payload) {
+      return NextResponse.json(
+        { error: "This recovery session has expired or is invalid. Please start over." },
+        { status: 401 }
+      );
     }
 
     await connectToDatabase();
 
     // 3. Find User
-    const user = await User.findOne({ email });
+    const users = await User.find({}, "email").lean();
+    let matchedId = null;
+
+    for (const u of users) {
+      const h = await hashEmail(u.email as string);
+      if (h === payload.emailHash) {
+        matchedId = u._id;
+        break;
+      }
+    }
+
+    if (!matchedId) {
+      return NextResponse.json({ error: "User account not found" }, { status: 404 });
+    }
+
+    const user = await User.findById(matchedId);
     if (!user) {
       return NextResponse.json({ error: "User account not found" }, { status: 404 });
     }

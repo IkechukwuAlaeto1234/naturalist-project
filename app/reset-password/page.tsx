@@ -17,6 +17,7 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const refToken = searchParams.get("ref") || "";
   const verifiedFromQuery = searchParams.get("verified") === "true";
   const tokenFromQuery = searchParams.get("token") || "";
 
@@ -71,8 +72,11 @@ function ResetPasswordContent() {
   }, [verifiedFromQuery, tokenFromQuery]);
 
   useEffect(() => {
+    const title = resetStep === 1
+      ? "Enter Reset Passcode | Naturalist"
+      : "Choose a New Password | Naturalist";
     const titleTimeout = setTimeout(() => {
-      document.title = "Confirm Password Reset | Naturalist";
+      document.title = title;
     }, 120);
     if (!email) {
       setVerificationErrorMsg("No email address context found. Please return to the Forgot Password screen.");
@@ -80,7 +84,7 @@ function ResetPasswordContent() {
       setVerificationModalOpen(true);
     }
     return () => clearTimeout(titleTimeout);
-  }, [email]);
+  }, [email, resetStep]);
 
   // Handle Token inputs
   const handleTokenChange = (index: number, val: string) => {
@@ -168,15 +172,23 @@ function ResetPasswordContent() {
     }, 1200);
 
     const startTime = Date.now();
-    let passcodeValid = true;
+    let passcodeValid = false;
+    let errorMsg = "The security passcode you entered is incorrect, expired, or malformed.";
 
-    // Simulate validation in development mode
-    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-      if (token === "123456" || token === "000000" || token.startsWith("000")) {
-        passcodeValid = false;
+    try {
+      const res = await fetch("/api/auth/reset-password/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ref: refToken, token }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        passcodeValid = true;
+      } else {
+        errorMsg = data.error || errorMsg;
       }
-    } else {
-      // In real database mode, verification is fully validated at save
+    } catch {
+      errorMsg = "A network error occurred. Please try again.";
     }
 
     const elapsed = Date.now() - startTime;
@@ -190,7 +202,7 @@ function ResetPasswordContent() {
       setVerificationStatus("success");
     } else {
       setVerificationStatus("error");
-      setVerificationErrorMsg("The security passcode you entered is incorrect, expired, or malformed.");
+      setVerificationErrorMsg(errorMsg);
     }
   };
 
@@ -198,7 +210,7 @@ function ResetPasswordContent() {
     setVerificationModalOpen(false);
     const token = tokenFields.join("");
     // Snappy browser navigation to step 2 that triggers the official Brand Loader dynamically!
-    window.location.href = `/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}&token=${token}&verified=true`;
+    window.location.href = `/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}&ref=${encodeURIComponent(refToken)}&token=${token}&verified=true`;
   };
 
   // Step 2: Save Password Action
@@ -225,7 +237,7 @@ function ResetPasswordContent() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.toLowerCase().trim(),
+          ref: refToken,
           token: token,
           password,
           confirmPassword,
@@ -300,6 +312,11 @@ function ResetPasswordContent() {
                       onKeyDown={(e) => handleTokenKeyDown(idx, e)}
                       onPaste={idx === 0 ? handleTokenPaste : undefined}
                       placeholder="•"
+                      inputMode="text"
+                      autoComplete="one-time-code"
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck="false"
                       className="w-12 h-12 text-lg font-bold font-serif uppercase rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
                     />
                   ))}

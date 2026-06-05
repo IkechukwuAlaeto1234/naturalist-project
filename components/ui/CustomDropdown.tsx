@@ -16,6 +16,9 @@ interface CustomDropdownProps {
   label?: string;
   placeholder?: string;
   className?: string;
+  size?: "sm" | "md";
+  textColorClassName?: string;
+  disabled?: boolean;
 }
 
 export default function CustomDropdown({
@@ -25,6 +28,9 @@ export default function CustomDropdown({
   label,
   placeholder = "Select an option",
   className = "",
+  size = "md",
+  textColorClassName = "",
+  disabled = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -47,7 +53,10 @@ export default function CustomDropdown({
   };
 
   return (
-    <div className={`space-y-1.5 text-xs w-full ${className}`} ref={dropdownRef}>
+    <div 
+      className={`space-y-1.5 text-xs w-full ${className} ${disabled ? "opacity-60 pointer-events-none" : ""}`} 
+      ref={dropdownRef}
+    >
       {label && (
         <label className="font-bold text-[#a3b2a9] uppercase tracking-wider block">
           {label}
@@ -57,12 +66,17 @@ export default function CustomDropdown({
         {/* Dropdown Toggle Button */}
         <button
           type="button"
+          disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white flex items-center justify-between transition-all focus:outline-none focus:border-[#b07e3a] hover:bg-white/[0.01]"
+          className={`w-full ${
+            size === "sm" ? "h-8 px-2.5 rounded-lg" : "h-11 px-4 rounded-xl"
+          } border border-[#1a241e] bg-[#070908] ${
+            textColorClassName || "text-white"
+          } flex items-center justify-between transition-all focus:outline-none focus:border-[#b07e3a] hover:bg-white/[0.01]`}
         >
           <div className="flex items-center gap-2 truncate">
             {selectedOption?.icon && <selectedOption.icon className="h-4 w-4 text-[#b07e3a]" />}
-            <span className="font-semibold text-sm truncate">
+            <span className={`font-semibold ${size === "sm" ? "text-[10px]" : "text-sm"} truncate`}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </div>
@@ -83,7 +97,9 @@ export default function CustomDropdown({
                   key={opt.value}
                   type="button"
                   onClick={() => handleSelect(opt.value)}
-                  className={`w-full h-10 px-4 flex items-center justify-between text-left transition-colors text-xs font-semibold ${
+                  className={`w-full ${
+                    size === "sm" ? "h-8 px-2.5 text-[10px]" : "h-10 px-4 text-xs"
+                  } flex items-center justify-between text-left transition-colors font-semibold ${
                     isSelected
                       ? "bg-[#2d4c38] text-white"
                       : "text-[#a3b2a9] hover:text-white hover:bg-white/[0.04]"
@@ -91,7 +107,7 @@ export default function CustomDropdown({
                 >
                   <div className="flex items-center gap-2 truncate">
                     {opt.icon && <opt.icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-[#b07e3a]"}`} />}
-                    <span className="text-sm truncate">{opt.label}</span>
+                    <span className={`${size === "sm" ? "text-[10px]" : "text-sm"} truncate`}>{opt.label}</span>
                   </div>
                   {isSelected && <Check className="h-4 w-4 text-white" />}
                 </button>

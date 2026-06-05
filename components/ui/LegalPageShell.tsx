@@ -90,10 +90,9 @@ export default function LegalPageShell({
       <section className="w-full bg-[#fcfcfb] dark:bg-[#0a0d0b] py-20 px-6 sm:px-8 transition-colors duration-300">
         <div className="mx-auto max-w-2xl">
 
-          {/* Effective date + Previous Version link — Anthropic-style */}
-          <div className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-6">
+          <div className="mb-10 flex flex-row items-center justify-between gap-4 border-b border-border/40 pb-6">
             {/* LHS: Effective date */}
-            <span className="inline-flex items-center rounded-full border border-[#b07e3a]/20 bg-[#b07e3a]/5 dark:bg-[#b07e3a]/10 px-3.5 py-1.5 text-xs font-bold text-[#b07e3a]">
+            <span className="w-fit inline-flex items-center rounded-full border border-[#b07e3a]/20 bg-[#b07e3a]/5 dark:bg-[#b07e3a]/10 px-3.5 py-1.5 text-xs font-bold text-[#b07e3a]">
               Effective {lastUpdated}
             </span>
 
@@ -101,7 +100,7 @@ export default function LegalPageShell({
             {slug && previousVersion && (
               <Link
                 href={`/p/${slug}/archive/${previousVersion._id}`}
-                className="text-xs font-bold text-[#b07e3a] underline underline-offset-2 hover:text-[#d4a362] transition-colors"
+                className="text-xs font-bold text-[#b07e3a] underline underline-offset-2 hover:text-[#d4a362] transition-colors whitespace-nowrap"
               >
                 Previous Version
               </Link>

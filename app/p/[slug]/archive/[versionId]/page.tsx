@@ -46,6 +46,20 @@ export default function ArchivedVersionPage({
     loadContent();
   }, [slug]);
 
+  const versions = content?.versions || [];
+  const version = versions.find((v: any) => v._id === versionId);
+
+  useEffect(() => {
+    if (version) {
+      const titleText = version.title || pageName;
+      const date = new Date(version.savedAt);
+      const formattedDate = date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      document.title = `Archive: ${titleText} (${formattedDate}) | Naturalist`;
+    } else {
+      document.title = `${pageName} Version Archive | Naturalist`;
+    }
+  }, [version, pageName]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#fcfcfb] dark:bg-[#0a0d0b] flex items-center justify-center">
@@ -53,9 +67,6 @@ export default function ArchivedVersionPage({
       </div>
     );
   }
-
-  const versions = content?.versions || [];
-  const version = versions.find((v: any) => v._id === versionId);
 
   if (!version) {
     return (

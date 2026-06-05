@@ -7,7 +7,8 @@ import {
   AlertCircle,
   Upload,
   ArrowLeft,
-  Boxes
+  Boxes,
+  Check
 } from "lucide-react";
 import { proxyCloudinaryUrl } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
@@ -223,7 +224,7 @@ export default function AdminEditBundlePage() {
   }
 
   return (
-    <div className="space-y-8 pb-20 text-white">
+    <div className="space-y-8 pb-20 text-white max-w-4xl mx-auto">
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <a
@@ -359,27 +360,48 @@ export default function AdminEditBundlePage() {
 
           {/* Options */}
           <div className="grid grid-cols-2 gap-6 p-4 bg-[#070908] border border-[#1a241e] rounded-2xl">
-            <div className="flex items-center gap-3">
+            <div 
+              onClick={() => setIsActive(!isActive)}
+              className="flex items-center gap-3 cursor-pointer select-none"
+            >
               <input
                 type="checkbox"
                 id="isActive"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="h-4 w-4 accent-[#2d4c38] rounded cursor-pointer"
+                className="sr-only"
               />
-              <label htmlFor="isActive" className="font-bold text-white cursor-pointer select-none text-xs">
+              <div className={`h-4.5 w-4.5 rounded border flex items-center justify-center transition-all ${
+                isActive 
+                  ? "border-[#2d4c38] bg-[#2d4c38]" 
+                  : "border-[#1a241e] bg-[#070908]"
+              }`}>
+                {isActive && <Check className="h-3 w-3 text-white stroke-[3.5]" />}
+              </div>
+              <label htmlFor="isActive" className="font-bold text-[#a3b2a9] hover:text-white cursor-pointer select-none text-xs">
                 Active in Store
               </label>
             </div>
-            <div className="flex items-center gap-3">
+
+            <div 
+              onClick={() => setIsFeatured(!isFeatured)}
+              className="flex items-center gap-3 cursor-pointer select-none"
+            >
               <input
                 type="checkbox"
                 id="isFeatured"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="h-4 w-4 accent-[#b07e3a] rounded cursor-pointer"
+                className="sr-only"
               />
-              <label htmlFor="isFeatured" className="font-bold text-white cursor-pointer select-none text-xs">
+              <div className={`h-4.5 w-4.5 rounded border flex items-center justify-center transition-all ${
+                isFeatured 
+                  ? "border-[#b07e3a] bg-[#b07e3a]" 
+                  : "border-[#1a241e] bg-[#070908]"
+              }`}>
+                {isFeatured && <Check className="h-3 w-3 text-black stroke-[3.5]" />}
+              </div>
+              <label htmlFor="isFeatured" className="font-bold text-[#a3b2a9] hover:text-white cursor-pointer select-none text-xs">
                 Feature on Homepage
               </label>
             </div>

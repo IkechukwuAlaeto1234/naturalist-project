@@ -9,7 +9,8 @@ import {
   AlertCircle,
   Upload,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Check
 } from "lucide-react";
 import { proxyCloudinaryUrl } from "@/lib/utils";
 import CustomDropdown from "@/components/ui/CustomDropdown";
@@ -285,31 +286,51 @@ export default function AdminNewProductPage() {
 
           {/* Checkboxes */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <label className="flex items-center gap-4 p-4 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors">
+            <div 
+              onClick={() => setFormIsActive(!formIsActive)}
+              className="flex items-center gap-4 p-4 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors"
+            >
               <input
                 type="checkbox"
                 checked={formIsActive}
                 onChange={(e) => setFormIsActive(e.target.checked)}
-                className="h-5 w-5 rounded border-[#1a241e] text-[#2d4c38] focus:ring-0"
+                className="sr-only"
               />
+              <div className={`h-5 w-5 rounded border flex items-center justify-center transition-all ${
+                formIsActive 
+                  ? "border-[#2d4c38] bg-[#2d4c38]" 
+                  : "border-[#1a241e] bg-[#070908]"
+              }`}>
+                {formIsActive && <Check className="h-3.5 w-3.5 text-white stroke-[3.5]" />}
+              </div>
               <div>
                 <p className="font-bold text-white uppercase tracking-wider text-[10px]">Active Listing</p>
                 <p className="text-[10px] text-[#a3b2a9] mt-0.5">Visible to customers in the store front</p>
               </div>
-            </label>
+            </div>
 
-            <label className="flex items-center gap-4 p-4 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors">
+            <div 
+              onClick={() => setFormIsFeatured(!formIsFeatured)}
+              className="flex items-center gap-4 p-4 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors"
+            >
               <input
                 type="checkbox"
                 checked={formIsFeatured}
                 onChange={(e) => setFormIsFeatured(e.target.checked)}
-                className="h-5 w-5 rounded border-[#1a241e] text-[#2d4c38] focus:ring-0"
+                className="sr-only"
               />
+              <div className={`h-5 w-5 rounded border flex items-center justify-center transition-all ${
+                formIsFeatured 
+                  ? "border-[#2d4c38] bg-[#2d4c38]" 
+                  : "border-[#1a241e] bg-[#070908]"
+              }`}>
+                {formIsFeatured && <Check className="h-3.5 w-3.5 text-white stroke-[3.5]" />}
+              </div>
               <div>
                 <p className="font-bold text-white uppercase tracking-wider text-[10px]">Featured Spotlight</p>
                 <p className="text-[10px] text-[#a3b2a9] mt-0.5">Showcase inside featured homepage segments</p>
               </div>
-            </label>
+            </div>
           </div>
 
           {/* Action Buttons */}

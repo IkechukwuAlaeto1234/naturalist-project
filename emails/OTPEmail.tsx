@@ -1,4 +1,5 @@
 import * as React from "react";
+import { BaseEmailLayout } from "./BaseEmailLayout";
 
 interface OTPEmailProps {
   otp: string;
@@ -6,43 +7,59 @@ interface OTPEmailProps {
 }
 
 export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
+  const digits = (otp || "------").split("").slice(0, 6);
+
+  const sansSerifStack = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const serifStack = "'Playfair Display', Georgia, 'Times New Roman', serif";
+
   return (
-    <div style={{
-      fontFamily: "sans-serif",
-      maxWidth: "600px",
-      margin: "0 auto",
-      padding: "20px",
-      border: "1px solid #e2dacd",
-      borderRadius: "8px",
-      backgroundColor: "#fbfbf9"
-    }}>
-      <h2 style={{ color: "#2d4c38", textAlign: "center", fontSize: "24px" }}>Naturalist</h2>
-      <p style={{ fontSize: "16px", color: "#141f19" }}>Hi {name},</p>
-      <p style={{ fontSize: "16px", color: "#141f19", lineHeight: "1.5" }}>
-        Thank you for registering with Naturalist. Please verify your email using the one-time passcode below:
-      </p>
-      <div style={{
-        backgroundColor: "#f4efe6",
-        padding: "15px",
-        textAlign: "center",
-        borderRadius: "6px",
-        margin: "20px 0"
-      }}>
-        <span style={{
-          fontSize: "32px",
-          fontWeight: "bold",
-          letterSpacing: "6px",
-          color: "#2d4c38"
-        }}>{otp}</span>
+    <BaseEmailLayout title="Verify Your Email | Naturalist" previewText="Complete your registration with Naturalist.">
+      <div style={{ fontFamily: sansSerifStack, color: "#141f19" }}>
+        
+        {/* Title / Heading */}
+        <h1 style={{ fontFamily: serifStack, fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 16px 0", textAlign: "center", lineHeight: "1.3" }}>
+          Confirm your email address
+        </h1>
+
+        <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
+          Hi <strong>{name}</strong>,
+        </p>
+
+        <p style={{ fontSize: "15px", margin: "0 0 24px 0", lineHeight: "1.6", color: "#2d4c38" }}>
+          Thank you for joining Naturalist! To complete your registration and activate your account, please enter the 6-character verification passcode below:
+        </p>
+
+        {/* Shootmail-style 6-Box Passcode Grid */}
+        <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto" }}>
+          <tr>
+            {digits.map((digit, i) => (
+              <React.Fragment key={i}>
+                <td align="center" valign="middle" style={{
+                  width: "44px",
+                  height: "52px",
+                  backgroundColor: "#fbfbf9",
+                  border: "1px solid #b07e3a",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                  fontFamily: sansSerifStack,
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  color: "#2d4c38"
+                }}>
+                  {digit}
+                </td>
+                {i < 5 && <td width="8" style={{ width: "8px" }}>&nbsp;</td>}
+              </React.Fragment>
+            ))}
+          </tr>
+        </table>
+
+        <p style={{ fontSize: "14px", color: "#5e6f64", margin: "24px 0 0 0", textAlign: "center", lineHeight: "1.5" }}>
+          This security code is valid for <strong>15 minutes</strong>. If you did not sign up for a Naturalist account, you can safely ignore this message.
+        </p>
+
       </div>
-      <p style={{ fontSize: "14px", color: "#5e6f64" }}>
-        This code is valid for 15 minutes. If you did not request this, you can safely ignore this email.
-      </p>
-      <hr style={{ border: "0", borderTop: "1px solid #e2dacd", margin: "20px 0" }} />
-      <p style={{ fontSize: "12px", color: "#5e6f64", textAlign: "center" }}>
-        Naturalist | Premium Organic Skincare & Wellness
-      </p>
-    </div>
+    </BaseEmailLayout>
   );
 };
 

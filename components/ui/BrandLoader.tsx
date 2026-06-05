@@ -70,11 +70,11 @@ export default function BrandLoader() {
     if (typeof window === "undefined") return;
 
     const handleNavigationStart = () => {
-      showNavigationLoader();
+      setTimeout(() => showNavigationLoader(), 0);
     };
 
     const handlePopState = () => {
-      showNavigationLoader();
+      setTimeout(() => showNavigationLoader(), 0);
     };
 
     const handleAnchorClick = (e: MouseEvent) => {
@@ -103,7 +103,7 @@ export default function BrandLoader() {
             return;
           }
 
-          showNavigationLoader();
+          setTimeout(() => showNavigationLoader(), 0);
         }
       }
     };
@@ -125,7 +125,11 @@ export default function BrandLoader() {
             return;
           }
         } catch {}
-        showNavigationLoader();
+        
+        // Defer execution to avoid "useInsertionEffect must not schedule updates"
+        setTimeout(() => {
+          showNavigationLoader();
+        }, 0);
       }
     };
 

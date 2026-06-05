@@ -4,30 +4,12 @@ import { User } from "@/models/User";
 import { verifyOTPSchema } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
 import { getFirstValidationError } from "@/lib/utils";
-import { render } from "@react-email/render";
-import { WelcomeEmail } from "@/emails/WelcomeEmail";
-import { sendEmail } from "@/lib/email";
-import React from "react";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ── LOCAL SIMULATION BYPASS ──
-    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-      const { email, otp } = body;
-      const normalizedEmail = (email || "").toLowerCase().trim();
-      if (!otp || otp.toString().trim().length !== 4) {
-        return NextResponse.json({ error: "The passcode must be exactly 4 characters" }, { status: 400 });
-      }
-      return NextResponse.json(
-        {
-          message: "Email verification successful! Your account is now active.",
-          isVerified: true,
-        },
-        { status: 200 }
-      );
-    }
+
 
     // 1. Rate Limiting (max 10 verification attempts per 15 minutes)
     const limiter = await rateLimit("verify-email", { limit: 10 });
@@ -76,18 +58,7 @@ export async function POST(req: Request) {
     user.otpExpires = undefined;
     await user.save();
 
-    // Send Welcome Email
-    try {
-      const html = await render(React.createElement(WelcomeEmail, { name: user.name }));
-      await sendEmail({
-        to: normalizedEmail,
-        subject: "Welcome to Naturalist",
-        html,
-        text: `Welcome to Naturalist, ${user.name}! Your account is now verified.`
-      });
-    } catch (emailError) {
-      console.error("Failed to send welcome email:", emailError);
-    }
+
 
     return NextResponse.json(
       {

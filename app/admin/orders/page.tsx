@@ -252,30 +252,36 @@ export default function AdminOrdersPage() {
                             </p>
                           </td>
                           <td className="p-4 sm:p-5 text-center" onClick={(e) => e.stopPropagation()}>
-                            <select
+                            <CustomDropdown
+                              options={[
+                                { value: "pending", label: "Pending" },
+                                { value: "processing", label: "Processing" },
+                                { value: "shipped", label: "Shipped" },
+                                { value: "delivered", label: "Delivered" },
+                                { value: "cancelled", label: "Cancelled" },
+                              ]}
                               value={o.shippingStatus}
                               disabled={updatingId === o._id}
-                              onChange={(e) => handleUpdateStatus(o._id, "shippingStatus", e.target.value)}
-                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-[#b07e3a] focus:outline-none cursor-pointer focus:border-[#b07e3a] disabled:opacity-50 font-sans"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="processing">Processing</option>
-                              <option value="shipped">Shipped</option>
-                              <option value="delivered">Delivered</option>
-                              <option value="cancelled">Cancelled</option>
-                            </select>
+                              onChange={(val) => handleUpdateStatus(o._id, "shippingStatus", val)}
+                              size="sm"
+                              textColorClassName="text-[#b07e3a]"
+                              className="w-28 mx-auto"
+                            />
                           </td>
                           <td className="p-4 sm:p-5 text-center" onClick={(e) => e.stopPropagation()}>
-                            <select
+                            <CustomDropdown
+                              options={[
+                                { value: "pending", label: "Pending" },
+                                { value: "paid", label: "Paid" },
+                                { value: "failed", label: "Failed" },
+                              ]}
                               value={o.paymentStatus}
                               disabled={updatingId === o._id}
-                              onChange={(e) => handleUpdateStatus(o._id, "paymentStatus", e.target.value)}
-                              className="h-8 px-2.5 rounded-lg border border-[#1a241e] bg-[#070908] text-[10px] font-bold uppercase tracking-wider text-emerald-400 focus:outline-none cursor-pointer focus:border-emerald-500 disabled:opacity-50 font-sans"
-                            >
-                              <option value="pending">Pending</option>
-                              <option value="paid">Paid</option>
-                              <option value="failed">Failed</option>
-                            </select>
+                              onChange={(val) => handleUpdateStatus(o._id, "paymentStatus", val)}
+                              size="sm"
+                              textColorClassName="text-emerald-400"
+                              className="w-24 mx-auto"
+                            />
                           </td>
                           <td className="p-4 sm:p-5 text-right font-bold text-white">
                             ${o.totalAmount.toFixed(2)}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles, X, Loader2, AlertCircle, Key, ArrowLeft } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 export default function AdminNewUserPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function AdminNewUserPage() {
   };
 
   return (
-    <div className="space-y-8 pb-20 text-white">
+    <div className="space-y-8 pb-20 text-white max-w-4xl mx-auto">
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <a
@@ -137,17 +138,15 @@ export default function AdminNewUserPage() {
           </div>
 
           {/* Role */}
-          <div className="space-y-2">
-            <label className="font-bold text-[#a3b2a9] uppercase tracking-wider block">System Role *</label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer text-sm font-semibold"
-            >
-              <option value="user">Standard User</option>
-              <option value="admin">Administrator (Command Access)</option>
-            </select>
-          </div>
+          <CustomDropdown
+            options={[
+              { value: "user", label: "Standard User" },
+              { value: "admin", label: "Administrator (Command Access)" },
+            ]}
+            value={role}
+            onChange={(val) => setRole(val)}
+            label="System Role *"
+          />
 
           {/* Action Buttons */}
           <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#1a241e]">

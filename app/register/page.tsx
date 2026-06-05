@@ -91,7 +91,7 @@ function RegisterContent() {
   // Auto-Focus First Empty OTP Input on Container Click
   const handleOtpContainerClick = () => {
     const firstEmptyIdx = otpFields.findIndex((f) => !f);
-    const targetIdx = firstEmptyIdx === -1 ? 3 : firstEmptyIdx;
+    const targetIdx = firstEmptyIdx === -1 ? 5 : firstEmptyIdx;
     otpRefs[targetIdx].current?.focus();
   };
 
@@ -105,8 +105,10 @@ function RegisterContent() {
   const [countrySearchQuery, setCountrySearchQuery] = useState("");
 
   // OTP inputs
-  const [otpFields, setOtpFields] = useState<string[]>(["", "", "", ""]);
+  const [otpFields, setOtpFields] = useState<string[]>(["", "", "", "", "", ""]);
   const otpRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -133,9 +135,10 @@ function RegisterContent() {
       window.dispatchEvent(new Event("naturalist:navigation-start"));
       setTimeout(() => {
         const currentPath = window.location.pathname + window.location.search;
-        window.location.href = href;
-        if (currentPath === href || href.startsWith("/register")) {
+        if (currentPath === href) {
           window.location.reload();
+        } else {
+          window.location.href = href;
         }
       }, 50);
     }
@@ -282,7 +285,7 @@ function RegisterContent() {
     newFields[index] = newVal;
     setOtpFields(newFields);
 
-    if (newVal && index < 3) {
+    if (newVal && index < 5) {
       otpRefs[index + 1].current?.focus();
     }
   };
@@ -295,20 +298,20 @@ function RegisterContent() {
 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").trim().slice(0, 4).toUpperCase();
+    const pasteData = e.clipboardData.getData("text").trim().slice(0, 6).toUpperCase();
     const newFields = [...otpFields];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       if (pasteData[i]) {
         newFields[i] = pasteData[i];
       }
     }
     setOtpFields(newFields);
-    const focusIndex = Math.min(pasteData.length, 3);
+    const focusIndex = Math.min(pasteData.length, 5);
     otpRefs[focusIndex].current?.focus();
   };
 
   // Form step navigation triggers
-  const handleNextStep1 = (e?: React.FormEvent) => {
+  const handleNextStep1 = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!name.trim()) {
       triggerError("Please enter your full name.");
@@ -319,38 +322,77 @@ function RegisterContent() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/register/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.toLowerCase().trim() }),
+      });
+      const data = await res.json();
       setLoading(false);
-      goToRoute("/register?step=2");
-    }, 1200);
+      if (res.ok) {
+        goToRoute("/register?step=2");
+      } else {
+        triggerError(data.error || "Failed to send verification code.");
+      }
+    } catch {
+      setLoading(false);
+      triggerError("Failed to send verification code. Please try again.");
+    }
   };
 
   const handleNextStep2 = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const otpCode = otpFields.join("").trim();
-    if (otpCode.length !== 4) {
-      triggerError("Please enter the complete 4-character passcode.");
+    if (otpCode.length !== 6) {
+      triggerError("Please enter the complete 6-character passcode.");
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), otp: otpCode }),
+      });
+      const data = await res.json();
       setLoading(false);
-      goToRoute("/register?step=3");
-    }, 1200);
+      if (res.ok && data.isVerified) {
+        goToRoute("/register?step=3");
+      } else {
+        triggerError(data.error || "The verification code is incorrect.");
+      }
+    } catch {
+      setLoading(false);
+      triggerError("Verification failed. Please try again.");
+    }
   };
 
-  const handleResendOtp = () => {
+  const handleResendOtp = async () => {
     setResending(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim() }),
+      });
       setResending(false);
-      setResendTimer(59);
-      setOtpFields(["", "", "", ""]);
-      otpRefs[0].current?.focus();
-    }, 1000);
+      if (res.ok) {
+        setResendTimer(59);
+        setOtpFields(["", "", "", "", "", ""]);
+        otpRefs[0].current?.focus();
+      } else {
+        const data = await res.json();
+        triggerError(data.error || "Failed to resend code.");
+      }
+    } catch {
+      setResending(false);
+      triggerError("Network error. Please try again.");
+    }
   };
 
-  const handleNextStep3 = (e?: React.FormEvent) => {
+  const handleNextStep3 = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (password.length < 6) {
       triggerError("Password must be at least 6 characters long.");
@@ -361,10 +403,23 @@ function RegisterContent() {
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/register/set-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
+      });
+      const data = await res.json();
       setLoading(false);
-      goToRoute("/register?step=4");
-    }, 1200);
+      if (res.ok) {
+        goToRoute("/register?step=4");
+      } else {
+        triggerError(data.error || "Failed to save password.");
+      }
+    } catch {
+      setLoading(false);
+      triggerError("Failed to save password. Please try again.");
+    }
   };
 
   const handleNextStep4 = () => {
@@ -384,28 +439,11 @@ function RegisterContent() {
     
     setTimeout(async () => {
       try {
-        if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-          setLoading(false);
-          // Clear registration session states on success
-          sessionStorage.removeItem("reg_name");
-          sessionStorage.removeItem("reg_email");
-          sessionStorage.removeItem("reg_password");
-          sessionStorage.removeItem("reg_phone");
-          sessionStorage.removeItem("reg_local_phone");
-          sessionStorage.removeItem("reg_phone_code");
-          sessionStorage.removeItem("reg_country");
-
-          goToRoute("/login?verified=true");
-          return;
-        }
-
-        const res = await fetch("/api/auth/register", {
+        const res = await fetch("/api/auth/register/finalize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: name.trim(),
             email: email.toLowerCase().trim(),
-            password: password,
             phone: phone.trim(),
             country: country,
           }),
@@ -639,10 +677,10 @@ function RegisterContent() {
           {step === 2 && (
             <div className="animate-fade-in space-y-6">
               <form onSubmit={handleNextStep2} noValidate className="space-y-6">
-                {/* 4 Digit Boxes Layout */}
+                {/* 6 Digit Boxes Layout */}
                 <div
                   onClick={handleOtpContainerClick}
-                  className="flex justify-center gap-3.5 py-4 cursor-text"
+                  className="flex justify-center gap-2.5 py-2 cursor-text"
                 >
                   {otpFields.map((field, idx) => (
                     <input
@@ -655,7 +693,12 @@ function RegisterContent() {
                       onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                       onPaste={idx === 0 ? handleOtpPaste : undefined}
                       placeholder="•"
-                      className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
+                      inputMode="text"
+                      autoComplete="one-time-code"
+                      autoCapitalize="characters"
+                      autoCorrect="off"
+                      spellCheck="false"
+                      className="w-12 h-12 text-lg font-bold font-serif uppercase rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
                     />
                   ))}
                 </div>

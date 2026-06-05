@@ -130,8 +130,31 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
           </a>
         </div>
 
+        {/* Mobile Header (Title & Price) - only visible on mobile */}
+        <div className="block lg:hidden mb-6">
+          <span className="inline-flex px-3 py-1 rounded-full bg-[#f4efe6] dark:bg-[#1e2621] border border-[#b07e3a]/30 text-[10px] font-bold uppercase tracking-wider text-[#b07e3a]">
+            EXCLUSIVE CEREMONY
+          </span>
+          <h1 className="font-serif text-3xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-tight mt-3">
+            {bundle.name}
+          </h1>
+          <div className="flex items-baseline gap-3 mt-4">
+            <span className="font-serif text-3xl font-bold text-[#2d4c38] dark:text-white">
+              ${bundle.price.toFixed(2)}
+            </span>
+            {hasDiscount && (
+              <span className="text-sm text-muted-foreground line-through font-medium">
+                ${bundle.compareAtPrice!.toFixed(2)}
+              </span>
+            )}
+            <span className="text-[10px] font-bold text-[#b07e3a] uppercase tracking-widest bg-[#b07e3a]/10 px-2 py-0.5 rounded ml-2">
+              COMPLETE SET DISCOUNT
+            </span>
+          </div>
+        </div>
+
         {/* Curation Details Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-y-8 lg:gap-x-12 items-start">
           
           {/* Left Column: Curation Image & Actions */}
           <div className="lg:col-span-6 flex flex-col items-center gap-6 justify-center w-full">
@@ -196,8 +219,8 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
           {/* Right Column: Descriptions & Details */}
           <div className="lg:col-span-6 flex flex-col gap-6">
             
-            {/* Category / Badge */}
-            <div>
+            {/* Category / Badge (Desktop only) */}
+            <div className="hidden lg:block">
               <span className="inline-flex px-3 py-1 rounded-full bg-[#f4efe6] dark:bg-[#1e2621] border border-[#b07e3a]/30 text-[10px] font-bold uppercase tracking-wider text-[#b07e3a]">
                 EXCLUSIVE CEREMONY
               </span>
@@ -206,8 +229,8 @@ export default function BundleDetailPage({ params }: { params: Promise<{ slug: s
               </h1>
             </div>
 
-            {/* Price */}
-            <div className="flex items-baseline gap-3 pb-5 border-b border-[#e2dacd]/60 dark:border-white/[0.05]">
+            {/* Price (Desktop only) */}
+            <div className="hidden lg:flex items-baseline gap-3 pb-5 border-b border-[#e2dacd]/60 dark:border-white/[0.05]">
               <span className="font-serif text-3xl font-bold text-[#2d4c38] dark:text-white">
                 ${bundle.price.toFixed(2)}
               </span>

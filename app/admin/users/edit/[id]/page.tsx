@@ -10,9 +10,11 @@ import {
   Laptop,
   Smartphone,
   Trash2,
-  ArrowLeft
+  ArrowLeft,
+  Check
 } from "lucide-react";
 import { useToast } from "@/context/ToastContext";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 interface SessionType {
   id: string;
@@ -171,7 +173,7 @@ export default function AdminEditUserPage() {
   }
 
   return (
-    <div className="space-y-8 pb-20 text-white">
+    <div className="space-y-8 pb-20 text-white max-w-6xl mx-auto">
       {/* Page Header */}
       <div className="flex items-center gap-3">
         <a
@@ -237,15 +239,25 @@ export default function AdminEditUserPage() {
 
             {/* Secondary Email Verified Checkbox */}
             {secondaryEmail && (
-              <div className="flex items-center gap-2.5 p-3.5 bg-[#070908] border border-[#1a241e] rounded-xl">
+              <div 
+                onClick={() => setIsSecondaryVerified(!isSecondaryVerified)}
+                className="flex items-center gap-3 p-3.5 bg-[#070908] border border-[#1a241e] rounded-xl cursor-pointer select-none hover:border-[#b07e3a]/40 transition-colors"
+              >
                 <input
                   type="checkbox"
                   id="editIsSecondaryVerified"
                   checked={isSecondaryVerified}
                   onChange={(e) => setIsSecondaryVerified(e.target.checked)}
-                  className="h-4 w-4 accent-[#b07e3a] rounded"
+                  className="sr-only"
                 />
-                <label htmlFor="editIsSecondaryVerified" className="font-semibold text-white cursor-pointer select-none text-xs">
+                <div className={`h-4 w-4 rounded border flex items-center justify-center transition-all ${
+                  isSecondaryVerified 
+                    ? "border-[#b07e3a] bg-[#b07e3a]" 
+                    : "border-[#1a241e] bg-[#070908]"
+                }`}>
+                  {isSecondaryVerified && <Check className="h-2.5 w-2.5 text-black stroke-[3.5]" />}
+                </div>
+                <label htmlFor="editIsSecondaryVerified" className="font-semibold text-[#a3b2a9] hover:text-white cursor-pointer text-xs">
                   Mark Backup Email as Verified
                 </label>
               </div>
@@ -274,17 +286,15 @@ export default function AdminEditUserPage() {
             </div>
 
             {/* Role */}
-            <div className="space-y-2">
-              <label className="font-bold text-[#a3b2a9] uppercase tracking-wider block">System Role Privilege</label>
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer text-sm font-semibold"
-              >
-                <option value="user">Standard User</option>
-                <option value="admin">Administrator</option>
-              </select>
-            </div>
+            <CustomDropdown
+              options={[
+                { value: "user", label: "Standard User" },
+                { value: "admin", label: "Administrator" },
+              ]}
+              value={role}
+              onChange={(val) => setRole(val)}
+              label="System Role Privilege"
+            />
 
             {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#1a241e]">

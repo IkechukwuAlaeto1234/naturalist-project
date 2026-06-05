@@ -110,6 +110,7 @@ export default function CartPage() {
                       fill
                       sizes="112px"
                       className="object-cover"
+                      priority
                     />
                   </div>
 

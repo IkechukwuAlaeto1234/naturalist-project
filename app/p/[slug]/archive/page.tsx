@@ -54,6 +54,10 @@ export default function ArchivePage({ params }: { params: Promise<{ slug: string
   const sessionUser = session?.user as any;
   const isAdmin = session?.user?.email?.toLowerCase().trim() === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
  
+  useEffect(() => {
+    document.title = `${pageName} Version Archive History | Naturalist`;
+  }, [pageName]);
+
   if (loading || status === "loading" || !session || !isAdmin) {
     return (
       <div className="min-h-screen bg-[#fcfcfb] dark:bg-[#0a0d0b] flex items-center justify-center">

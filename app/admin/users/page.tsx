@@ -25,6 +25,7 @@ import {
   Smartphone,
   Check,
 } from "lucide-react";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 interface SessionType {
   id: string;
@@ -273,15 +274,16 @@ export default function AdminUsersPage() {
               <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#b07e3a]" />
             )}
           </div>
-          <select
+          <CustomDropdown
+            options={[
+              { value: "", label: "All Roles" },
+              { value: "user", label: "Standard User" },
+              { value: "admin", label: "Administrator" },
+            ]}
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-11 px-4 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white focus:outline-none focus:border-[#b07e3a] transition-all cursor-pointer min-w-[160px]"
-          >
-            <option value="">All Roles</option>
-            <option value="user">Standard User</option>
-            <option value="admin">Administrator</option>
-          </select>
+            onChange={(val) => setRoleFilter(val)}
+            className="w-full sm:w-48"
+          />
         </div>
       )}
 

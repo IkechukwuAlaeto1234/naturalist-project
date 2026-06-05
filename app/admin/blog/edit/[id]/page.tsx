@@ -12,7 +12,8 @@ import {
   AlertCircle,
   Upload,
   ArrowLeft,
-  Sparkles
+  Sparkles,
+  Check
 } from "lucide-react";
 import { proxyCloudinaryUrl } from "@/lib/utils";
 import { useToast } from "@/context/ToastContext";
@@ -369,18 +370,28 @@ export default function AdminEditBlogPage() {
               </div>
             </div>
 
-            <label className="flex items-center gap-4 p-4 h-12 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors">
+            <div 
+              onClick={() => setFormFeatured(!formFeatured)}
+              className="flex items-center gap-4 p-4 h-12 bg-[#070908] border border-[#1a241e] rounded-2xl cursor-pointer select-none hover:border-[#2d4c38]/40 transition-colors"
+            >
               <input
                 type="checkbox"
                 checked={formFeatured}
                 onChange={(e) => setFormFeatured(e.target.checked)}
-                className="h-5 w-5 rounded border-[#1a241e] text-[#2d4c38] focus:ring-0"
+                className="sr-only"
               />
+              <div className={`h-5 w-5 rounded border flex items-center justify-center transition-all ${
+                formFeatured 
+                  ? "border-[#2d4c38] bg-[#2d4c38]" 
+                  : "border-[#1a241e] bg-[#070908]"
+              }`}>
+                {formFeatured && <Check className="h-3.5 w-3.5 text-white stroke-[3.5]" />}
+              </div>
               <div>
                 <p className="font-bold text-white uppercase tracking-wider text-[10px]">Featured Post</p>
                 <p className="text-[10px] text-[#a3b2a9]">Highlight top homepage banner</p>
               </div>
-            </label>
+            </div>
           </div>
 
           {/* Formatted Article Section Blocks */}

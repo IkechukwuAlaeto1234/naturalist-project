@@ -15,20 +15,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    // ── LOCAL SIMULATION BYPASS ──
-    if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-      const { name, email, password } = body;
-      const normalizedEmail = (email || "").toLowerCase().trim();
-      const mockOtp = generateOTP(4);
-      return NextResponse.json(
-        {
-          message: "Registration successful. Please verify your email.",
-          email: normalizedEmail,
-          mockOtp: mockOtp,
-        },
-        { status: 201 }
-      );
-    }
+
 
     // 1. Rate Limiting (max 5 registration attempts per 15 minutes per IP)
     const limiter = await rateLimit("register", { limit: 5 });

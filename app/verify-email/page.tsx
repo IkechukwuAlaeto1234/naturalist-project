@@ -16,9 +16,11 @@ function VerifyEmailContent() {
   const [email, setEmail] = useState(emailFromQuery);
   const [isEmailEditable, setIsEmailEditable] = useState(!emailFromQuery);
 
-  // 4 characters alphanumeric OTP fields
-  const [otpFields, setOtpFields] = useState<string[]>(["", "", "", ""]);
+  // 6 characters alphanumeric OTP fields
+  const [otpFields, setOtpFields] = useState<string[]>(["", "", "", "", "", ""]);
   const otpRefs = [
+    useRef<HTMLInputElement>(null),
+    useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
     useRef<HTMLInputElement>(null),
@@ -75,7 +77,7 @@ function VerifyEmailContent() {
   // Google-Style Restart on failure
   const handleRestart = () => {
     setErrorModalOpen(false);
-    setOtpFields(["", "", "", ""]);
+    setOtpFields(["", "", "", "", "", ""]);
     if (emailFromQuery) {
       goToRoute("/register?step=1");
     } else {
@@ -92,7 +94,7 @@ function VerifyEmailContent() {
     setOtpFields(newFields);
 
     // Shift focus forward if entered a character
-    if (newVal && index < 3) {
+    if (newVal && index < 5) {
       otpRefs[index + 1].current?.focus();
     }
   };
@@ -106,23 +108,23 @@ function VerifyEmailContent() {
 
   const handleOtpPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const pasteData = e.clipboardData.getData("text").trim().slice(0, 4).toUpperCase();
+    const pasteData = e.clipboardData.getData("text").trim().slice(0, 6).toUpperCase();
     const newFields = [...otpFields];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 6; i++) {
       if (pasteData[i]) {
         newFields[i] = pasteData[i];
       }
     }
     setOtpFields(newFields);
     // Focus the last populated field or the last box
-    const focusIndex = Math.min(pasteData.length, 3);
+    const focusIndex = Math.min(pasteData.length, 5);
     otpRefs[focusIndex].current?.focus();
   };
 
   // Auto-Focus First Empty OTP Input on Container Click
   const handleOtpContainerClick = () => {
     const firstEmptyIdx = otpFields.findIndex((f) => !f);
-    const targetIdx = firstEmptyIdx === -1 ? 3 : firstEmptyIdx;
+    const targetIdx = firstEmptyIdx === -1 ? 5 : firstEmptyIdx;
     otpRefs[targetIdx].current?.focus();
   };
 
@@ -133,8 +135,8 @@ function VerifyEmailContent() {
       return;
     }
     const otpCode = otpFields.join("").trim();
-    if (otpCode.length !== 4) {
-      triggerError("Please enter the complete 4-character passcode.");
+    if (otpCode.length !== 6) {
+      triggerError("Please enter the complete 6-character passcode.");
       return;
     }
 
@@ -144,17 +146,7 @@ function VerifyEmailContent() {
     const startTime = Date.now();
 
     try {
-      if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-        // Simulated premium verification delay
-        const elapsed = Date.now() - startTime;
-        const remaining = Math.max(1500 - elapsed, 0);
-        await new Promise((resolve) => setTimeout(resolve, remaining));
-        setLoading(false);
 
-        setSuccess("Account verified successfully! Redirecting to login...");
-        setSuccessModalOpen(true);
-        return;
-      }
 
       // Real backend request
       const res = await fetch("/api/auth/verify-email", {
@@ -197,16 +189,7 @@ function VerifyEmailContent() {
     setSuccess("");
 
     try {
-      if (process.env.NEXT_PUBLIC_MOCK_AUTH === "true") {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        setResending(false);
-        setSuccess("A new passcode has been generated (Simulation Mode).");
-        setSuccessModalOpen(true);
-        setResendTimer(59);
-        setOtpFields(["", "", "", ""]);
-        otpRefs[0].current?.focus();
-        return;
-      }
+
 
       const res = await fetch("/api/auth/resend-otp", {
         method: "POST",
@@ -224,10 +207,10 @@ function VerifyEmailContent() {
         throw new Error(data.error || "Failed to resend passcode.");
       }
 
-      setSuccess("A new 4-character passcode has been sent to your email.");
+      setSuccess("A new 6-character passcode has been sent to your email.");
       setSuccessModalOpen(true);
       setResendTimer(59);
-      setOtpFields(["", "", "", ""]);
+      setOtpFields(["", "", "", "", "", ""]);
       otpRefs[0].current?.focus();
     } catch (err: any) {
       setResending(false);
@@ -296,14 +279,14 @@ function VerifyEmailContent() {
               </div>
             )}
 
-            {/* 4 Digit Boxes Layout */}
+            {/* 6 Digit Boxes Layout */}
             <div className="flex flex-col gap-1.5 text-left">
               <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <Key className="h-3.5 w-3.5 text-muted-foreground" /> Verification Code
               </label>
               <div
                 onClick={handleOtpContainerClick}
-                className="flex justify-center gap-3.5 py-2 cursor-text"
+                className="flex justify-center gap-2.5 py-2 cursor-text"
               >
                 {otpFields.map((field, idx) => (
                   <input
@@ -316,7 +299,12 @@ function VerifyEmailContent() {
                     onKeyDown={(e) => handleOtpKeyDown(idx, e)}
                     onPaste={idx === 0 ? handleOtpPaste : undefined}
                     placeholder="•"
-                    className="w-14 h-14 text-xl font-bold font-serif uppercase rounded-2xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
+                    inputMode="text"
+                    autoComplete="one-time-code"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck="false"
+                    className="w-12 h-12 text-lg font-bold font-serif uppercase rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-[#b07e3a] dark:focus:ring-emerald-500/40 focus:border-transparent transition-all text-center placeholder:text-muted-foreground/30 text-foreground"
                   />
                 ))}
               </div>
