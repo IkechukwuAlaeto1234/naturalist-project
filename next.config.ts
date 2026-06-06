@@ -10,7 +10,7 @@ const ContentSecurityPolicy = `
   script-src 'self' 'unsafe-inline' 'unsafe-eval';
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com data:;
-  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com;
+  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://img.icons8.com;
   connect-src 'self' https://api.cloudinary.com ${isDev ? "ws: wss: *" : ""};
   frame-ancestors 'self';
   base-uri 'self';
