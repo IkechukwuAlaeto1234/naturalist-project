@@ -202,7 +202,16 @@ export default function AdminCdnPage() {
             </div>
           ) : (
             filteredImages.map((img) => {
-              const sizeMB = img.sizeBytes ? (img.sizeBytes / (1024 * 1024)).toFixed(2) : "0.00";
+              let sizeStr = "0 B";
+              if (img.sizeBytes) {
+                if (img.sizeBytes >= 1024 * 1024) {
+                  sizeStr = `${(img.sizeBytes / (1024 * 1024)).toFixed(2)} MB`;
+                } else if (img.sizeBytes >= 1024) {
+                  sizeStr = `${(img.sizeBytes / 1024).toFixed(2)} KB`;
+                } else {
+                  sizeStr = `${img.sizeBytes} B`;
+                }
+              }
               const isCopied = copiedId === img._id;
               
               return (
@@ -257,7 +266,7 @@ export default function AdminCdnPage() {
                       {img.originalName}
                     </p>
                     <div className="flex justify-between text-[#a3b2a9] text-[9px] pt-1">
-                      <span>{sizeMB} MB</span>
+                      <span>{sizeStr}</span>
                       <button
                         onClick={() => handleDeleteImage(img._id)}
                         className="text-red-400 hover:text-red-300 transition-colors"

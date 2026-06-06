@@ -1,0 +1,38 @@
+{
+  "logo_transparent.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751080/brand/logo_transparent.png",
+    "public_id": "brand/logo_transparent",
+    "width": 559,
+    "height": 142
+  },
+  "logo_transparent_white.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751081/brand/logo_transparent_white.png",
+    "public_id": "brand/logo_transparent_white",
+    "width": 559,
+    "height": 142
+  },
+  "logo_green.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751082/brand/logo_green.png",
+    "public_id": "brand/logo_green",
+    "width": 559,
+    "height": 142
+  },
+  "logo_oatmeal.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751083/brand/logo_oatmeal.png",
+    "public_id": "brand/logo_oatmeal",
+    "width": 559,
+    "height": 142
+  },
+  "logo_dark.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751084/brand/logo_dark.png",
+    "public_id": "brand/logo_dark",
+    "width": 559,
+    "height": 142
+  },
+  "logo_white.png": {
+    "secure_url": "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751085/brand/logo_white.png",
+    "public_id": "brand/logo_white",
+    "width": 559,
+    "height": 142
+  }
+}

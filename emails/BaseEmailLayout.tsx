@@ -15,7 +15,7 @@ export const BaseEmailLayout = ({
   unsubscribeUrl = "#",
   logoUrl,
 }: BaseEmailLayoutProps) => {
-  const defaultLogoUrl = "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780592772/brand/naturalist_logo.jpg";
+  const defaultLogoUrl = "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751080/brand/logo_transparent.png";
   const finalLogoUrl = logoUrl || defaultLogoUrl;
   
   const sansSerifStack = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";

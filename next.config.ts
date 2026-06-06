@@ -12,7 +12,7 @@ const ContentSecurityPolicy = `
   font-src 'self' https://fonts.gstatic.com data:;
   img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com;
   connect-src 'self' https://api.cloudinary.com ${isDev ? "ws: wss: *" : ""};
-  frame-ancestors 'none';
+  frame-ancestors 'self';
   base-uri 'self';
   form-action 'self';
   object-src 'none';
@@ -24,7 +24,7 @@ const securityHeaders = [
   // Prevents page from being loaded in an iframe — stops clickjacking attacks
   {
     key: "X-Frame-Options",
-    value: "DENY",
+    value: "SAMEORIGIN",
   },
   // Prevents browsers from guessing content types — mitigates MIME-sniffing attacks
   {
