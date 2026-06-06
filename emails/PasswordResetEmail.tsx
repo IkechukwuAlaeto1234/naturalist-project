@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface PasswordResetEmailProps {
   token: string;
@@ -11,12 +12,17 @@ export const PasswordResetEmail = ({ token, name }: PasswordResetEmailProps) => 
 
   return (
     <BaseEmailLayout title="Reset Your Password | Naturalist" previewText="Use this passcode to reset your Naturalist credentials.">
-      <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: "#141f19" }}>
+      <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 16px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Reset your password
-        </h1>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.resetPasswordHeader} 
+            alt="Reset your password" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,

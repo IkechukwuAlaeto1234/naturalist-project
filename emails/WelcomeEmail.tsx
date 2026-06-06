@@ -1,25 +1,36 @@
-import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface WelcomeEmailProps {
   name: string;
 }
 
 export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
-  const sansSerifStack = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  const serifStack = "'Playfair Display', Georgia, 'Times New Roman', serif";
+  const sansSerifStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
     <BaseEmailLayout title="Welcome to Naturalist | Premium Skincare" previewText="Inspired by Nature, Crafted for Glow.">
       <div style={{ fontFamily: sansSerifStack, color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: serifStack, fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 6px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Welcome to Naturalist
-        </h1>
-        <p style={{ fontStyle: "italic", textAlign: "center", color: "#5e6f64", margin: "0 0 24px 0", fontSize: "13px" }}>
-          Inspired by Nature, Crafted for Glow
-        </p>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.welcomeHeader} 
+            alt="Welcome to Naturalist" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
+
+        {/* Hero Image */}
+        <div style={{ marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.botanical} 
+            alt="Welcome to the Naturalist family" 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface PasswordResetSuccessEmailProps {
   name: string;
@@ -8,15 +9,26 @@ interface PasswordResetSuccessEmailProps {
 export const PasswordResetSuccessEmail = ({ name }: PasswordResetSuccessEmailProps) => {
   return (
     <BaseEmailLayout title="Password Reset Successful | Naturalist" previewText="Your password has been successfully updated.">
-      <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: "#141f19" }}>
+      <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 6px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Security Update
-        </h1>
-        <p style={{ textAlign: "center", color: "#5e6f64", margin: "0 0 24px 0", fontSize: "13px" }}>
-          Your password has been changed successfully.
-        </p>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.passwordSuccessHeader} 
+            alt="Password Updated Successfully" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
+
+        {/* Hero Image */}
+        <div style={{ marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.passwordSuccessIllustration} 
+            alt="Password reset successful" 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,
@@ -31,7 +43,7 @@ export const PasswordResetSuccessEmail = ({ name }: PasswordResetSuccessEmailPro
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "20px", backgroundColor: "#faf9f5", margin: "24px 0" }}>
           <tr>
             <td>
-              <h4 style={{ margin: "0 0 8px 0", fontFamily: "'Playfair Display', Georgia, serif", fontSize: "15px", color: "#b07e3a", fontWeight: "bold" }}>
+              <h4 style={{ margin: "0 0 8px 0", fontFamily: "Georgia, serif", fontSize: "15px", color: "#b07e3a", fontWeight: "bold" }}>
                 Didn't request this change?
               </h4>
               <p style={{ margin: "0", fontSize: "13px", color: "#5e6f64", lineHeight: "1.5" }}>

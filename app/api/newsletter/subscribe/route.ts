@@ -4,6 +4,7 @@ import { Newsletter } from "@/models/Newsletter";
 import { newsletterSchema } from "@/lib/validations";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { EMAIL_ASSETS } from "@/emails/assets";
 
 /**
  * POST /api/newsletter/subscribe
@@ -63,7 +64,9 @@ export async function POST(req: Request) {
             <!-- HEADER -->
             <div style="background: #111a14; padding: 48px 48px 40px; text-align: center;">
               <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: #b07e3a; margin: 0 0 20px 0;">A letter from the forest</p>
-              <div style="font-size: 36px; font-weight: 700; color: #faf8f4; letter-spacing: -0.02em; margin-bottom: 6px;">Naturalist.</div>
+              <div style="margin-bottom: 6px; text-align: center;">
+                <img src="${EMAIL_ASSETS.logoTransparentWhite}" alt="Naturalist" style="max-height: 48px; max-width: 180px; display: inline-block; border: 0;" />
+              </div>
               <p style="font-size: 13px; color: rgba(250,248,244,0.45); font-style: italic; margin: 0;">Skincare rooted in nature</p>
             </div>
 
@@ -74,6 +77,10 @@ export async function POST(req: Request) {
 
             <!-- BODY -->
             <div style="padding: 44px 48px;">
+              <div style="margin-bottom: 28px; text-align: center;">
+                <img src="${EMAIL_ASSETS.newsletter}" alt="Naturalist Newsletter" style="width: 100%; height: auto; border-radius: 12px; display: block; border: 0;" />
+              </div>
+
               <p style="font-size: 17px; color: #141f19; font-style: italic; border-left: 3px solid #b07e3a; padding-left: 16px; margin: 0 0 28px 0; line-height: 1.6;">
                 "The earth has enough for everyone's need — we just have to know where to look."
               </p>
@@ -118,7 +125,36 @@ export async function POST(req: Request) {
 
             <!-- FOOTER -->
             <div style="background: #111a14; padding: 32px 48px; text-align: center;">
-              <div style="font-size: 18px; font-weight: 700; color: rgba(250,248,244,0.6); margin-bottom: 12px;">Naturalist.</div>
+              <!-- SOCIAL PILL -->
+              <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto; background-color: #222d26; border-radius: 30px; padding: 8px 16px;">
+                <tr>
+                  <td style="padding: 0 8px; vertical-align: middle;">
+                    <a href="https://www.facebook.com/naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${EMAIL_ASSETS.socialFacebook}" alt="Facebook" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                  <td style="padding: 0 8px; vertical-align: middle;">
+                    <a href="https://www.instagram.com/naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${EMAIL_ASSETS.socialInstagram}" alt="Instagram" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                  <td style="padding: 0 8px; vertical-align: middle;">
+                    <a href="https://x.com/naturalist_skin" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${EMAIL_ASSETS.socialX}" alt="X" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                  <td style="padding: 0 8px; vertical-align: middle;">
+                    <a href="https://www.tiktok.com/@naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${EMAIL_ASSETS.socialTiktok}" alt="TikTok" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                  <td style="padding: 0 8px; vertical-align: middle;">
+                    <a href="https://www.youtube.com/@naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
+                      <img src="${EMAIL_ASSETS.socialYoutube}" alt="YouTube" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
+                    </a>
+                  </td>
+                </tr>
+              </table>
               <div style="width: 40px; height: 1px; background: rgba(250,248,244,0.1); margin: 0 auto 16px;"></div>
               <p style="font-size: 11px; color: rgba(250,248,244,0.3); line-height: 1.7; font-family: 'Courier New', monospace; margin: 0;">
                 Premium Organic Skincare &amp; Wellness<br/>

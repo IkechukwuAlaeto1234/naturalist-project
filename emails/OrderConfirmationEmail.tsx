@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface OrderConfirmationEmailProps {
   orderId: string;
@@ -28,15 +29,26 @@ export const OrderConfirmationEmail = ({
 }: OrderConfirmationEmailProps) => {
   return (
     <BaseEmailLayout title="Order Confirmed | Naturalist" previewText="Thank you for your purchase from Naturalist!">
-      <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: "#141f19" }}>
+      <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 6px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Order Confirmed
-        </h1>
-        <p style={{ textAlign: "center", color: "#5e6f64", margin: "0 0 24px 0", fontSize: "13px" }}>
-          Thank you for shopping organic remedies with Naturalist!
-        </p>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.confirmOrderHeader} 
+            alt="Confirm your order" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
+
+        {/* Hero Image */}
+        <div style={{ marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.plantGifts} 
+            alt="Thank you for your purchase" 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,
@@ -50,9 +62,9 @@ export const OrderConfirmationEmail = ({
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", overflow: "hidden", marginBottom: "24px", width: "100%", borderCollapse: "separate" }}>
           <thead>
             <tr style={{ backgroundColor: "#faf9f5" }}>
-              <th align="left" style={{ padding: "14px 18px", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd" }}>Item</th>
-              <th align="center" style={{ padding: "14px 18px", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "50px" }}>Qty</th>
-              <th align="right" style={{ padding: "14px 18px", fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "80px" }}>Price</th>
+              <th align="left" style={{ padding: "14px 18px", fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd" }}>Item</th>
+              <th align="center" style={{ padding: "14px 18px", fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "50px" }}>Qty</th>
+              <th align="right" style={{ padding: "14px 18px", fontFamily: "system-ui, -apple-system, sans-serif", fontSize: "12px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "80px" }}>Price</th>
             </tr>
           </thead>
           <tbody>
@@ -80,7 +92,7 @@ export const OrderConfirmationEmail = ({
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "20px", backgroundColor: "#ffffff" }}>
           <tr>
             <td>
-              <h4 style={{ margin: "0 0 10px 0", fontFamily: "'Playfair Display', Georgia, serif", fontSize: "16px", color: "#2d4c38", fontWeight: "bold" }}>
+              <h4 style={{ margin: "0 0 10px 0", fontFamily: "Georgia, serif", fontSize: "16px", color: "#2d4c38", fontWeight: "bold" }}>
                 Delivery Address
               </h4>
               <p style={{ margin: "0", fontSize: "14px", color: "#5e6f64", lineHeight: "1.5" }}>

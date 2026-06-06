@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface OTPEmailProps {
   otp: string;
@@ -9,17 +10,22 @@ interface OTPEmailProps {
 export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
   const digits = (otp || "------").split("").slice(0, 6);
 
-  const sansSerifStack = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  const serifStack = "'Playfair Display', Georgia, 'Times New Roman', serif";
+  const sansSerifStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
     <BaseEmailLayout title="Verify Your Email | Naturalist" previewText="Complete your registration with Naturalist.">
       <div style={{ fontFamily: sansSerifStack, color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: serifStack, fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 16px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Confirm your email address
-        </h1>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.verifyEmailHeader} 
+            alt="Verify your email address" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,

@@ -102,7 +102,7 @@ export default function SuccessModal({
           )}
           <button
             onClick={onAction || handleGoToCart}
-            className={`flex-grow-[1.3] flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-[#2d4c38]/10 cursor-pointer ${
+            className={`flex-1 flex h-12 items-center justify-center gap-2 rounded-full bg-[#2d4c38] hover:bg-[#3a6349] hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-[#2d4c38]/10 cursor-pointer ${
               !showCancel ? "w-full" : ""
             }`}
           >

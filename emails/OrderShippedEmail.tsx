@@ -1,5 +1,6 @@
 import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
+import { EMAIL_ASSETS } from "./assets";
 
 interface OrderShippedEmailProps {
   orderId: string;
@@ -16,15 +17,26 @@ export const OrderShippedEmail = ({
 }: OrderShippedEmailProps) => {
   return (
     <BaseEmailLayout title="Order Shipped | Naturalist" previewText="Your organic skin remedies are on their way!">
-      <div style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif", color: "#141f19" }}>
+      <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#141f19" }}>
         
-        {/* Title / Heading */}
-        <h1 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: "24px", fontWeight: "900", color: "#2d4c38", margin: "0 0 6px 0", textAlign: "center", lineHeight: "1.3" }}>
-          Your Order Has Shipped!
-        </h1>
-        <p style={{ textAlign: "center", color: "#5e6f64", margin: "0 0 24px 0", fontSize: "13px" }}>
-          Your organic skin remedies are on their way to you!
-        </p>
+        {/* Title / Heading Image */}
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.orderShippedHeader} 
+            alt="Your Order Has Shipped" 
+            width="280" 
+            style={{ maxWidth: "100%", height: "auto", display: "inline-block", border: 0 }} 
+          />
+        </div>
+
+        {/* Hero Image */}
+        <div style={{ marginBottom: "24px" }}>
+          <img 
+            src={EMAIL_ASSETS.packageShipping} 
+            alt="Your order is on its way" 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+          />
+        </div>
 
         <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,

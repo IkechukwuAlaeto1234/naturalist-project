@@ -1,4 +1,5 @@
 import * as React from "react";
+import { EMAIL_ASSETS } from "./assets";
 
 interface BaseEmailLayoutProps {
   title?: string;
@@ -15,11 +16,11 @@ export const BaseEmailLayout = ({
   unsubscribeUrl = "#",
   logoUrl,
 }: BaseEmailLayoutProps) => {
-  const defaultLogoUrl = "https://res.cloudinary.com/dtpwhaxvh/image/upload/v1780751080/brand/logo_transparent.png";
+  const defaultLogoUrl = EMAIL_ASSETS.logoTransparent;
   const finalLogoUrl = logoUrl || defaultLogoUrl;
   
-  const sansSerifStack = "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  const serifStack = "'Playfair Display', Georgia, 'Times New Roman', serif";
+  const sansSerifStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
     <html lang="en">
@@ -117,30 +118,37 @@ export const BaseEmailLayout = ({
                     <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: "20px", textAlign: "center" }}>
                       <tr>
                         <td align="center">
-                          <table cellPadding={0} cellSpacing={0} style={{ margin: "0 auto" }}>
+                          <span dangerouslySetInnerHTML={{ __html: "<!--[if mso]><table align=\"center\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"width:250px;\"><tr><td align=\"center\" bgcolor=\"#f4efe6\" style=\"padding:10px 24px;border-radius:30px;\"><![endif]-->" }} />
+                          <table cellPadding={0} cellSpacing={0} style={{ margin: "0 auto", backgroundColor: "#f4efe6", borderRadius: "30px", padding: "10px 24px" }}>
                             <tr>
-                              <td style={{ padding: "0 8px" }}>
-                                <a href="#" target="_blank" style={{ display: "inline-block" }}>
-                                  <img src="https://img.icons8.com/ios-filled/40/2d4c38/facebook.png" alt="Facebook" style={{ width: "20px", height: "20px", opacity: 0.85 }} />
+                              <td style={{ padding: "0 10px", verticalAlign: "middle" }}>
+                                <a href="https://www.facebook.com/naturalist.skincare" target="_blank" style={{ display: "block", textDecoration: "none" }}>
+                                  <img src={EMAIL_ASSETS.socialFacebook} alt="Facebook" width="24" height="24" style={{ width: "24px", height: "24px", display: "block", border: 0 }} />
                                 </a>
                               </td>
-                              <td style={{ padding: "0 8px" }}>
-                                <a href="#" target="_blank" style={{ display: "inline-block" }}>
-                                  <img src="https://img.icons8.com/ios-filled/40/2d4c38/instagram-new.png" alt="Instagram" style={{ width: "20px", height: "20px", opacity: 0.85 }} />
+                              <td style={{ padding: "0 10px", verticalAlign: "middle" }}>
+                                <a href="https://www.instagram.com/naturalist.skincare" target="_blank" style={{ display: "block", textDecoration: "none" }}>
+                                  <img src={EMAIL_ASSETS.socialInstagram} alt="Instagram" width="24" height="24" style={{ width: "24px", height: "24px", display: "block", border: 0 }} />
                                 </a>
                               </td>
-                              <td style={{ padding: "0 8px" }}>
-                                <a href="#" target="_blank" style={{ display: "inline-block" }}>
-                                  <img src="https://img.icons8.com/ios-filled/40/2d4c38/twitter.png" alt="X" style={{ width: "20px", height: "20px", opacity: 0.85 }} />
+                              <td style={{ padding: "0 10px", verticalAlign: "middle" }}>
+                                <a href="https://x.com/naturalist_skin" target="_blank" style={{ display: "block", textDecoration: "none" }}>
+                                  <img src={EMAIL_ASSETS.socialX} alt="X" width="24" height="24" style={{ width: "24px", height: "24px", display: "block", border: 0 }} />
                                 </a>
                               </td>
-                              <td style={{ padding: "0 8px" }}>
-                                <a href="#" target="_blank" style={{ display: "inline-block" }}>
-                                  <img src="https://img.icons8.com/ios-filled/40/2d4c38/linkedin.png" alt="LinkedIn" style={{ width: "20px", height: "20px", opacity: 0.85 }} />
+                              <td style={{ padding: "0 10px", verticalAlign: "middle" }}>
+                                <a href="https://www.tiktok.com/@naturalist.skincare" target="_blank" style={{ display: "block", textDecoration: "none" }}>
+                                  <img src={EMAIL_ASSETS.socialTiktok} alt="TikTok" width="24" height="24" style={{ width: "24px", height: "24px", display: "block", border: 0 }} />
+                                </a>
+                              </td>
+                              <td style={{ padding: "0 10px", verticalAlign: "middle" }}>
+                                <a href="https://www.youtube.com/@naturalist.skincare" target="_blank" style={{ display: "block", textDecoration: "none" }}>
+                                  <img src={EMAIL_ASSETS.socialYoutube} alt="YouTube" width="24" height="24" style={{ width: "24px", height: "24px", display: "block", border: 0 }} />
                                 </a>
                               </td>
                             </tr>
                           </table>
+                          <span dangerouslySetInnerHTML={{ __html: "<!--[if mso]></td></tr></table><![endif]-->" }} />
                         </td>
                       </tr>
                     </table>

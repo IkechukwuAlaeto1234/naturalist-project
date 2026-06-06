@@ -94,15 +94,34 @@ export async function sendEmail({
   const from      = `${fromName} <${fromEmail}>`;
   const plainText = text || "";
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const unsubscribeUrl = `${appUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(to)}`;
+
   // ── Resend primary ──────────────────────────────────────────────────────
   if (resend) {
     try {
+      // Resend sandbox/unverified domains require sending from onboarding@resend.dev
+      const isPublicOrUnverified = 
+        fromEmail.endsWith("gmail.com") || 
+        fromEmail.endsWith("yahoo.com") || 
+        fromEmail.endsWith("hotmail.com") || 
+        fromEmail.endsWith("outlook.com") || 
+        fromEmail.endsWith("naturalist.com");
+
+      const resendFrom = isPublicOrUnverified 
+        ? `${fromName} <onboarding@resend.dev>` 
+        : from;
+
       const response = await resend.emails.send({
-        from,
+        from: resendFrom,
         to,
         subject,
         html,
         text: plainText,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       });
 
       if (!response.error) {
@@ -123,13 +142,15 @@ export async function sendEmail({
         subject,
         html,
         text: plainText,
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       });
       return { success: true, id: info.messageId, provider: "smtp" };
     } catch (err) {
       console.error("SMTP fallback failed...", err);
-      if (!isDev) {
-        throw err;
-      }
+      console.warn("EMAIL SEND WARNING: Both Resend and SMTP failed in production. Falling back to terminal printing to prevent blocking user actions.");
     }
   }
 
