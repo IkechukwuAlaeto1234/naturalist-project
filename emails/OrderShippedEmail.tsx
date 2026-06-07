@@ -15,9 +15,11 @@ export const OrderShippedEmail = ({
   carrier = "Naturalist Eco-Courier",
   trackingNumber = "ECO-TRACK-" + Date.now(),
 }: OrderShippedEmailProps) => {
+  const sansSerifStack = "Verdana, Geneva, sans-serif";
+
   return (
     <BaseEmailLayout title="Order Shipped | Naturalist" previewText="Your organic skin remedies are on their way!">
-      <div style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#141f19" }}>
+      <div style={{ fontFamily: sansSerifStack, color: "#141f19" }}>
         
         {/* Title / Heading Image */}
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
@@ -34,15 +36,15 @@ export const OrderShippedEmail = ({
           <img 
             src={EMAIL_ASSETS.packageShipping} 
             alt="Your order is on its way" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
 
-        <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,
         </p>
 
-        <p style={{ fontSize: "15px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
           Great news! We have carefully packed your Naturalist products in our 100% biodegradable, carbon-neutral packaging and dispatched them. Below are your courier tracking details:
         </p>
 
@@ -52,16 +54,16 @@ export const OrderShippedEmail = ({
             <td>
               <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: "14px" }}>
                 <tr>
-                  <td style={{ fontSize: "14px", color: "#5e6f64", paddingBottom: "8px" }}>Order ID:</td>
-                  <td align="right" style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38", paddingBottom: "8px" }}>#{orderId}</td>
+                  <td style={{ fontSize: "13px", color: "#5e6f64", paddingBottom: "8px", fontFamily: sansSerifStack }}>Order ID:</td>
+                  <td align="right" style={{ fontSize: "13px", fontWeight: "bold", color: "#2d4c38", paddingBottom: "8px", fontFamily: sansSerifStack }}>#{orderId}</td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: "14px", color: "#5e6f64", paddingBottom: "8px" }}>Carrier:</td>
-                  <td align="right" style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38", paddingBottom: "8px" }}>{carrier}</td>
+                  <td style={{ fontSize: "13px", color: "#5e6f64", paddingBottom: "8px", fontFamily: sansSerifStack }}>Carrier:</td>
+                  <td align="right" style={{ fontSize: "13px", fontWeight: "bold", color: "#2d4c38", paddingBottom: "8px", fontFamily: sansSerifStack }}>{carrier}</td>
                 </tr>
                 <tr>
-                  <td style={{ fontSize: "14px", color: "#5e6f64" }}>Tracking Number:</td>
-                  <td align="right" style={{ fontSize: "14px", fontFamily: "monospace", fontWeight: "bold", color: "#b07e3a" }}>{trackingNumber}</td>
+                  <td style={{ fontSize: "13px", color: "#5e6f64", fontFamily: sansSerifStack }}>Tracking Number:</td>
+                  <td align="right" style={{ fontSize: "13px", fontFamily: "monospace", fontWeight: "bold", color: "#b07e3a" }}>{trackingNumber}</td>
                 </tr>
               </table>
               
@@ -88,7 +90,7 @@ export const OrderShippedEmail = ({
           </tr>
         </table>
 
-        <p style={{ fontSize: "15px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
           Thank you for choosing Naturalist and supporting carbon-neutral skincare!
         </p>
 

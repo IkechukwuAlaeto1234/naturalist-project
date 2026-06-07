@@ -1,0 +1,97 @@
+Created At: 2026-06-06T22:59:54Z
+Completed At: 2026-06-06T22:59:54Z
+File Path: `file:///c:/Users/user/Downloads/naturalist-project/scratch/decode_logs_socials.py`
+Total Lines: 89
+Total Bytes: 3066
+Showing lines 1 to 89
+The following code has been modified to include a line number before every line, in the format: <line_number>: <original_line>. Please note that any changes targeting the original code should remove the line number, colon, and leading space.
+1: import os
+2: import json
+3: import base64
+4: import re
+5: 
+6: def main():
+7:     conversation_id = '15898c9b-b61e-47f8-987d-02469f4fb19a'
+8:     log_path = os.path.expanduser(f'~/.gemini/antigravity/brain/{conversation_id}/.system_generated/logs/transcript.jsonl')
+9:     
+10:     if not os.path.exists(log_path):
+11:         # Check standard absolute path fallback
+12:         log_path = f'C:\\Users\\user\\.gemini\\antigravity\\brain\\{conversation_id}\\.system_generated\\logs\\transcript.jsonl'
+13:         if not os.path.exists(log_path):
+14:             print(f"Error: Transcript log not found at {log_path}")
+15:             return
+16: 
+17:     print(f"Reading logs from {log_path}...")
+18:     
+19:     # Read the transcript lines
+20:     with open(log_path, 'r', encoding='utf-8') as f:
+21:         lines = f.readlines()
+22: 
+23:     # Search backwards for the last user message containing images
+24:     user_content = ""
+25:     for line in reversed(lines):
+26:         try:
+27:             step = json.loads(line)
+28:             if step.get('type') == 'USER_INPUT':
+29:                 content = step.get('content', '')
+30:                 if 'data:image/png;base64' in content:
+31:                     user_content = content
+32:                     break
+33:         except Exception:
+34:             continue
+35: 
+36:     if not user_content:
+37:         print("Error: Could not find the user input containing base64 images in the logs.")
+38:         return
+39: 
+40:     # Extract all img tags with their base64 source and alt tags using string splitting
+41:     parts = user_content.split('<img src="data:image/png;base64,')
+42:     matches = []
+43:     
+44:     for part in parts[1:]:
+45:         try:
+46:             b64_str = part.split('"')[0].strip()
+47:             if 'alt="' in part:
+48:                 alt = part.split('alt="')[1].split('"')[0].strip()
+49:                 matches.append((b64_str, alt))
+50:         except Exception as e:
+51:             print(f"Error parsing segment: {e}")
+52:     
+53:     if not matches:
+54:         print("Error: String splitting failed to find any base64 images in the user content.")
+55:         return
+56: 
+57:     output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'public', 'brand'))
+58:     os.makedirs(output_dir, exist_ok=True)
+59:     
+60:     alt_map = {
+61:         'twitterx': 'social_x.png',
+62:         'instagram-new': 'social_instagram.png',
+63:         'tiktok': 'social_tiktok.png',
+64:         'youtube-play': 'social_youtube.png',
+65:         'facebook': 'social_facebook.png'
+66:     }
+67: 
+68:     print(f"Found {len(matches)} images to decode. Saving to {output_dir}...")
+69:     
+70:     for b64_str, alt in matches:
+71:         filename = alt_map.get(alt)
+72:         if not filename:
+73:             print(f"  Warning: Unknown alt tag '{alt}', skipping.")
+74:             continue
+75:             
+76:         try:
+77:             img_data = base64.b64decode(b64_str)
+78:             filepath = os.path.join(output_dir, filename)
+79:             with open(filepath, 'wb') as f_out:
+80:                 f_out.write(img_data)
+81:             print(f"  Saved: {filename} ({len(img_data)} bytes)")
+82:         except Exception as e:
+83:             print(f"  Failed to save {filename}: {e}")
+84: 
+85:     print("\nLog image decoding complete!")
+86: 
+87: if __name__ == '__main__':
+88:     main()
+89: 
+The above content shows the entire, complete file contents of the requested file.

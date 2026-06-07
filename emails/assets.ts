@@ -18,13 +18,13 @@ export const EMAIL_ASSETS = {
   legalUpdateHeader: `${appUrl}/cdn/image/upload/v1780787290/brand/legal_update_header.png`,
 
   // Social Icons
-  socialInstagram: `${appUrl}/cdn/image/upload/v1780787291/brand/social_instagram.png`,
-  socialX: `${appUrl}/cdn/image/upload/v1780787292/brand/social_x.png`,
-  socialLinkedin: `${appUrl}/cdn/image/upload/v1780787294/brand/social_linkedin.png`,
-  socialYoutube: `${appUrl}/cdn/image/upload/v1780787295/brand/social_youtube.png`,
-  socialFacebook: `${appUrl}/cdn/image/upload/v1780787296/brand/social_facebook.png`,
-  socialTiktok: `${appUrl}/cdn/image/upload/v1780787298/brand/social_tiktok.png`,
-  socialWhatsapp: `${appUrl}/cdn/image/upload/v1780787299/brand/social_whatsapp.png`,
+  socialInstagram: `${appUrl}/cdn/image/upload/v1780787291/brand/social_instagram.png?v=3`,
+  socialX: `${appUrl}/cdn/image/upload/v1780787292/brand/social_x.png?v=3`,
+  socialLinkedin: `${appUrl}/cdn/image/upload/v1780787294/brand/social_linkedin.png?v=3`,
+  socialYoutube: `${appUrl}/cdn/image/upload/v1780787295/brand/social_youtube.png?v=3`,
+  socialFacebook: `${appUrl}/cdn/image/upload/v1780787296/brand/social_facebook.png?v=3`,
+  socialTiktok: `${appUrl}/cdn/image/upload/v1780787298/brand/social_tiktok.png?v=3`,
+  socialWhatsapp: `${appUrl}/cdn/image/upload/v1780787299/brand/social_whatsapp.png?v=3`,
 
   // Illustrations
   colorfulBlobs: `${appUrl}/cdn/image/upload/v1780787300/email/colorful_blobs.jpg`,

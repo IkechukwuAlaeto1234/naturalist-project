@@ -1,3 +1,4 @@
+import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
 import { EMAIL_ASSETS } from "./assets";
 
@@ -6,7 +7,7 @@ interface WelcomeEmailProps {
 }
 
 export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
-  const sansSerifStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+  const sansSerifStack = "Verdana, Geneva, sans-serif";
   const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
@@ -23,25 +24,25 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           />
         </div>
 
-        {/* Hero Image */}
+        {/* Hero Image - Styled with Rounded corners & Subtle Border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
             src={EMAIL_ASSETS.botanical} 
             alt="Welcome to the Naturalist family" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block", border: 0 }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
 
-        <p style={{ fontSize: "15px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 16px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,
         </p>
 
-        <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
           Thank you for joining Naturalist! We are absolutely thrilled to welcome you to our community. 
           At Naturalist, we believe skincare should be pure, intentional, and environmentally responsible.
         </p>
 
-        <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
           To celebrate your journey with us, here is a special subscriber gift for <strong>10% off</strong> your very first order:
         </p>
 
@@ -74,11 +75,11 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           </tr>
         </table>
 
-        <p style={{ fontSize: "15px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
           Explore our curated collection of botanical cleansers, nourishing face oils, and hydrating mist toniques! We cannot wait to hear about your skincare transformation.
         </p>
 
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 10px 0" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 32px 0" }}>
           <tr>
             <td align="center">
               <a href="#" target="_blank" style={{
@@ -94,6 +95,57 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
               }}>
                 Shop Collection
               </a>
+            </td>
+          </tr>
+        </table>
+
+        {/* Brand Promises Section (Redesigned Editorial Style) */}
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderTop: "1px solid #eae5db", paddingTop: "32px" }}>
+          <tr>
+            <td>
+              <h3 style={{ fontSize: "15px", fontWeight: "bold", color: "#2d4c38", margin: "0 0 20px 0", letterSpacing: "-0.3px", textTransform: "uppercase" }}>
+                Our Brand Promises
+              </h3>
+              
+              {/* Promise 1 */}
+              <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: "20px" }}>
+                <tr>
+                  <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>🌱</td>
+                  <td style={{ paddingLeft: "12px" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>100% Organic Ingredients</div>
+                    <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
+                      We source our botanicals from ethical, local growers. Every batch is vegan, pure, and cruelty-free.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              {/* Promise 2 */}
+              <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: "20px" }}>
+                <tr>
+                  <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>📦</td>
+                  <td style={{ paddingLeft: "12px" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Sustainable Packaging</div>
+                    <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
+                      Our packaging is 100% recyclable, utilizing amber glass bottles and biodegradable paper boxes.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              {/* Promise 3 */}
+              <table width="100%" cellPadding={0} cellSpacing={0}>
+                <tr>
+                  <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>🧪</td>
+                  <td style={{ paddingLeft: "12px" }}>
+                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Dermatologist Approved</div>
+                    <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
+                      Developed in partnership with skincare experts to ensure clinical efficacy and gentle care for sensitive skin.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
             </td>
           </tr>
         </table>

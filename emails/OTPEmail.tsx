@@ -9,9 +9,7 @@ interface OTPEmailProps {
 
 export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
   const digits = (otp || "------").split("").slice(0, 6);
-
-  const sansSerifStack = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
+  const sansSerifStack = "Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Verify Your Email | Naturalist" previewText="Complete your registration with Naturalist.">
@@ -27,15 +25,15 @@ export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
           />
         </div>
 
-        <p style={{ fontSize: "15px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
           Hi <strong>{name}</strong>,
         </p>
 
-        <p style={{ fontSize: "15px", margin: "0 0 24px 0", lineHeight: "1.6", color: "#2d4c38" }}>
+        <p style={{ fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.6", color: "#2d4c38" }}>
           Thank you for joining Naturalist! To complete your registration and activate your account, please enter the 6-character verification passcode below:
         </p>
 
-        {/* Shootmail-style 6-Box Passcode Grid */}
+        {/* 6-Box Passcode Grid */}
         <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto" }}>
           <tr>
             {digits.map((digit, i) => (
@@ -43,7 +41,7 @@ export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
                 <td align="center" valign="middle" style={{
                   width: "44px",
                   height: "52px",
-                  backgroundColor: "#fbfbf9",
+                  backgroundColor: "#faf9f5",
                   border: "1px solid #b07e3a",
                   borderRadius: "12px",
                   textAlign: "center",
@@ -60,7 +58,7 @@ export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
           </tr>
         </table>
 
-        <p style={{ fontSize: "14px", color: "#5e6f64", margin: "24px 0 0 0", textAlign: "center", lineHeight: "1.5" }}>
+        <p style={{ fontSize: "13px", color: "#5e6f64", margin: "24px 0 0 0", textAlign: "center", lineHeight: "1.5" }}>
           This security code is valid for <strong>15 minutes</strong>. If you did not sign up for a Naturalist account, you can safely ignore this message.
         </p>
 
