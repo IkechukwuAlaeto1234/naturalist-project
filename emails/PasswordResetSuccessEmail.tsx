@@ -42,9 +42,9 @@ export const PasswordResetSuccessEmail = ({ name }: PasswordResetSuccessEmailPro
         </p>
 
         {/* Security Warning Box - Styled as a neat bordered card */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "20px", backgroundColor: "#faf9f5", margin: "24px 0" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#faf9f5", margin: "24px 0" }}>
           <tr>
-            <td>
+            <td style={{ padding: "20px" }}>
               <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#b07e3a", fontWeight: "bold" }}>
                 Didn't request this change?
               </h4>

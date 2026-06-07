@@ -41,8 +41,7 @@ export const PasswordResetEmail = ({ token, name }: PasswordResetEmailProps) => 
                 <td align="center" valign="middle" style={{
                   width: "44px",
                   height: "52px",
-                  backgroundColor: "#faf9f5",
-                  border: "1px solid #b07e3a",
+                  backgroundColor: "#f4efe6",
                   borderRadius: "12px",
                   textAlign: "center",
                   fontFamily: sansSerifStack,

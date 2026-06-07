@@ -41,9 +41,9 @@ export const LegalUpdateEmail = ({
         </p>
 
         {/* Changes Summary Card */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "24px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
           <tr>
-            <td>
+            <td style={{ padding: "24px" }}>
               <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#2d4c38", fontWeight: "bold" }}>
                 Summary of Changes
               </h4>

@@ -36,7 +36,7 @@ export const OrderShippedEmail = ({
           <img 
             src={EMAIL_ASSETS.packageShipping} 
             alt="Your order is on its way" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
           />
         </div>
 
@@ -49,9 +49,9 @@ export const OrderShippedEmail = ({
         </p>
 
         {/* Tracking Details Box */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "24px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
           <tr>
-            <td>
+            <td style={{ padding: "24px" }}>
               <table width="100%" cellPadding={0} cellSpacing={0} style={{ marginBottom: "14px" }}>
                 <tr>
                   <td style={{ fontSize: "13px", color: "#5e6f64", paddingBottom: "8px", fontFamily: sansSerifStack }}>Order ID:</td>

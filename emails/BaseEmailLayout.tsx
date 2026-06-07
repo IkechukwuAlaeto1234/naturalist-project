@@ -134,7 +134,7 @@ export const BaseEmailLayout = ({
                           <div style={{ fontWeight: "bold", color: "#2d4c38", marginBottom: "4px" }}>Naturalist Co. Ltd.</div>
                           <div>Inspired by Nature, Crafted for Glow</div>
                           <div style={{ marginTop: "4px" }}>125 Botanical Gardens Drive, Suite 400, SF, CA 94107</div>
-                          <div style={{ marginTop: "16px", borderTop: "1px solid #eae5db", paddingTop: "16px" }}>
+                          <div style={{ marginTop: "16px", paddingTop: "16px" }}>
                             This email was sent in response to your account actions. 
                             If you wish to opt-out, please <a href={unsubscribeUrl} style={{ color: "#b07e3a", textDecoration: "underline", fontWeight: "bold" }}>unsubscribe</a>.
                           </div>

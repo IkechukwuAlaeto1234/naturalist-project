@@ -51,9 +51,9 @@ export const SecurityAlertEmail = ({
         </p>
 
         {/* Security Alert Info Box - Styled as a neat bordered card */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "24px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#faf9f5", marginBottom: "24px" }}>
           <tr>
-            <td>
+            <td style={{ padding: "24px" }}>
               <table width="100%" cellPadding={0} cellSpacing={0}>
                 <tr>
                   <td style={{ fontSize: "13px", color: "#5e6f64", paddingBottom: "8px", fontFamily: sansSerifStack }}>Device / Browser:</td>
@@ -77,9 +77,9 @@ export const SecurityAlertEmail = ({
         </table>
 
         {/* Action Callout */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "20px", backgroundColor: "#ffffff" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#ffffff" }}>
           <tr>
-            <td>
+            <td style={{ padding: "20px" }}>
               <h4 style={{ margin: "0 0 8px 0", fontSize: "14px", color: "#2d4c38", fontWeight: "bold" }}>
                 Was this you?
               </h4>

@@ -24,12 +24,12 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           />
         </div>
 
-        {/* Hero Image - Styled with Rounded corners & Subtle Border */}
+        {/* Hero Image - Styled with Rounded corners */}
         <div style={{ marginBottom: "24px" }}>
           <img 
             src={EMAIL_ASSETS.botanical} 
             alt="Welcome to the Naturalist family" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
           />
         </div>
 
@@ -47,7 +47,7 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
         </p>
 
         {/* Gift Card Promo Block */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "24px 0", backgroundColor: "#faf9f5", border: "1px dashed #b07e3a", borderRadius: "16px", textAlign: "center" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "24px 0", backgroundColor: "#faf9f5", borderRadius: "16px", textAlign: "center" }}>
           <tr>
             <td style={{ padding: "24px" }}>
               <div style={{ fontSize: "11px", fontWeight: "bold", color: "#2d4c38", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
@@ -100,7 +100,7 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
         </table>
 
         {/* Brand Promises Section (Redesigned Editorial Style) */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderTop: "1px solid #eae5db", paddingTop: "32px" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ paddingTop: "32px" }}>
           <tr>
             <td>
               <h3 style={{ fontSize: "15px", fontWeight: "bold", color: "#2d4c38", margin: "0 0 20px 0", letterSpacing: "-0.3px", textTransform: "uppercase" }}>

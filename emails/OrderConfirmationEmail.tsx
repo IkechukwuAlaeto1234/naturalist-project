@@ -48,7 +48,7 @@ export const OrderConfirmationEmail = ({
           <img 
             src={EMAIL_ASSETS.plantGifts} 
             alt="Thank you for your purchase" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
           />
         </div>
 
@@ -61,12 +61,12 @@ export const OrderConfirmationEmail = ({
         </p>
 
         {/* Invoice Itemized Table */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", overflow: "hidden", marginBottom: "24px", width: "100%", borderCollapse: "separate" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", overflow: "hidden", marginBottom: "24px", width: "100%", borderCollapse: "separate" }}>
           <thead>
             <tr style={{ backgroundColor: "#faf9f5" }}>
-              <th align="left" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", fontFamily: sansSerifStack }}>Item</th>
-              <th align="center" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "50px", fontFamily: sansSerifStack }}>Qty</th>
-              <th align="right" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #e2dacd", width: "80px", fontFamily: sansSerifStack }}>Price</th>
+              <th align="left" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #f4efe6", fontFamily: sansSerifStack }}>Item</th>
+              <th align="center" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #f4efe6", width: "50px", fontFamily: sansSerifStack }}>Qty</th>
+              <th align="right" style={{ padding: "14px 18px", fontSize: "11px", fontWeight: "bold", color: "#2d4c38", textTransform: "uppercase", letterSpacing: "1px", borderBottom: "1px solid #f4efe6", width: "80px", fontFamily: sansSerifStack }}>Price</th>
             </tr>
           </thead>
           <tbody>
@@ -91,9 +91,9 @@ export const OrderConfirmationEmail = ({
         </table>
 
         {/* Shipping Address Detail Box */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ border: "1px solid #e2dacd", borderRadius: "16px", padding: "20px", backgroundColor: "#ffffff" }}>
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ borderRadius: "16px", backgroundColor: "#ffffff" }}>
           <tr>
-            <td>
+            <td style={{ padding: "20px" }}>
               <h4 style={{ margin: "0 0 10px 0", fontSize: "14px", color: "#2d4c38", fontWeight: "bold" }}>
                 Delivery Address
               </h4>
