@@ -1,4 +1,10 @@
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+let appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+// For local testing, since public email clients (like Gmail) cannot access localhost,
+// we serve email images using the live production CDN domain.
+if (appUrl.includes("localhost")) {
+  appUrl = "https://naturalist-project.onrender.com";
+}
 
 export const EMAIL_ASSETS = {
   // Headers
