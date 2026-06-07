@@ -7,7 +7,7 @@ interface PasswordResetSuccessEmailProps {
 }
 
 export const PasswordResetSuccessEmail = ({ name }: PasswordResetSuccessEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Password Reset Successful | Naturalist" previewText="Your password has been successfully updated.">
@@ -57,21 +57,17 @@ export const PasswordResetSuccessEmail = ({ name }: PasswordResetSuccessEmailPro
         </table>
 
         {/* Button */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 10px 0" }}>
+        {/* Horizontal CTA Buttons */}
+        <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto 10px auto", textAlign: "center" }}>
           <tr>
-            <td align="center">
-              <a href="#" target="_blank" style={{
-                backgroundColor: "#2d4c38",
-                color: "#faf9f5",
-                fontSize: "13px",
-                fontWeight: "bold",
-                textDecoration: "none",
-                padding: "12px 28px",
-                borderRadius: "30px",
-                display: "inline-block",
-                boxShadow: "0 4px 10px rgba(45, 76, 56, 0.15)"
-              }}>
-                Go to Security Panel
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_SECURITY_PANEL__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_primary_Go to Security Panel__" alt="Go to Security Panel" width="200" style={{ display: "block", border: 0, height: "auto" }} />
+              </a>
+            </td>
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_REVIEW_ACTIVITY_reset__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_secondary_Review Account Activity__" alt="Review Account Activity" width="240" style={{ display: "block", border: 0, height: "auto" }} />
               </a>
             </td>
           </tr>

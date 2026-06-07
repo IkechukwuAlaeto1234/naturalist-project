@@ -7,7 +7,7 @@ interface WelcomeEmailProps {
 }
 
 export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
   const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
@@ -24,12 +24,12 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           />
         </div>
 
-        {/* Hero Image - Styled with Rounded corners */}
+        {/* Hero Image - Styled with Rounded corners and border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
-            src={EMAIL_ASSETS.botanical} 
+            src={EMAIL_ASSETS.taskManagement} 
             alt="Welcome to the Naturalist family" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
 
@@ -46,31 +46,16 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           To celebrate your journey with us, here is a special subscriber gift for <strong>10% off</strong> your very first order:
         </p>
 
-        {/* Gift Card Promo Block */}
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "24px 0", backgroundColor: "#faf9f5", borderRadius: "16px", textAlign: "center" }}>
+        {/* Gift Card Promo Block - Dynamic High Fidelity Image */}
+        <table width="100%" cellPadding={0} cellSpacing={0} style={{ margin: "24px 0", textAlign: "center" }}>
           <tr>
-            <td style={{ padding: "24px" }}>
-              <div style={{ fontSize: "11px", fontWeight: "bold", color: "#2d4c38", letterSpacing: "2px", textTransform: "uppercase", marginBottom: "4px" }}>
-                YOUR FIRST SUBSCRIBER GIFT
-              </div>
-              <div style={{ fontFamily: serifStack, fontSize: "20px", fontWeight: "bold", color: "#b07e3a", marginBottom: "16px" }}>
-                Get 10% Off Your First Purchase
-              </div>
-              <div style={{
-                fontFamily: "monospace",
-                fontSize: "16px",
-                letterSpacing: "3px",
-                color: "#2d4c38",
-                fontWeight: "bold",
-                backgroundColor: "#ffffff",
-                display: "inline-block",
-                padding: "10px 24px",
-                borderRadius: "8px",
-                border: "1px solid #e2dacd",
-                boxShadow: "0 2px 8px rgba(45, 76, 56, 0.01)"
-              }}>
-                NATURALGLOW10
-              </div>
+            <td align="center">
+              <img 
+                src="__VOUCHER_Your First Subscriber Gift|Get 10% Off Your First Purchase|NATURALGLOW10__" 
+                alt="10% Off First Purchase: NATURALGLOW10" 
+                width="520"
+                style={{ display: "block", maxWidth: "100%", height: "auto", border: 0 }}
+              />
             </td>
           </tr>
         </table>
@@ -79,21 +64,17 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
           Explore our curated collection of botanical cleansers, nourishing face oils, and hydrating mist toniques! We cannot wait to hear about your skincare transformation.
         </p>
 
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 32px 0" }}>
+        {/* Horizontal Primary and Secondary High-Fidelity Buttons */}
+        <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto 32px auto", textAlign: "center" }}>
           <tr>
-            <td align="center">
-              <a href="#" target="_blank" style={{
-                backgroundColor: "#2d4c38",
-                color: "#faf9f5",
-                fontSize: "13px",
-                fontWeight: "bold",
-                textDecoration: "none",
-                padding: "12px 28px",
-                borderRadius: "30px",
-                display: "inline-block",
-                boxShadow: "0 4px 10px rgba(45, 76, 56, 0.15)"
-              }}>
-                Shop Collection
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_SHOP__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_primary_Shop Collection__" alt="Shop Collection" width="180" style={{ display: "block", border: 0, height: "auto" }} />
+              </a>
+            </td>
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_BEST_SELLERS__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_secondary_Browse Best Sellers__" alt="Browse Best Sellers" width="220" style={{ display: "block", border: 0, height: "auto" }} />
               </a>
             </td>
           </tr>

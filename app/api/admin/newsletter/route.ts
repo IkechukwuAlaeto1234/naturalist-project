@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Newsletter } from "@/models/Newsletter";
 import { auth } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/newsletter";
 
 // GET /api/admin/newsletter
 // Fetch all subscribers (Admin only)
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
+    const adminEmail = (session.user as any).email || "System";
+
     await connectToDatabase();
 
     const existing = await Newsletter.findOne({ email: email.toLowerCase().trim() });
@@ -45,7 +48,16 @@ export async function POST(req: Request) {
       }
       existing.isActive = true;
       existing.unsubscribedAt = undefined;
+      existing.welcomeEmailSentAt = undefined; // reset to allow sending welcome email
       await existing.save();
+
+      // Dispatch welcome email and log it
+      try {
+        await sendWelcomeEmail(existing, true, adminEmail);
+      } catch (err) {
+        console.error("Failed to send welcome email for reactivated manual subscriber:", err);
+      }
+      
       return NextResponse.json(existing, { status: 200 });
     }
 
@@ -53,6 +65,13 @@ export async function POST(req: Request) {
       email: email.toLowerCase().trim(),
       isActive: true,
     });
+
+    // Dispatch welcome email and log it
+    try {
+      await sendWelcomeEmail(newSub, true, adminEmail);
+    } catch (err) {
+      console.error("Failed to send welcome email for new manual subscriber:", err);
+    }
 
     return NextResponse.json(newSub, { status: 201 });
   } catch (error) {

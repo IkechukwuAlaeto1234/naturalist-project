@@ -9,7 +9,7 @@ interface PasswordResetEmailProps {
 
 export const PasswordResetEmail = ({ token, name }: PasswordResetEmailProps) => {
   const digits = (token || "------").split("").slice(0, 6);
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Reset Your Password | Naturalist" previewText="Use this passcode to reset your Naturalist credentials.">

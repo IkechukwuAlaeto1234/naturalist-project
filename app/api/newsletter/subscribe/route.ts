@@ -2,9 +2,212 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Newsletter } from "@/models/Newsletter";
 import { newsletterSchema } from "@/lib/validations";
-import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { EMAIL_ASSETS } from "@/emails/assets";
+import { sendWelcomeEmail } from "@/lib/newsletter";
+
+/**
+ * GET /api/newsletter/subscribe
+ * Re-subscribe an email via direct link click (GET request from browser)
+ */
+export async function GET(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const email = searchParams.get("email");
+
+    if (!email) {
+      return new Response("Email parameter is required", { status: 400 });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    await connectToDatabase();
+
+    // Find if already subscribed
+    let subscriber = await Newsletter.findOne({ email: normalizedEmail });
+
+    if (subscriber) {
+      subscriber.isActive = true;
+      subscriber.subscribedAt = new Date();
+      subscriber.unsubscribedAt = undefined;
+      await subscriber.save();
+    } else {
+      // Create new subscription
+      subscriber = await Newsletter.create({
+        email: normalizedEmail,
+        isActive: true,
+      });
+    }
+
+    // Try sending welcome email in background
+    try {
+      await sendWelcomeEmail(subscriber);
+    } catch (e) {
+      console.error("Welcome email send failure on GET:", e);
+    }
+
+    // Return a beautiful HTML confirmation page
+    const html = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Successfully Re-subscribed | Naturalist</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+        <style>
+          body {
+            font-family: 'Host Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #faf8f4;
+            color: #141f19;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          header {
+            padding: 24px;
+            border-bottom: 1px solid #eae5db;
+            text-align: center;
+            background-color: #ffffff;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          header img {
+            max-height: 48px;
+            max-width: 180px;
+            display: block;
+            margin: 0 auto;
+          }
+          main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 24px;
+            box-sizing: border-box;
+          }
+          .card {
+            background-color: #ffffff;
+            border: 1px solid #eae5db;
+            border-radius: 32px;
+            padding: 48px 40px;
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(20, 31, 25, 0.03);
+            box-sizing: border-box;
+          }
+          .icon-wrapper {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px;
+            height: 64px;
+            background-color: #f4efe6;
+            color: #b07e3a;
+            border-radius: 50%;
+            margin-bottom: 24px;
+            font-size: 28px;
+          }
+          h1 {
+            font-family: Georgia, serif;
+            font-size: 28px;
+            font-weight: 900;
+            margin: 0 0 16px 0;
+            color: #141f19;
+            letter-spacing: -0.5px;
+            line-height: 1.25;
+          }
+          p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #5e6f64;
+            margin: 0 0 32px 0;
+          }
+          .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #2d4c38;
+            color: #faf8f4;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            height: 48px;
+            padding: 0 36px;
+            border-radius: 9999px;
+            transition: background-color 0.2s, transform 0.2s;
+            border: none;
+            box-shadow: 0 4px 12px rgba(45, 76, 56, 0.08);
+            box-sizing: border-box;
+            cursor: pointer;
+          }
+          .btn:hover {
+            background-color: #3a6349;
+            transform: translateY(-1px);
+          }
+          footer {
+            text-align: center;
+            padding: 24px;
+            width: 100%;
+            box-sizing: border-box;
+          }
+          footer p {
+            margin: 0 0 8px 0;
+            font-size: 11px;
+            color: #8a7f72;
+          }
+          footer a {
+            color: #2d4c38;
+            text-decoration: underline;
+            font-weight: 600;
+          }
+        </style>
+      </head>
+      <body>
+        <header>
+          <a href="/">
+            <img src="${EMAIL_ASSETS.logoTransparent}" alt="Naturalist Logo" />
+          </a>
+        </header>
+        <main>
+          <div class="card">
+            <div class="icon-wrapper">✓</div>
+            <h1>You're back in!</h1>
+            <p>We've successfully updated your subscription. You will receive organic skincare guides, ingredient spotlights, and exclusive member offers again at <strong>${normalizedEmail}</strong>.</p>
+            <a href="/" class="btn">Return to Store</a>
+          </div>
+          <footer>
+            <p>&copy; ${new Date().getFullYear()} Naturalist. All rights reserved.</p>
+            <p>
+              <a href="/">Visit our store</a> &nbsp;&middot;&nbsp; 
+              <a href="/privacy-policy">Privacy Policy</a>
+            </p>
+          </footer>
+        </main>
+      </body>
+      </html>
+    `;
+
+    return new Response(html, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+      },
+    });
+  } catch (error) {
+    console.error("GET newsletter subscribe error:", error);
+    return new Response("An error occurred while re-subscribing. Please try again.", { status: 500 });
+  }
+}
 
 /**
  * POST /api/newsletter/subscribe
@@ -38,12 +241,21 @@ export async function POST(req: Request) {
 
     if (subscriber) {
       if (subscriber.isActive) {
+        // If welcome email hasn't been sent yet, send it
+        if (!subscriber.welcomeEmailSentAt) {
+          try {
+            await sendWelcomeEmail(subscriber);
+          } catch (e) {
+            console.error("Welcome email send failure on POST:", e);
+          }
+        }
         return NextResponse.json({ message: "You are already subscribed to our newsletter!" }, { status: 200 });
       }
-      // Re-activate subscription
+      // Re-reactivate subscription
       subscriber.isActive = true;
       subscriber.subscribedAt = new Date();
       subscriber.unsubscribedAt = undefined;
+      subscriber.welcomeEmailSentAt = undefined; // Reset to allow welcome email on reactivation
       await subscriber.save();
     } else {
       // Create new subscription
@@ -55,119 +267,7 @@ export async function POST(req: Request) {
 
     // 4. Send Welcome Newsletter Email
     try {
-      await sendEmail({
-        to: normalizedEmail,
-        subject: "You're in. Welcome to Naturalist.",
-        html: `
-          <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 600px; margin: 0 auto; background: #faf8f4; border-radius: 4px; overflow: hidden; box-shadow: 0 8px 40px rgba(45,76,56,0.12);">
-
-            <!-- HEADER -->
-            <div style="background: #111a14; padding: 48px 48px 40px; text-align: center;">
-              <p style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: #b07e3a; margin: 0 0 20px 0;">A letter from the forest</p>
-              <div style="margin-bottom: 6px; text-align: center;">
-                <img src="${EMAIL_ASSETS.logoTransparentWhite}" alt="Naturalist" style="max-height: 48px; max-width: 180px; display: inline-block; border: 0;" />
-              </div>
-              <p style="font-size: 13px; color: rgba(250,248,244,0.45); font-style: italic; margin: 0;">Skincare rooted in nature</p>
-            </div>
-
-            <!-- HERO BAND -->
-            <div style="background: #2d4c38; padding: 28px 48px; text-align: center;">
-              <h1 style="font-size: 22px; color: #faf8f4; font-weight: 400; margin: 0;">You're in. <em style="color: #b07e3a;">Welcome to the fold.</em></h1>
-            </div>
-
-            <!-- BODY -->
-            <div style="padding: 44px 48px;">
-              <div style="margin-bottom: 28px; text-align: center;">
-                <img src="${EMAIL_ASSETS.newsletter}" alt="Naturalist Newsletter" style="width: 100%; height: auto; border-radius: 12px; display: block; border: 0;" />
-              </div>
-
-              <p style="font-size: 17px; color: #141f19; font-style: italic; border-left: 3px solid #b07e3a; padding-left: 16px; margin: 0 0 28px 0; line-height: 1.6;">
-                "The earth has enough for everyone's need — we just have to know where to look."
-              </p>
-
-              <p style="font-size: 15px; line-height: 1.75; color: #2e3a31; margin: 0 0 20px 0;">
-                That belief is at the heart of everything we make at Naturalist. Every formulation begins in the wild — with roots, leaves, and oils that have been trusted for generations — and ends in your hands, thoughtfully crafted and honestly made.
-              </p>
-
-              <p style="font-size: 15px; line-height: 1.75; color: #2e3a31; margin: 0 0 32px 0;">
-                You've just joined a growing community of people who believe that what you put on your skin matters. We're glad you're here.
-              </p>
-
-              <!-- WHAT TO EXPECT -->
-              <div style="background: #f4efe6; border-radius: 6px; padding: 28px 32px; margin-bottom: 32px;">
-                <h3 style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: #5e6f64; margin: 0 0 18px 0;">What comes next</h3>
-                <p style="font-size: 14px; color: #2e3a31; line-height: 1.55; margin: 0 0 12px 0; padding-left: 18px; position: relative;"><span style="position: absolute; left: 0; color: #b07e3a;">&#8226;</span> Early access to new launches before they go public — including limited botanical editions.</p>
-                <p style="font-size: 14px; color: #2e3a31; line-height: 1.55; margin: 0 0 12px 0; padding-left: 18px; position: relative;"><span style="position: absolute; left: 0; color: #b07e3a;">&#8226;</span> Ingredient spotlights, skin rituals, and honest education about what's in your products.</p>
-                <p style="font-size: 14px; color: #2e3a31; line-height: 1.55; margin: 0; padding-left: 18px; position: relative;"><span style="position: absolute; left: 0; color: #b07e3a;">&#8226;</span> Subscriber-only offers and restocks — no noise, no spam.</p>
-              </div>
-
-              <!-- COUPON -->
-              <div style="border: 1px solid #e2dacd; border-radius: 6px; overflow: hidden; margin-bottom: 36px;">
-                <div style="background: #111a14; padding: 20px 28px; display: flex; align-items: center; justify-content: space-between;">
-                  <span style="font-family: 'Courier New', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(250,248,244,0.5);">Your first-order gift</span>
-                  <span style="font-size: 28px; font-weight: 700; color: #b07e3a; letter-spacing: -0.02em;">10% OFF</span>
-                </div>
-                <div style="background: #faf8f4; padding: 20px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px;">
-                  <span style="font-family: 'Courier New', monospace; font-size: 20px; letter-spacing: 0.15em; color: #2d4c38; font-weight: 700; border: 1.5px dashed #b07e3a; padding: 10px 18px; border-radius: 4px; background: #fff;">NATURALGLOW10</span>
-                  <span style="font-size: 12px; color: #8a7f72; font-style: italic; line-height: 1.5; max-width: 180px; text-align: right;">Valid on your first order. No minimum spend required.</span>
-                </div>
-              </div>
-
-              <!-- CTA -->
-              <div style="text-align: center; margin-bottom: 36px;">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/shop" style="display: inline-block; background: #2d4c38; color: #faf8f4; text-decoration: none; font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; padding: 16px 36px; border-radius: 2px;">Shop the Collection &rarr;</a>
-              </div>
-
-              <p style="font-size: 13px; color: #8a7f72; line-height: 1.65; margin: 0;">
-                If you ever feel like this inbox isn't for you — no hard feelings. You can <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/newsletter/unsubscribe?email=${encodeURIComponent(normalizedEmail)}" style="color: #b07e3a;">unsubscribe here</a> at any time.
-              </p>
-            </div>
-
-            <!-- FOOTER -->
-            <div style="background: #111a14; padding: 32px 48px; text-align: center;">
-              <!-- SOCIAL PILL -->
-              <table align="center" border="0" cellspacing="0" cellpadding="0" style="margin: 0 auto 20px auto; background-color: #222d26; border-radius: 30px; padding: 8px 16px;">
-                <tr>
-                  <td style="padding: 0 8px; vertical-align: middle;">
-                    <a href="https://www.facebook.com/naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
-                      <img src="${EMAIL_ASSETS.socialFacebook}" alt="Facebook" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
-                    </a>
-                  </td>
-                  <td style="padding: 0 8px; vertical-align: middle;">
-                    <a href="https://www.instagram.com/naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
-                      <img src="${EMAIL_ASSETS.socialInstagram}" alt="Instagram" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
-                    </a>
-                  </td>
-                  <td style="padding: 0 8px; vertical-align: middle;">
-                    <a href="https://x.com/naturalist_skin" target="_blank" style="display: block; text-decoration: none;">
-                      <img src="${EMAIL_ASSETS.socialX}" alt="X" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
-                    </a>
-                  </td>
-                  <td style="padding: 0 8px; vertical-align: middle;">
-                    <a href="https://www.tiktok.com/@naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
-                      <img src="${EMAIL_ASSETS.socialTiktok}" alt="TikTok" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
-                    </a>
-                  </td>
-                  <td style="padding: 0 8px; vertical-align: middle;">
-                    <a href="https://www.youtube.com/@naturalist.skincare" target="_blank" style="display: block; text-decoration: none;">
-                      <img src="${EMAIL_ASSETS.socialYoutube}" alt="YouTube" width="20" height="20" style="width: 20px; height: 20px; display: block; border: 0;" />
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <div style="width: 40px; height: 1px; background: rgba(250,248,244,0.1); margin: 0 auto 16px;"></div>
-              <p style="font-size: 11px; color: rgba(250,248,244,0.3); line-height: 1.7; font-family: 'Courier New', monospace; margin: 0;">
-                Premium Organic Skincare &amp; Wellness<br/>
-                &copy; ${new Date().getFullYear()} Naturalist. All rights reserved.<br/><br/>
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/newsletter/unsubscribe?email=${encodeURIComponent(normalizedEmail)}" style="color: #b07e3a;">Unsubscribe</a> &nbsp;&middot;&nbsp;
-                <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}" style="color: #b07e3a;">Visit our store</a>
-              </p>
-            </div>
-
-          </div>
-        `,
-        text: "Thank you for subscribing to the Naturalist newsletter! Enjoy 10% off your first purchase using the coupon code NATURALGLOW10."
-      });
+      await sendWelcomeEmail(subscriber);
     } catch (emailError) {
       console.error("Failed to send welcome newsletter email:", emailError);
     }

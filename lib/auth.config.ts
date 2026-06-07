@@ -34,52 +34,46 @@ export const authConfig = {
       const isOnAccount = nextUrl.pathname.startsWith("/account");
       const isOnCheckout = nextUrl.pathname.startsWith("/checkout");
 
+      // Admin & account/checkout protection is handled in proxy.ts.
+      // The authorized callback here only needs to gate /account and /checkout
+      // by returning false (NextAuth will redirect to pages.signIn = /login).
+      // Admin protection is intentionally left to proxy.ts to avoid double-redirect races.
+
       if (isOnAdmin) {
-        // Admin pages require user to be logged in and have the 'admin' role
+        // Let proxy.ts own admin guarding to avoid a race between two redirect layers.
+        // Here we simply approve logged-in admins; proxy handles the unauthenticated case.
         const userEmail = auth?.user?.email?.toLowerCase().trim();
         if (isLoggedIn && (userEmail === "ikechukwualaeto@gmail.com" || hasAdminAccess(auth.user as AuthUser))) {
           return true;
         }
-        
-        // Extract forwarded host and protocol to avoid internal port redirect loop (e.g., localhost:10000)
-        let host = request.headers.get("x-forwarded-host") || request.headers.get("host") || nextUrl.host;
-        if (host && host.includes(":10000")) {
-          host = host.replace(/:10000$/, "");
-        }
-        const proto = request.headers.get("x-forwarded-proto") || "https";
-        const redirectUrl = new URL(`/login?callbackUrl=${encodeURIComponent(nextUrl.pathname)}`, `${proto}://${host}`);
-        
-        return Response.redirect(redirectUrl);
+        // Not logged in or not admin: proxy.ts will redirect; return false so NextAuth
+        // doesn't fire its own redirect on top (which causes the double-flash).
+        return false;
       }
 
       if (isOnAccount || isOnCheckout) {
         if (isLoggedIn) return true;
-        return false; // Will redirect to page.signIn (/login)
+        return false; // NextAuth redirects to pages.signIn (/login)
       }
 
       return true;
     },
     async redirect({ url, baseUrl }) {
+      // Strip internal port (e.g., :10000 on Render) from baseUrl and url.
+      // Render exposes the app on port 443 externally but runs it on :10000 internally.
+      // NextAuth sometimes constructs redirects using req.url which contains the internal port.
+      const cleanBase = baseUrl.replace(/:10000($|\/)/, (_, suffix) => suffix || "");
+
       try {
-        const parsed = new URL(url, baseUrl);
-        try {
-          const { headers } = await import("next/headers");
-          const headersList = await headers();
-          let host = headersList.get("x-forwarded-host") || headersList.get("host");
-          if (host && host.includes(":10000")) {
-            host = host.replace(/:10000$/, "");
-          }
-          const proto = headersList.get("x-forwarded-proto") || "https";
-          if (host) {
-            parsed.protocol = proto.endsWith(":") ? proto : `${proto}:`;
-            parsed.host = host;
-          }
-        } catch (e) {
-          console.warn("Could not read headers in redirect callback, using baseUrl:", e);
-        }
+        // Resolve the target URL against the clean base
+        const parsed = new URL(url.startsWith("/") ? `${cleanBase}${url}` : url);
+        // Force protocol and host to match the clean base so no internal port leaks
+        const cleanBaseUrl = new URL(cleanBase);
+        parsed.protocol = cleanBaseUrl.protocol;
+        parsed.host = cleanBaseUrl.host;
         return parsed.toString();
       } catch {
-        return url.startsWith("/") ? `${baseUrl}${url}` : baseUrl;
+        return url.startsWith("/") ? `${cleanBase}${url}` : cleanBase;
       }
     },
     async jwt({ token, user, trigger, session }) {

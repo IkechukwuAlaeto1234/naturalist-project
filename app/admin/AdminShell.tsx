@@ -103,6 +103,17 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   const sessionUser = session?.user as AdminSessionUser | undefined;
   const userEmail = session?.user?.email?.toLowerCase().trim();
   const isAdmin = userEmail === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
+
+  // Unauthenticated: proxy.ts will redirect, but show the spinner while that happens
+  // so the user never sees the Access Denied flash during the in-flight redirect.
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#070908] text-white flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-[#b07e3a]" />
+        <p className="text-sm font-medium tracking-widest text-[#a3b2a9] uppercase font-serif animate-pulse">Redirecting...</p>
+      </div>
+    );
+  }
   
   if (!session || !isAdmin) {
     return (
@@ -468,8 +479,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       </aside>
 
       {/* ── Main Viewport Content Area ── */}
-      <main className="flex-1 overflow-y-auto bg-[#070908] p-6 lg:p-10">
-        <div className="max-w-5xl mx-auto animate-fade-in">
+      <main className={`flex-1 bg-[#070908] ${pathname === "/admin/email-sandbox" ? "overflow-hidden flex flex-col h-[calc(100vh-80px)]" : "overflow-y-auto p-6 lg:p-10"}`}>
+        <div className={`animate-fade-in ${pathname === "/admin/email-sandbox" ? "w-full h-full flex flex-col min-h-0" : "max-w-5xl mx-auto"}`}>
           {children}
         </div>
       </main>

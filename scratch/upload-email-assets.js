@@ -56,7 +56,12 @@ const brandFiles = [
   'logo_oatmeal.png',
   'logo_transparent.png',
   'logo_transparent_white.png',
-  'logo_white.png'
+  'logo_white.png',
+  'shop_collection_btn.png',
+  'track_shipment_btn.png',
+  'security_panel_btn.png',
+  'change_password_btn.png',
+  'view_documents_btn.png'
 ];
 
 const emailFiles = [

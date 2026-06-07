@@ -17,7 +17,7 @@ export const SecurityAlertEmail = ({
   time = new Date().toLocaleString(),
   ipAddress = "127.0.0.1",
 }: SecurityAlertEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Security Alert: New Sign In | Naturalist" previewText="We detected a new sign in to your Naturalist profile.">
@@ -91,21 +91,17 @@ export const SecurityAlertEmail = ({
           </tr>
         </table>
 
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 10px 0" }}>
+        {/* Horizontal CTA Buttons */}
+        <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto 10px auto", textAlign: "center" }}>
           <tr>
-            <td align="center">
-              <a href="#" target="_blank" style={{
-                backgroundColor: "#b07e3a",
-                color: "#faf9f5",
-                fontSize: "13px",
-                fontWeight: "bold",
-                textDecoration: "none",
-                padding: "12px 28px",
-                borderRadius: "30px",
-                display: "inline-block",
-                boxShadow: "0 4px 10px rgba(176, 126, 58, 0.2)"
-              }}>
-                Change Password
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_CHANGE_PASSWORD__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_gold_Change Password__" alt="Change Password" width="180" style={{ display: "block", border: 0, height: "auto" }} />
+              </a>
+            </td>
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_REVIEW_ACTIVITY_security__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_secondary_Review Account Activity__" alt="Review Account Activity" width="240" style={{ display: "block", border: 0, height: "auto" }} />
               </a>
             </td>
           </tr>

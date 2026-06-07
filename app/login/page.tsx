@@ -9,14 +9,6 @@ import SuccessModal from "@/components/ui/SuccessModal";
 
 function LoginContent() {
   const router = useRouter();
-  const goToRoute = (href: string) => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new Event("naturalist:navigation-start"));
-      setTimeout(() => {
-        window.location.href = href;
-      }, 50);
-    }
-  };
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -24,8 +16,6 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-
-  // Error modal state
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -34,12 +24,12 @@ function LoginContent() {
   const isVerified = searchParams.get("verified") === "true";
   const isReset = searchParams.get("reset") === "true";
 
+  // Redirect already-authenticated users away from the login page
   useEffect(() => {
     if (loading) return;
     if (status === "authenticated" && session?.user) {
       const userEmail = session.user.email?.toLowerCase().trim();
       const userRole = (session.user as any).role;
-      
       if (userEmail === "ikechukwualaeto@gmail.com" || userRole === "admin") {
         router.replace("/admin");
       } else {
@@ -71,6 +61,19 @@ function LoginContent() {
 
     return () => clearTimeout(titleTimeout);
   }, [nextAuthError, isVerified, isReset]);
+
+  // While session is resolving or an authenticated redirect is in-flight,
+  // show a spinner so the login form never flashes before the redirect happens.
+  if (status === "loading" || (status === "authenticated" && !loading)) {
+    return (
+      <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] flex items-center justify-center">
+        <svg className="h-8 w-8 animate-spin text-[#2d4c38]/40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+          <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +107,7 @@ function LoginContent() {
         return;
       }
 
-      // Success: verify session then fire brand loader and navigate — do NOT stop spinner
+      // Success: verify session then fire brand loader and navigate
       const sessionRes = await fetch("/api/auth/session");
       const sessionData = sessionRes.ok ? await sessionRes.json() : null;
       const userEmail = sessionData?.user?.email?.toLowerCase().trim();
@@ -114,18 +117,16 @@ function LoginContent() {
           ? "/admin"
           : callbackUrl;
 
-      // Fire brand loader immediately, then navigate — spinner stays on until page unloads
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("naturalist:navigation-start"));
       }
       window.location.href = targetUrl;
     } catch (err: any) {
-      // Enforce 1.5s minimum even on error path
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(1500 - elapsed, 0);
       await new Promise((resolve) => setTimeout(resolve, remaining));
 
-      // NextAuth sometimes throws on success (network quirk) — verify session before giving up
+      // NextAuth sometimes throws on success — verify session before giving up
       try {
         const sessionRes = await fetch("/api/auth/session");
         if (sessionRes.ok) {
@@ -228,7 +229,7 @@ function LoginContent() {
 
           {/* Footer Navigation */}
           <div className="mt-8 text-center text-xs text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <a
               href="/register"
               className="font-semibold text-[#b07e3a] hover:underline cursor-pointer"

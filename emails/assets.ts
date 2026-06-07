@@ -43,5 +43,9 @@ export const EMAIL_ASSETS = {
   // Brand Logo
   logoTransparentWhite: `${appUrl}/cdn/image/upload/v1780751081/brand/logo_transparent_white.png`,
   logoTransparent: `${appUrl}/cdn/image/upload/v1780751080/brand/logo_transparent.png`,
-  logoOatmeal: `${appUrl}/cdn/image/upload/v1780751083/brand/logo_oatmeal.png`
+  logoOatmeal: `${appUrl}/cdn/image/upload/v1780751083/brand/logo_oatmeal.png`,
+
+  // Unsubscribe Assets
+  unsubscribeHeader: `${appUrl}/cdn/image/upload/v1780811163/naturalist/cdn/ttszyfwvjvz9dzwedyvu.png`,
+  unsubscribeButton: `${appUrl}/cdn/image/upload/v1780809897/naturalist/cdn/a0jgfonzac0dmdegvtqo.png`
 };

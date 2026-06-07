@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Mail, Send, CheckCircle2, RefreshCw, FileText, Layout, ShieldAlert, Sparkles, Inbox, Eye } from "lucide-react";
 
 const TEMPLATES = [
+  { id: "UnsubscribeConfirmationEmail", name: "Unsubscribe Confirmation", desc: "Sent to confirm that a user has unsubscribed from the newsletter.", category: "Engagement" },
   { id: "OTPEmail", name: "Email OTP Verification", desc: "Sent immediately after registration to verify user email address.", category: "Auth & Verification" },
   { id: "PasswordResetEmail", name: "Password Reset Passcode", desc: "Sent when a user requests a passcode reset on their profile.", category: "Auth & Verification" },
   { id: "WelcomeEmail", name: "Welcome Subscriber", desc: "Sent after account activation with a first-purchase coupon.", category: "Engagement" },
@@ -15,7 +16,7 @@ const TEMPLATES = [
 ];
 
 export default function EmailSandboxPage() {
-  const [selectedTemplate, setSelectedTemplate] = useState("OTPEmail");
+  const [selectedTemplate, setSelectedTemplate] = useState("UnsubscribeConfirmationEmail");
   const [toEmail, setToEmail] = useState("ikechukwualaeto@gmail.com");
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; provider?: string } | null>(null);
@@ -63,34 +64,10 @@ export default function EmailSandboxPage() {
   const activeTemplateInfo = TEMPLATES.find((t) => t.id === selectedTemplate) || TEMPLATES[0];
 
   return (
-    <div className="min-h-screen bg-[#faf8f4] dark:bg-[#0a0d0b] text-foreground font-sans transition-colors duration-300">
+    <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0 w-full bg-[#faf8f4] dark:bg-[#0a0d0b]">
       
-      {/* Premium Header */}
-      <header className="border-b border-border/60 bg-white/80 dark:bg-[#151c18]/80 backdrop-blur-xl sticky top-0 z-30 px-6 py-4 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#2d4c38] to-[#3a6349] dark:from-[#1a2e22] dark:to-[#2d4c38] flex items-center justify-center text-white border border-[#b07e3a]/15 shadow-sm">
-            <Mail className="h-5 w-5 stroke-[2]" />
-          </div>
-          <div>
-            <h1 className="text-lg font-serif font-black tracking-tight leading-none">Email Sandbox</h1>
-            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-1.5 flex items-center gap-1">
-              <Sparkles className="h-3 w-3 text-[#b07e3a]" /> Template Design & Delivery Dashboard
-            </p>
-          </div>
-        </div>
-        
-        {/* Status Indicator */}
-        <div className="flex items-center gap-2.5 px-4 py-2 rounded-full border border-emerald-500/25 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-          <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-          Active Developer Mode
-        </div>
-      </header>
-
-      {/* Workspace Area */}
-      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-73px)]">
-        
-        {/* Left Sidebar: Template Selection */}
-        <aside className="w-full lg:w-80 border-r border-border/40 bg-white/40 dark:bg-[#111714]/40 p-6 flex flex-col gap-6 flex-shrink-0">
+      {/* Left Sidebar: Template Selection */}
+      <aside className="w-full lg:w-80 border-r border-border/40 bg-white/40 dark:bg-[#111714]/40 p-6 flex flex-col gap-6 overflow-y-auto h-full shrink-0">
           <div>
             <h2 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-4">Email Templates</h2>
             <div className="space-y-2">
@@ -128,11 +105,11 @@ export default function EmailSandboxPage() {
         </aside>
 
         {/* Right Sandbox Container */}
-        <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 min-w-0">
+        <main className="flex-1 flex flex-col xl:flex-row p-6 gap-6 overflow-y-auto xl:overflow-hidden min-w-0 h-full">
           
           {/* IFrame Email Preview Area (Left inside main area) */}
-          <div className="flex-1 flex flex-col gap-4 bg-white/70 dark:bg-[#151c18]/70 border border-border/50 rounded-3xl p-6 shadow-sm min-w-0">
-            <div className="flex items-center justify-between border-b border-border/40 pb-4">
+          <div className="flex-1 flex flex-col gap-4 bg-white/70 dark:bg-[#151c18]/70 border border-border/50 rounded-3xl p-6 shadow-sm min-w-0 h-full">
+            <div className="flex items-center justify-between border-b border-border/40 pb-4 shrink-0">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-muted-foreground" />
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live HTML Rendering</span>
@@ -141,17 +118,17 @@ export default function EmailSandboxPage() {
             </div>
             
             {/* Viewport Render Frame Container */}
-            <div className="flex-1 min-h-[500px] border border-border/40 bg-[#fbfbf9] rounded-2xl overflow-hidden shadow-inner flex flex-col">
+            <div className="flex-1 border border-border/40 bg-[#fbfbf9] rounded-2xl overflow-hidden shadow-inner flex flex-col">
               <iframe
                 src={`/api/dev/email-preview?template=${selectedTemplate}`}
-                className="w-full flex-1 border-0"
+                className="w-full h-full flex-1 border-0"
                 title="Email Template Live Rendering Window"
               />
             </div>
           </div>
 
           {/* Test Sender Control Panel (Right inside main area) */}
-          <div className="w-full xl:w-96 flex flex-col gap-6 flex-shrink-0">
+          <div className="w-full xl:w-96 flex flex-col gap-6 overflow-y-auto h-full shrink-0 pr-1 pb-4">
             
             {/* Delivery Testing Card */}
             <div className="bg-white/80 dark:bg-[#151c18]/80 border border-border/60 rounded-3xl p-6 shadow-sm">
@@ -230,6 +207,9 @@ export default function EmailSandboxPage() {
               </p>
               
               <div className="bg-[#faf8f4] dark:bg-[#111714] border border-border/40 rounded-xl p-3.5 overflow-x-auto text-[10px] font-mono text-muted-foreground/80 leading-relaxed max-h-60">
+                {selectedTemplate === "UnsubscribeConfirmationEmail" && (
+                  <pre>{`{\n  email: "ikechukwualaeto@gmail.com",\n  resubscribeUrl: "http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com"\n}`}</pre>
+                )}
                 {selectedTemplate === "OTPEmail" && (
                   <pre>{`{\n  name: "Ikechukwu Alaeto",\n  otp: "N4TGLO"\n}`}</pre>
                 )}
@@ -261,7 +241,5 @@ export default function EmailSandboxPage() {
 
         </main>
       </div>
-
-    </div>
   );
 }

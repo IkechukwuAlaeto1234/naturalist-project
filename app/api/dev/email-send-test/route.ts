@@ -12,6 +12,7 @@ import { OrderShippedEmail } from "@/emails/OrderShippedEmail";
 import { PasswordResetSuccessEmail } from "@/emails/PasswordResetSuccessEmail";
 import { SecurityAlertEmail } from "@/emails/SecurityAlertEmail";
 import { LegalUpdateEmail } from "@/emails/LegalUpdateEmail";
+import { UnsubscribeConfirmationEmail } from "@/emails/UnsubscribeConfirmationEmail";
 
 export async function POST(req: Request) {
   try {
@@ -29,6 +30,14 @@ export async function POST(req: Request) {
     let textFallback = "";
 
     switch (template) {
+      case "UnsubscribeConfirmationEmail":
+        element = React.createElement(UnsubscribeConfirmationEmail, {
+          email: "ikechukwualaeto@gmail.com",
+          resubscribeUrl: "http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com",
+        });
+        subject = "You've been unsubscribed from Naturalist";
+        textFallback = "Hi,\n\nYou have been successfully unsubscribed from the Naturalist newsletter. Changed your mind? Re-subscribe at: http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com";
+        break;
       case "OTPEmail":
         element = React.createElement(OTPEmail, {
           otp: "N4TGLO",

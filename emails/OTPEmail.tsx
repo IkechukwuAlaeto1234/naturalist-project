@@ -9,7 +9,7 @@ interface OTPEmailProps {
 
 export const OTPEmail = ({ otp, name }: OTPEmailProps) => {
   const digits = (otp || "------").split("").slice(0, 6);
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Verify Your Email | Naturalist" previewText="Complete your registration with Naturalist.">

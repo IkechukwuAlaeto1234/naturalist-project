@@ -5,6 +5,9 @@ export interface INewsletter extends Document {
   isActive: boolean;
   subscribedAt: Date;
   unsubscribedAt?: Date;
+  unsubscribeReason?: string;
+  unsubscribeFeedback?: string;
+  welcomeEmailSentAt?: Date;
 }
 
 const NewsletterSchema = new Schema<INewsletter>({
@@ -25,6 +28,15 @@ const NewsletterSchema = new Schema<INewsletter>({
     default: Date.now,
   },
   unsubscribedAt: {
+    type: Date,
+  },
+  unsubscribeReason: {
+    type: String,
+  },
+  unsubscribeFeedback: {
+    type: String,
+  },
+  welcomeEmailSentAt: {
     type: Date,
   },
 });

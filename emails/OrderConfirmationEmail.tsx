@@ -27,7 +27,7 @@ export const OrderConfirmationEmail = ({
   totalAmount,
   shippingAddress,
 }: OrderConfirmationEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Order Confirmed | Naturalist" previewText="Thank you for your purchase from Naturalist!">
@@ -43,12 +43,12 @@ export const OrderConfirmationEmail = ({
           />
         </div>
 
-        {/* Hero Image */}
+        {/* Hero Image - Styled with Rounded corners and border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
             src={EMAIL_ASSETS.plantGifts} 
             alt="Thank you for your purchase" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
 

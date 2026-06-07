@@ -29,6 +29,7 @@ export async function PUT(
     sub.isActive = isActive;
     if (!isActive) {
       sub.unsubscribedAt = new Date();
+      sub.welcomeEmailSentAt = undefined;
     } else {
       sub.unsubscribedAt = undefined;
     }

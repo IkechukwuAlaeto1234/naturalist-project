@@ -23,6 +23,7 @@ interface Subscriber {
   isActive: boolean;
   subscribedAt: string;
   unsubscribedAt?: string;
+  welcomeEmailSentAt?: string;
 }
 
 export default function AdminNewsletterPage() {
@@ -38,6 +39,9 @@ export default function AdminNewsletterPage() {
   const [addEmail, setAddEmail] = useState("");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState("");
+
+  // Welcome Email Send Loading State
+  const [sendingWelcomeId, setSendingWelcomeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!searchQuery) {
@@ -99,6 +103,24 @@ export default function AdminNewsletterPage() {
       setSubscribers(subscribers.filter((s) => s._id !== id));
     } catch (e: any) {
       alert(e.message || "Delete failed.");
+    }
+  };
+
+  const handleSendWelcome = async (id: string) => {
+    try {
+      setSendingWelcomeId(id);
+      const res = await fetch(`/api/admin/newsletter/${id}/send-welcome`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send welcome email.");
+      
+      alert("Welcome email successfully sent and logged!");
+      setSubscribers(subscribers.map((s) => (s._id === id ? data : s)));
+    } catch (e: any) {
+      alert(e.message || "Failed to send welcome email.");
+    } finally {
+      setSendingWelcomeId(null);
     }
   };
 
@@ -264,6 +286,7 @@ export default function AdminNewsletterPage() {
                   <tr className="text-[#a3b2a9] font-bold uppercase tracking-wider bg-[#0c100e]">
                     <th className="pb-3">Subscribed Email</th>
                     <th className="pb-3 text-center">Status</th>
+                    <th className="pb-3 text-center">Welcome Email</th>
                     <th className="pb-3 text-right">Join Date</th>
                     <th className="pb-3 text-center">Actions</th>
                   </tr>
@@ -271,7 +294,7 @@ export default function AdminNewsletterPage() {
                 <tbody className="divide-y divide-[#1a241e]/50">
                   {filteredSubs.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="py-10 text-center text-[#a3b2a9]">
+                      <td colSpan={5} className="py-10 text-center text-[#a3b2a9]">
                         No subscribers matched the filtering criteria.
                       </td>
                     </tr>
@@ -292,6 +315,33 @@ export default function AdminNewsletterPage() {
                             >
                               {s.isActive ? "Active" : "Inactive"}
                             </button>
+                          </td>
+                          <td className="py-3.5 text-center">
+                            {s.welcomeEmailSentAt ? (
+                              <div
+                                className="inline-flex items-center justify-center gap-1.5 text-emerald-400 font-bold"
+                                title={`Sent at: ${new Date(s.welcomeEmailSentAt).toLocaleString()}`}
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                <span className="text-[10px] uppercase tracking-wider">Sent</span>
+                              </div>
+                            ) : s.isActive ? (
+                              <button
+                                onClick={() => handleSendWelcome(s._id)}
+                                disabled={sendingWelcomeId === s._id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#b07e3a]/30 hover:border-[#b07e3a] bg-[#b07e3a]/5 hover:bg-[#b07e3a]/15 text-[#b07e3a] hover:text-[#e4a853] text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer"
+                                title="Send Welcome Email"
+                              >
+                                {sendingWelcomeId === s._id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Mail className="h-3 w-3" />
+                                )}
+                                <span>Send</span>
+                              </button>
+                            ) : (
+                              <span className="text-[#5e6f64] italic text-[10px]">N/A</span>
+                            )}
                           </td>
                           <td className="py-3.5 text-right text-[#a3b2a9] text-[10px]">
                             {new Date(s.subscribedAt).toLocaleDateString("en-US", {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { render } from "@react-email/render";
 import React from "react";
+import { resolveEmailPlaceholders } from "@/lib/button-generator";
 
 // Import all templates
 import { OTPEmail } from "@/emails/OTPEmail";
@@ -11,6 +12,7 @@ import { OrderShippedEmail } from "@/emails/OrderShippedEmail";
 import { PasswordResetSuccessEmail } from "@/emails/PasswordResetSuccessEmail";
 import { SecurityAlertEmail } from "@/emails/SecurityAlertEmail";
 import { LegalUpdateEmail } from "@/emails/LegalUpdateEmail";
+import { UnsubscribeConfirmationEmail } from "@/emails/UnsubscribeConfirmationEmail";
 
 export async function GET(req: Request) {
   try {
@@ -21,6 +23,12 @@ export async function GET(req: Request) {
     let element: React.ReactElement | null = null;
 
     switch (templateName) {
+      case "UnsubscribeConfirmationEmail":
+        element = React.createElement(UnsubscribeConfirmationEmail, {
+          email: "ikechukwualaeto@gmail.com",
+          resubscribeUrl: "http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com",
+        });
+        break;
       case "OTPEmail":
         element = React.createElement(OTPEmail, {
           otp: "N4TGLO",
@@ -88,7 +96,7 @@ export async function GET(req: Request) {
         break;
       default:
         return new NextResponse(
-          "<h3>Error: Template not found. Available options: OTPEmail, PasswordResetEmail, WelcomeEmail, OrderConfirmationEmail, OrderShippedEmail, PasswordResetSuccessEmail, SecurityAlertEmail, LegalUpdateEmail</h3>",
+          "<h3>Error: Template not found. Available options: UnsubscribeConfirmationEmail, OTPEmail, PasswordResetEmail, WelcomeEmail, OrderConfirmationEmail, OrderShippedEmail, PasswordResetSuccessEmail, SecurityAlertEmail, LegalUpdateEmail</h3>",
           { status: 404, headers: { "Content-Type": "text/html" } }
         );
     }
@@ -96,7 +104,10 @@ export async function GET(req: Request) {
     // Compile React components to static email HTML string
     const html = await render(element);
 
-    return new NextResponse(html, {
+    // Resolve buttons and unsubscribe URLs for preview display
+    const resolvedHtml = await resolveEmailPlaceholders(html, "preview-recipient@naturalist.com");
+
+    return new NextResponse(resolvedHtml, {
       status: 200,
       headers: {
         "Content-Type": "text/html",

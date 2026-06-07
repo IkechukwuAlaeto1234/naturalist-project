@@ -15,7 +15,7 @@ export const LegalUpdateEmail = ({
   updateDate = new Date().toLocaleDateString(),
   changesSummary = "We have updated our guidelines and privacy practices to provide clearer explanations about data usage and to ensure regulatory compliance.",
 }: LegalUpdateEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Notice: Legal Policy Update | Naturalist" previewText="We are updating our terms and conditions.">
@@ -59,21 +59,17 @@ export const LegalUpdateEmail = ({
           If you have any questions or concerns, please do not hesitate to contact our legal support desk.
         </p>
 
-        <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", margin: "24px 0 10px 0" }}>
+        {/* Horizontal CTA Buttons */}
+        <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "24px auto 10px auto", textAlign: "center" }}>
           <tr>
-            <td align="center">
-              <a href="#" target="_blank" style={{
-                backgroundColor: "#2d4c38",
-                color: "#faf9f5",
-                fontSize: "13px",
-                fontWeight: "bold",
-                textDecoration: "none",
-                padding: "12px 28px",
-                borderRadius: "30px",
-                display: "inline-block",
-                boxShadow: "0 4px 10px rgba(45, 76, 56, 0.15)"
-              }}>
-                View Full Documents
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_VIEW_DOCS__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_primary_View Full Documents__" alt="View Full Documents" width="200" style={{ display: "block", border: 0, height: "auto" }} />
+              </a>
+            </td>
+            <td style={{ padding: "0 10px" }} align="center">
+              <a href="__LINK_CONTACT_SUPPORT_legal__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                <img src="__BTN_secondary_Contact Support__" alt="Contact Support" width="180" style={{ display: "block", border: 0, height: "auto" }} />
               </a>
             </td>
           </tr>

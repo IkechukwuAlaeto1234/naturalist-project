@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import nodemailer from "nodemailer";
+import { resolveEmailPlaceholders } from "./button-generator";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -97,8 +98,8 @@ export async function sendEmail({
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const unsubscribeUrl = `${appUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(to)}`;
   
-  // Dynamically replace any unsubscribe placeholder in the rendered template
-  const finalHtml = html ? html.replaceAll("__UNSUBSCRIBE_URL__", unsubscribeUrl) : "";
+  // Dynamically resolve all buttons and unsubscribe placeholders in the rendered template
+  const finalHtml = await resolveEmailPlaceholders(html, to);
 
   // ── Resend primary ──────────────────────────────────────────────────────
   if (resend) {

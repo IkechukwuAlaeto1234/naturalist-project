@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "./lib/auth.config";
 import { hasAdminAccess } from "./lib/admin";
@@ -17,16 +17,32 @@ const ADMIN_PAGE_PATHS = /^\/admin(\/|$)/;
 const ADMIN_API_PATHS = /^\/api\/admin(\/|$)/;
 
 /**
+ * Build a clean base URL from forwarded headers, stripping internal ports like :10000.
+ * In production on Render, the app runs on an internal port (e.g. 10000) but is
+ * exposed externally on 443 via a reverse proxy. We must use the forwarded host/proto
+ * for any redirect URLs, otherwise signOut, callbackUrl, etc. include the internal port.
+ */
+function getPublicBaseUrl(req: NextRequest): string {
+  const forwardedProto = req.headers.get("x-forwarded-proto") || "https";
+  const proto = forwardedProto.split(",")[0].trim(); // may be comma-list
+  const forwardedHost = req.headers.get("x-forwarded-host") || req.headers.get("host") || "";
+  const host = forwardedHost.split(",")[0].trim().replace(/:10000$/, "");
+  return `${proto}://${host}`;
+}
+
+/**
  * Next.js 16 Proxy Router (replaces deprecated middleware)
  * Handles multi-tenant subdomain routing for admin panels, Cloudinary CDN proxy,
  * and executes secure Auth.js route guards.
  */
 export const proxy = auth((req) => {
-  // Clean internal port :10000 from URLs to avoid redirect loop issues in production
-  const cleanReqUrl = req.url.replace(/:10000($|\/)/, "$1");
   const url = req.nextUrl;
   const { pathname } = url;
-  const hostname = (req.headers.get("host") || "").replace(/:10000$/, "");
+  const rawHost = req.headers.get("host") || "";
+  const hostname = rawHost.replace(/:10000$/, "");
+  // Clean public base URL — used for all redirects so internal port never leaks out
+  const publicBase = getPublicBaseUrl(req as any);
+  const cleanReqUrl = `${publicBase}${pathname}${url.search}`;
 
   console.log("PROXY INTERCEPTED pathname:", pathname, "hostname:", hostname);
 
@@ -62,16 +78,15 @@ export const proxy = auth((req) => {
 
     // Guard: Admin subdomain requires authentication
     if (!isLoggedIn) {
-      const loginUrl = new URL("/login", cleanReqUrl);
-      loginUrl.searchParams.set("callbackUrl", cleanReqUrl);
+      const loginUrl = new URL("/login", publicBase);
+      loginUrl.searchParams.set("callbackUrl", pathname);
       return withTracing(NextResponse.redirect(loginUrl));
     }
 
     // Guard: Logged-in user must have 'admin' role
     if (!hasAdminAccess(req.auth?.user as ProxyUser)) {
       // Redirect unauthorized users to the main public site
-      const mainDomain = hostname.replace("admin.", "");
-      return withTracing(NextResponse.redirect(new URL(`http://${mainDomain}`, cleanReqUrl)));
+      return withTracing(NextResponse.redirect(new URL("/", publicBase)));
     }
 
     // Rewrite request internally to the admin directory
@@ -85,14 +100,14 @@ export const proxy = auth((req) => {
   if (ADMIN_PAGE_PATHS.test(pathname)) {
     const isLoggedIn = !!req.auth?.user;
     if (!isLoggedIn) {
-      const loginUrl = new URL("/login", cleanReqUrl);
+      const loginUrl = new URL("/login", publicBase);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return withTracing(NextResponse.redirect(loginUrl));
     }
 
     if (!hasAdminAccess(req.auth?.user as ProxyUser)) {
       // Authenticated but not admin — send to home page
-      return withTracing(NextResponse.redirect(new URL("/", cleanReqUrl)));
+      return withTracing(NextResponse.redirect(new URL("/", publicBase)));
     }
   }
 

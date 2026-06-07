@@ -1,5 +1,6 @@
 import * as React from "react";
 import { EMAIL_ASSETS } from "./assets";
+import { FONT_REGULAR } from "../lib/hostGroteskFontData";
 
 interface BaseEmailLayoutProps {
   title?: string;
@@ -19,7 +20,7 @@ export const BaseEmailLayout = ({
   const defaultLogoUrl = EMAIL_ASSETS.logoTransparent;
   const finalLogoUrl = logoUrl || defaultLogoUrl;
   
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <html lang="en">
@@ -28,6 +29,12 @@ export const BaseEmailLayout = ({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>{title || "Naturalist"}</title>
         <style dangerouslySetInnerHTML={{ __html: `
+          @font-face {
+            font-family: 'Host Grotesk';
+            font-style: normal;
+            font-weight: 400;
+            src: url('data:font/ttf;charset=utf-8;base64,${FONT_REGULAR}') format('truetype');
+          }
           body {
             margin: 0;
             padding: 0;

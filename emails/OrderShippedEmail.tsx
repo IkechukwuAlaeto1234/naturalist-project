@@ -15,7 +15,7 @@ export const OrderShippedEmail = ({
   carrier = "Naturalist Eco-Courier",
   trackingNumber = "ECO-TRACK-" + Date.now(),
 }: OrderShippedEmailProps) => {
-  const sansSerifStack = "Verdana, Geneva, sans-serif";
+  const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
 
   return (
     <BaseEmailLayout title="Order Shipped | Naturalist" previewText="Your organic skin remedies are on their way!">
@@ -31,12 +31,12 @@ export const OrderShippedEmail = ({
           />
         </div>
 
-        {/* Hero Image */}
+        {/* Hero Image - Styled with Rounded corners and border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
             src={EMAIL_ASSETS.packageShipping} 
             alt="Your order is on its way" 
-            style={{ width: "100%", height: "auto", borderRadius: "12px", display: "block" }} 
+            style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
 
@@ -67,21 +67,16 @@ export const OrderShippedEmail = ({
                 </tr>
               </table>
               
-              <table width="100%" cellPadding={0} cellSpacing={0} style={{ textAlign: "center", marginTop: "10px" }}>
+              <table align="center" cellPadding={0} cellSpacing={0} style={{ margin: "16px auto 0 auto", textAlign: "center" }}>
                 <tr>
-                  <td align="center">
-                    <a href="#" target="_blank" style={{
-                      backgroundColor: "#2d4c38",
-                      color: "#faf9f5",
-                      fontSize: "13px",
-                      fontWeight: "bold",
-                      textDecoration: "none",
-                      padding: "10px 24px",
-                      borderRadius: "30px",
-                      display: "inline-block",
-                      boxShadow: "0 4px 10px rgba(45, 76, 56, 0.15)"
-                    }}>
-                      Track Shipment
+                  <td style={{ padding: "0 10px" }} align="center">
+                    <a href={`__LINK_TRACK_SHIPMENT_${orderId}__`} target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                      <img src="__BTN_primary_Track Shipment__" alt="Track Shipment" width="180" style={{ display: "block", border: 0, height: "auto" }} />
+                    </a>
+                  </td>
+                  <td style={{ padding: "0 10px" }} align="center">
+                    <a href="__LINK_CONTACT_SUPPORT_shipped__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
+                      <img src="__BTN_secondary_Contact Support__" alt="Contact Support" width="180" style={{ display: "block", border: 0, height: "auto" }} />
                     </a>
                   </td>
                 </tr>
