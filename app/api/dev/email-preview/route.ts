@@ -7,6 +7,7 @@ import { resolveEmailPlaceholders } from "@/lib/button-generator";
 import { OTPEmail } from "@/emails/OTPEmail";
 import { PasswordResetEmail } from "@/emails/PasswordResetEmail";
 import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { EmailSubscriptionEmail } from "@/emails/EmailSubscriptionEmail";
 import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
 import { OrderShippedEmail } from "@/emails/OrderShippedEmail";
 import { PasswordResetSuccessEmail } from "@/emails/PasswordResetSuccessEmail";
@@ -43,6 +44,11 @@ export async function GET(req: Request) {
         break;
       case "WelcomeEmail":
         element = React.createElement(WelcomeEmail, {
+          name: "Ikechukwu Alaeto",
+        });
+        break;
+      case "EmailSubscriptionEmail":
+        element = React.createElement(EmailSubscriptionEmail, {
           name: "Ikechukwu Alaeto",
         });
         break;
@@ -96,7 +102,7 @@ export async function GET(req: Request) {
         break;
       default:
         return new NextResponse(
-          "<h3>Error: Template not found. Available options: UnsubscribeConfirmationEmail, OTPEmail, PasswordResetEmail, WelcomeEmail, OrderConfirmationEmail, OrderShippedEmail, PasswordResetSuccessEmail, SecurityAlertEmail, LegalUpdateEmail</h3>",
+          "<h3>Error: Template not found. Available options: UnsubscribeConfirmationEmail, OTPEmail, PasswordResetEmail, WelcomeEmail, EmailSubscriptionEmail, OrderConfirmationEmail, OrderShippedEmail, PasswordResetSuccessEmail, SecurityAlertEmail, LegalUpdateEmail</h3>",
           { status: 404, headers: { "Content-Type": "text/html" } }
         );
     }

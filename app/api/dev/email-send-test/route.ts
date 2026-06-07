@@ -7,6 +7,7 @@ import React from "react";
 import { OTPEmail } from "@/emails/OTPEmail";
 import { PasswordResetEmail } from "@/emails/PasswordResetEmail";
 import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { EmailSubscriptionEmail } from "@/emails/EmailSubscriptionEmail";
 import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
 import { OrderShippedEmail } from "@/emails/OrderShippedEmail";
 import { PasswordResetSuccessEmail } from "@/emails/PasswordResetSuccessEmail";
@@ -60,6 +61,13 @@ export async function POST(req: Request) {
         });
         subject = "Welcome to Naturalist - Special Gift Inside!";
         textFallback = "Welcome to Naturalist! Use coupon NATURALGLOW10 for 10% off your first purchase.";
+        break;
+      case "EmailSubscriptionEmail":
+        element = React.createElement(EmailSubscriptionEmail, {
+          name: "Ikechukwu Alaeto",
+        });
+        subject = "Welcome to the Naturalist Circle!";
+        textFallback = "Welcome to the Naturalist Circle! Use coupon NATURALGLOW10 for 10% off your next purchase.";
         break;
       case "OrderConfirmationEmail":
         element = React.createElement(OrderConfirmationEmail, {

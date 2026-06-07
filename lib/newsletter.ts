@@ -3,7 +3,7 @@ import { Newsletter } from "@/models/Newsletter";
 import { User } from "@/models/User";
 import { AccountLog } from "@/models/AccountLog";
 import { render } from "@react-email/render";
-import { WelcomeEmail } from "@/emails/WelcomeEmail";
+import { EmailSubscriptionEmail } from "@/emails/EmailSubscriptionEmail";
 import { sendEmail } from "@/lib/email";
 import React from "react";
 
@@ -31,13 +31,13 @@ export async function sendWelcomeEmail(
   }
 
   // Render our brand-aligned React component to HTML
-  const html = await render(React.createElement(WelcomeEmail, { name: displayName }));
+  const html = await render(React.createElement(EmailSubscriptionEmail, { name: displayName }));
 
   await sendEmail({
     to: subscriber.email,
-    subject: "Welcome to Naturalist - Special Gift Inside!",
+    subject: "Welcome to the Naturalist Circle!",
     html,
-    text: "Welcome to Naturalist! Use coupon NATURALGLOW10 for 10% off your first purchase.",
+    text: "Welcome to the Naturalist Circle! Use coupon NATURALGLOW10 for 10% off your next purchase.",
   });
 
   subscriber.welcomeEmailSentAt = new Date();

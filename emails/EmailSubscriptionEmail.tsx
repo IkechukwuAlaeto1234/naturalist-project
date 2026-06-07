@@ -2,16 +2,15 @@ import * as React from "react";
 import { BaseEmailLayout } from "./BaseEmailLayout";
 import { EMAIL_ASSETS } from "./assets";
 
-interface WelcomeEmailProps {
+interface EmailSubscriptionEmailProps {
   name: string;
 }
 
-export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
+export const EmailSubscriptionEmail = ({ name }: EmailSubscriptionEmailProps) => {
   const sansSerifStack = "'Host Grotesk', Verdana, Geneva, sans-serif";
-  const serifStack = "Georgia, Cambria, 'Times New Roman', Times, serif";
 
   return (
-    <BaseEmailLayout title="Welcome to Naturalist | Premium Skincare" previewText="Inspired by Nature, Crafted for Glow.">
+    <BaseEmailLayout title="Welcome to the Naturalist Circle" previewText="Thank you for subscribing to our newsletter.">
       <div style={{ fontFamily: sansSerifStack, color: "#141f19" }}>
         
         {/* Title / Heading Image */}
@@ -27,8 +26,8 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
         {/* Hero Image - Styled with Rounded corners and border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
-            src={EMAIL_ASSETS.botanical} 
-            alt="Welcome to the Naturalist family" 
+            src={EMAIL_ASSETS.taskManagement} 
+            alt="Welcome to the Naturalist Newsletter Circle" 
             style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />
         </div>
@@ -38,12 +37,12 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
         </p>
 
         <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
-          Thank you for joining Naturalist! We are absolutely thrilled to welcome you to our community. 
-          At Naturalist, we believe skincare should be pure, intentional, and environmentally responsible.
+          Thank you for subscribing to the Naturalist newsletter! We are thrilled to welcome you to our circle of botanical enthusiasts. 
+          By joining us, you will receive regular updates on skincare rituals, clean botanical ingredient deep dives, and limited-edition product drops.
         </p>
 
         <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
-          To celebrate your journey with us, here is a special subscriber gift for <strong>10% off</strong> your very first order:
+          As a special thank you for joining our newsletter list, enjoy a **10% discount** on your next order with the coupon below:
         </p>
 
         {/* Gift Card Promo Block - Dynamic High Fidelity Image */}
@@ -61,7 +60,7 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
         </table>
 
         <p style={{ fontSize: "14px", margin: "0 0 24px 0", lineHeight: "1.6" }}>
-          Explore our curated collection of botanical cleansers, nourishing face oils, and hydrating mist toniques! We cannot wait to hear about your skincare transformation.
+          Start exploring our collection of hand-crafted botanical cleansing milks, active serums, and nourishing face oils!
         </p>
 
         {/* Horizontal Primary and Secondary High-Fidelity Buttons */}
@@ -72,20 +71,15 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
                 <img src="__BTN_primary_Shop Collection__" alt="Shop Collection" width="180" style={{ display: "block", border: 0, height: "auto" }} />
               </a>
             </td>
-            <td style={{ padding: "0 10px" }} align="center">
-              <a href="__LINK_BEST_SELLERS__" target="_blank" style={{ display: "inline-block", border: 0, textDecoration: "none" }}>
-                <img src="__BTN_secondary_Browse Best Sellers__" alt="Browse Best Sellers" width="220" style={{ display: "block", border: 0, height: "auto" }} />
-              </a>
-            </td>
           </tr>
         </table>
 
-        {/* Brand Promises Section (Redesigned Editorial Style) */}
+        {/* Brand Promises Section */}
         <table width="100%" cellPadding={0} cellSpacing={0} style={{ paddingTop: "32px" }}>
           <tr>
             <td>
               <h3 style={{ fontSize: "15px", fontWeight: "bold", color: "#2d4c38", margin: "0 0 20px 0", letterSpacing: "-0.3px", textTransform: "uppercase" }}>
-                Our Brand Promises
+                What to expect from us
               </h3>
               
               {/* Promise 1 */}
@@ -93,9 +87,9 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
                 <tr>
                   <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>🌱</td>
                   <td style={{ paddingLeft: "12px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>100% Organic Ingredients</div>
+                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Botanical Spotlights</div>
                     <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
-                      We source our botanicals from ethical, local growers. Every batch is vegan, pure, and cruelty-free.
+                      Get inside details on active herbal ingredients, sourcing, and their unique benefits for your skin barrier.
                     </div>
                   </td>
                 </tr>
@@ -106,22 +100,9 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
                 <tr>
                   <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>📦</td>
                   <td style={{ paddingLeft: "12px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Sustainable Packaging</div>
+                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Early Access & Circle Offers</div>
                     <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
-                      Our packaging is 100% recyclable, utilizing amber glass bottles and biodegradable paper boxes.
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              {/* Promise 3 */}
-              <table width="100%" cellPadding={0} cellSpacing={0}>
-                <tr>
-                  <td valign="top" style={{ width: "28px", fontSize: "18px", lineHeight: "24px" }}>🧪</td>
-                  <td style={{ paddingLeft: "12px" }}>
-                    <div style={{ fontSize: "14px", fontWeight: "bold", color: "#2d4c38" }}>Dermatologist Approved</div>
-                    <div style={{ fontSize: "13px", color: "#5e6f64", marginTop: "2px", lineHeight: "1.5" }}>
-                      Developed in partnership with skincare experts to ensure clinical efficacy and gentle care for sensitive skin.
+                      Subscribers are first in line for product launches, restocks, and unique botanical blends.
                     </div>
                   </td>
                 </tr>
@@ -136,4 +117,4 @@ export const WelcomeEmail = ({ name }: WelcomeEmailProps) => {
   );
 };
 
-export default WelcomeEmail;
+export default EmailSubscriptionEmail;

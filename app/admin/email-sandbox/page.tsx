@@ -7,7 +7,8 @@ const TEMPLATES = [
   { id: "UnsubscribeConfirmationEmail", name: "Unsubscribe Confirmation", desc: "Sent to confirm that a user has unsubscribed from the newsletter.", category: "Engagement" },
   { id: "OTPEmail", name: "Email OTP Verification", desc: "Sent immediately after registration to verify user email address.", category: "Auth & Verification" },
   { id: "PasswordResetEmail", name: "Password Reset Passcode", desc: "Sent when a user requests a passcode reset on their profile.", category: "Auth & Verification" },
-  { id: "WelcomeEmail", name: "Welcome Subscriber", desc: "Sent after account activation with a first-purchase coupon.", category: "Engagement" },
+  { id: "WelcomeEmail", name: "Welcome User Account", desc: "Sent to welcome a newly registered user account.", category: "Engagement" },
+  { id: "EmailSubscriptionEmail", name: "Newsletter Subscription Welcome", desc: "Sent immediately after subscribing to the newsletter.", category: "Engagement" },
   { id: "OrderConfirmationEmail", name: "Order Confirmation", desc: "Sent right after a successful checkout to confirm purchase invoice details.", category: "E-Commerce" },
   { id: "OrderShippedEmail", name: "Order Shipped Tracking", desc: "Sent once a package is dispatched from the apothecary warehouse.", category: "E-Commerce" },
   { id: "PasswordResetSuccessEmail", name: "Password Reset Success", desc: "Sent to confirm a password was successfully changed.", category: "Security" },
@@ -217,6 +218,9 @@ export default function EmailSandboxPage() {
                   <pre>{`{\n  name: "Ikechukwu Alaeto",\n  token: "RST829"\n}`}</pre>
                 )}
                 {selectedTemplate === "WelcomeEmail" && (
+                  <pre>{`{\n  name: "Ikechukwu Alaeto"\n}`}</pre>
+                )}
+                {selectedTemplate === "EmailSubscriptionEmail" && (
                   <pre>{`{\n  name: "Ikechukwu Alaeto",\n  coupon: "NATURALGLOW10"\n}`}</pre>
                 )}
                 {selectedTemplate === "OrderConfirmationEmail" && (
