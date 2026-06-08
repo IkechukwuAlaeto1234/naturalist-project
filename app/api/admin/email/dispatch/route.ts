@@ -69,7 +69,7 @@ export async function POST(req: Request) {
     );
 
     const htmlBody = await render(
-      React.createElement(BaseEmailLayout, { title: subject, previewText: subject }, emailContent)
+      React.createElement(BaseEmailLayout, { title: subject, previewText: subject, children: emailContent })
     );
 
     const result = await sendEmail({
