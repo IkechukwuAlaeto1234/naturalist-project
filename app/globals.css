@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* Material Symbols Rounded utility class */
 .ms {
   font-family: 'Material Symbols Rounded', sans-serif;
@@ -536,4 +538,36 @@ body {
 }
 .admin-content-area .text-\[\#768e80\] {
   color: #8a9e90 !important;
+}
+
+/* Semi-transparent overlay elements (e.g. category badges and buttons on product images) */
+.admin-content-area [class*="bg-[#0c100e]/"],
+.admin-content-area [class*="bg-[#070908]/"] {
+  background-color: rgba(244, 239, 230, 0.9) !important;
+  color: #141f19 !important;
+  border-color: rgba(226, 218, 205, 0.8) !important;
+}
+.admin-content-area [class*="bg-[#0c100e]/"] *,
+.admin-content-area [class*="bg-[#070908]/"] * {
+  color: #141f19 !important;
+}
+
+/* Ensure text and icons remain white inside green, gold, and red elements */
+.admin-content-area .bg-\[\#2d4c38\],
+.admin-content-area .bg-\[\#2d4c38\] *,
+.admin-content-area .hover\:bg-\[\#3a6349\]:hover,
+.admin-content-area .hover\:bg-\[\#3a6349\]:hover *,
+.admin-content-area .bg-\[\#b07e3a\],
+.admin-content-area .bg-\[\#b07e3a\] *,
+.admin-content-area .bg-red-500,
+.admin-content-area .bg-red-500 *,
+.admin-content-area .bg-destructive,
+.admin-content-area .bg-destructive *,
+.admin-content-area .bg-\[\#456f54\],
+.admin-content-area .bg-\[\#456f54\] *,
+.admin-content-area .bg-emerald-600,
+.admin-content-area .bg-emerald-600 *,
+.admin-content-area .bg-emerald-500,
+.admin-content-area .bg-emerald-500 * {
+  color: #ffffff !important;
 }
