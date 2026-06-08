@@ -74,13 +74,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     [showToast]
   );
 
-  // 1. Load initial cart from LocalStorage for guest users
+  // 1. Load initial cart from LocalStorage for guest users (only when explicitly unauthenticated)
   useEffect(() => {
-    if (!isServer && status !== "authenticated") {
+    if (!isServer && status === "unauthenticated") {
       try {
         const storedCart = localStorage.getItem("naturalist_cart");
         if (storedCart) {
           setCartItems(JSON.parse(storedCart));
+        } else {
+          setCartItems([]); // Clear local state if guest cart is empty or on logout
         }
       } catch (err) {
         console.error("Failed to load local cart:", err);
@@ -122,10 +124,41 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // 3. Sync guest cart to database and retrieve remote cart upon authentication
   useEffect(() => {
-    if (status === "authenticated") {
-      fetchRemoteCart();
-    }
+    const syncAndFetchCart = async () => {
+      if (status === "authenticated") {
+        setLoading(true);
+        try {
+          const storedCart = localStorage.getItem("naturalist_cart");
+          if (storedCart) {
+            const items: CartItem[] = JSON.parse(storedCart);
+            if (items.length > 0) {
+              // Sequentially merge local guest items to user database cart
+              for (const item of items) {
+                await fetch("/api/cart", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    productId: item.isBundle ? undefined : item.productId,
+                    bundleId: item.isBundle ? item.productId : undefined,
+                    quantity: item.quantity,
+                    price: item.price,
+                  }),
+                });
+              }
+              // Expunge guest cart once merged successfully
+              localStorage.removeItem("naturalist_cart");
+            }
+          }
+        } catch (err) {
+          console.error("Failed to sync guest cart to backend:", err);
+        }
+        await fetchRemoteCart();
+      }
+    };
+
+    syncAndFetchCart();
   }, [status, fetchRemoteCart]);
 
   // 3. Save to localStorage for guests

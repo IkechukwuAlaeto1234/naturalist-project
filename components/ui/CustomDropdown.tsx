@@ -69,27 +69,27 @@ export default function CustomDropdown({
           disabled={disabled}
           onClick={() => setIsOpen(!isOpen)}
           className={`w-full ${
-            size === "sm" ? "h-8 px-2.5 rounded-lg" : "h-11 px-4 rounded-xl"
-          } border border-[#1a241e] bg-[#070908] ${
-            textColorClassName || "text-white"
-          } flex items-center justify-between transition-all focus:outline-none focus:border-[#b07e3a] hover:bg-white/[0.01]`}
+            size === "sm" ? "h-8 px-2.5 rounded-lg" : "h-10 px-4 rounded-xl"
+          } border border-[#e2dacd] bg-[#faf8f4] ${
+            textColorClassName || "text-[#141f19]"
+          } flex items-center justify-between transition-all focus:outline-none focus:border-[#b07e3a] hover:bg-white cursor-pointer`}
         >
           <div className="flex items-center gap-2 truncate">
             {selectedOption?.icon && <selectedOption.icon className="h-4 w-4 text-[#b07e3a]" />}
-            <span className={`font-semibold ${size === "sm" ? "text-[10px]" : "text-sm"} truncate`}>
+            <span className={`font-semibold ${size === "sm" ? "text-[10px]" : "text-sm"} truncate text-[#141f19]`}>
               {selectedOption ? selectedOption.label : placeholder}
             </span>
           </div>
           <ChevronDown
-            className={`h-4 w-4 text-[#a3b2a9] transition-transform duration-300 ${
-              isOpen ? "transform rotate-180 text-white" : ""
+            className={`h-4 w-4 text-[#8a9e90] flex-shrink-0 transition-transform duration-300 ${
+              isOpen ? "rotate-180 text-[#2d4c38]" : ""
             }`}
           />
         </button>
 
-        {/* Dropdown Options Drawer */}
+        {/* Dropdown Options */}
         {isOpen && (
-          <div className="absolute left-0 right-0 mt-2 z-50 rounded-2xl border border-[#1a241e] bg-[#0c100e]/95 backdrop-blur-xl shadow-2xl overflow-hidden animate-scale-up py-1 max-h-60 overflow-y-auto">
+          <div className="absolute left-0 right-0 mt-1.5 z-50 rounded-xl border border-[#e2dacd] bg-white shadow-xl overflow-hidden animate-scale-up py-1 max-h-60 overflow-y-auto">
             {options.map((opt) => {
               const isSelected = opt.value === value;
               return (
@@ -99,17 +99,17 @@ export default function CustomDropdown({
                   onClick={() => handleSelect(opt.value)}
                   className={`w-full ${
                     size === "sm" ? "h-8 px-2.5 text-[10px]" : "h-10 px-4 text-xs"
-                  } flex items-center justify-between text-left transition-colors font-semibold ${
+                  } flex items-center justify-between text-left transition-colors font-semibold cursor-pointer ${
                     isSelected
-                      ? "bg-[#2d4c38] text-white"
-                      : "text-[#a3b2a9] hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-[#e8f0eb] text-[#2d4c38]"
+                      : "text-[#5e6f64] hover:bg-[#f5f2ed] hover:text-[#141f19]"
                   }`}
                 >
                   <div className="flex items-center gap-2 truncate">
-                    {opt.icon && <opt.icon className={`h-4 w-4 ${isSelected ? "text-white" : "text-[#b07e3a]"}`} />}
+                    {opt.icon && <opt.icon className={`h-4 w-4 ${isSelected ? "text-[#2d4c38]" : "text-[#b07e3a]"}`} />}
                     <span className={`${size === "sm" ? "text-[10px]" : "text-sm"} truncate`}>{opt.label}</span>
                   </div>
-                  {isSelected && <Check className="h-4 w-4 text-white" />}
+                  {isSelected && <Check className="h-4 w-4 text-[#2d4c38] flex-shrink-0" />}
                 </button>
               );
             })}

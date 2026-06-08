@@ -59,6 +59,13 @@ export const authConfig = {
       return true;
     },
     async redirect({ url, baseUrl }) {
+      // If the target URL is an absolute URL and does not point to localhost,
+      // it means it's a valid external/production redirect. Trust its host
+      // and do not override it with a potentially misconfigured baseUrl.
+      if (url.startsWith("http") && !url.includes("localhost") && !url.includes("127.0.0.1")) {
+        return url;
+      }
+
       // Strip internal port (e.g., :10000 on Render) from baseUrl and url.
       // Render exposes the app on port 443 externally but runs it on :10000 internally.
       // NextAuth sometimes constructs redirects using req.url which contains the internal port.

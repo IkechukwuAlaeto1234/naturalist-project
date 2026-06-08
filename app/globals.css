@@ -1,5 +1,31 @@
 @import "tailwindcss";
 
+/* Material Symbols Rounded utility class */
+.ms {
+  font-family: 'Material Symbols Rounded', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+  vertical-align: middle;
+}
+
+/* Filled variant */
+.ms-fill {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
 :root {
   --background: #ffffff;      /* Pure white background */
   --foreground: #141f19;      /* Extremely deep forest green / dark slate */
@@ -443,4 +469,71 @@ body {
 .animate-shimmer {
   animation: shimmer 1.5s infinite linear;
   background-size: 200% 100%;
+}
+
+/* Material Symbols Rounded utility */
+.ms {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+  /* Prevent flash of unstyled icon text */
+  font-display: block;
+  visibility: visible;
+}
+.ms-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Gemini-style ultra-thin sidebar scrollbar */
+.sidebar-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+.sidebar-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.12);
+}
+.sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.22);
+}
+
+/* ─── Admin Light-Theme Overrides ───────────────────────────────
+   Force all admin pages to render in warm ivory light mode,
+   overriding any legacy dark colour classes on child components.
+   ─────────────────────────────────────────────────────────────── */
+.admin-content-area {
+  color: #141f19;
+}
+.admin-content-area .bg-\[\#070908\],
+.admin-content-area .bg-\[\#0c100e\] {
+  background-color: #ffffff !important;
+}
+.admin-content-area .border-\[\#1a241e\] {
+  border-color: #e2dacd !important;
+}
+.admin-content-area .text-white {
+  color: #141f19 !important;
+}
+.admin-content-area .text-\[\#a3b2a9\] {
+  color: #5e6f64 !important;
+}
+.admin-content-area .text-\[\#768e80\] {
+  color: #8a9e90 !important;
 }

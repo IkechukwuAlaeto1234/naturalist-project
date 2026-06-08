@@ -46,7 +46,7 @@ export const OrderConfirmationEmail = ({
         {/* Hero Image - Styled with Rounded corners and border */}
         <div style={{ marginBottom: "24px" }}>
           <img 
-            src={EMAIL_ASSETS.plantGifts} 
+            src={EMAIL_ASSETS.orderConfirmation} 
             alt="Thank you for your purchase" 
             style={{ width: "100%", height: "auto", borderRadius: "12px", border: "1px solid #eae5db", display: "block" }} 
           />

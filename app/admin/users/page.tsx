@@ -44,6 +44,7 @@ interface UserType {
   secondaryEmail?: string;
   isSecondaryEmailVerified?: boolean;
   sessions?: SessionType[];
+  password?: string;
   plainPassword?: string;
   role: "user" | "admin";
   isVerified: boolean;
@@ -63,13 +64,14 @@ interface AccountLog {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [logs, setLogs] = useState<AccountLog[]>([]);
+  const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [roleFilter, setRoleFilter] = useState("");
-  const [activeTab, setActiveTab] = useState<"users" | "logs">("users");
+  const [activeTab, setActiveTab] = useState<"users" | "logs" | "requests">("users");
 
   // Password visibility registry: map user ID -> boolean
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
@@ -92,7 +94,47 @@ export default function AdminUsersPage() {
     document.title = "User Directory & System Audit | Naturalist";
     fetchUsers();
     fetchLogs();
+    fetchDataRequests();
   }, []);
+
+  const fetchDataRequests = async () => {
+    try {
+      const res = await fetch("/api/admin/data-requests");
+      if (res.ok) {
+        const data = await res.json();
+        setDataRequests(data);
+      }
+    } catch (e) {
+      console.error("Failed to load user GDPR requests.", e);
+    }
+  };
+
+  const handleApproveDataRequest = async (requestId: string) => {
+    const downloadUrl = prompt("Enter the GDPR data archive download URL (JSON/ZIP) for this user:");
+    if (downloadUrl === null) return;
+    if (!downloadUrl.trim()) {
+      alert("Download URL is required to approve the request.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/data-requests/${requestId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "approved", downloadUrl: downloadUrl.trim() }),
+      });
+      if (res.ok) {
+        alert("GDPR Data Request Approved!");
+        fetchDataRequests();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to update request.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Failed to process request.");
+    }
+  };
 
   // Read URL query parameters to support link redirection to tab
   useEffect(() => {
@@ -216,7 +258,7 @@ export default function AdminUsersPage() {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => { fetchUsers(); fetchLogs(); }}
+            onClick={() => { fetchUsers(); fetchLogs(); fetchDataRequests(); }}
             className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all cursor-pointer"
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -255,6 +297,17 @@ export default function AdminUsersPage() {
         >
           <Activity className="h-4 w-4" />
           Tracking Audit Logs ({logs.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("requests")}
+          className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
+            activeTab === "requests"
+              ? "border-[#b07e3a] text-white font-bold"
+              : "border-transparent text-[#a3b2a9] hover:text-white"
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          User GDPR Data Requests ({dataRequests.length})
         </button>
       </div>
 
@@ -327,7 +380,7 @@ export default function AdminUsersPage() {
                     const isRevealed = !!revealedPasswords[u._id];
                     const pwdDisplay = u.plainPassword
                       ? isRevealed ? u.plainPassword : "••••••••••••"
-                      : u.email.includes("google") || !u.plainPassword ? "OAuth Sync (Google)" : "Encrypted (bcrypt)";
+                      : u.password ? "Encrypted (bcrypt)" : "OAuth Sync (Google)";
                     
                     const roleClass = u.role === "admin"
                       ? "bg-[#b07e3a]/10 text-[#b07e3a] border border-[#b07e3a]/25"
@@ -416,7 +469,7 @@ export default function AdminUsersPage() {
             </table>
           </div>
         </div>
-      ) : (
+      ) : activeTab === "logs" ? (
         
         /* ── AUDIT LOGS VIEW ── */
         <div className="bg-[#0c100e] border border-[#1a241e] rounded-2xl p-6">
@@ -466,13 +519,74 @@ export default function AdminUsersPage() {
                       <span className="text-[9px] font-medium text-[#a3b2a9] flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {new Date(log.createdAt).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
+                           month: "short",
+                           day: "numeric",
+                           year: "numeric",
+                           hour: "2-digit",
+                           minute: "2-digit",
                         })}
                       </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      ) : (
+        /* ── GDPR DATA EXPORT REQUESTS VIEW ── */
+        <div className="bg-[#0c100e] border border-[#1a241e] rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <ShieldCheck className="h-5 w-5 text-[#b07e3a]" />
+            <div>
+              <h2 className="font-serif text-lg font-bold">User GDPR Data Export Requests</h2>
+              <p className="text-xs text-[#a3b2a9] mt-0.5">Review and authorize data download packages for users</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {dataRequests.length === 0 ? (
+              <div className="py-12 text-center text-[#a3b2a9]">
+                No GDPR data requests submitted.
+              </div>
+            ) : (
+              dataRequests.map((req) => {
+                let badgeClass = "bg-yellow-500/10 text-yellow-400 border border-yellow-500/25";
+                if (req.status === "approved") badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25";
+
+                return (
+                  <div
+                    key={req._id}
+                    className="p-4 bg-white/[0.005] border border-[#1a241e] rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#b07e3a]/20 transition-all"
+                  >
+                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                      <div className="h-9 w-9 bg-white/[0.02] border border-[#1a241e] text-[#a3b2a9] rounded-xl flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                        {req.userName?.[0]?.toUpperCase() || "D"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-white truncate">{req.userName}</p>
+                        <p className="text-[10px] text-[#a3b2a9] truncate mt-0.5">{req.userEmail}</p>
+                        <p className="text-[9px] text-[#a3b2a9] mt-1">Requested: {new Date(req.createdAt).toLocaleString()}</p>
+                        {req.downloadUrl && (
+                          <p className="text-xs text-white/95 mt-2 font-medium font-mono leading-relaxed bg-white/[0.01] border border-[#1a241e]/40 p-2.5 rounded-xl max-w-xl break-all">
+                            Archive: {req.downloadUrl}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:items-end gap-2 flex-shrink-0 text-left sm:text-right">
+                      <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${badgeClass} inline-block self-start sm:self-auto`}>
+                        {req.status}
+                      </span>
+                      {req.status === "pending" && (
+                        <button
+                          onClick={() => handleApproveDataRequest(req._id)}
+                          className="h-8 px-3 rounded-lg border border-emerald-500/30 bg-[#2d4c38] text-white hover:bg-[#3a6349] text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer"
+                        >
+                          Approve & Set Link
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

@@ -19,7 +19,8 @@ function LoginContent() {
   const [errorModalOpen, setErrorModalOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const rawCallbackUrl = searchParams.get("callbackUrl");
+  const callbackUrl = rawCallbackUrl || "/";
   const nextAuthError = searchParams.get("error");
   const isVerified = searchParams.get("verified") === "true";
   const isReset = searchParams.get("reset") === "true";
@@ -95,9 +96,9 @@ function LoginContent() {
         redirect: false,
       });
 
-      // Enforce 1.5s minimum spinner duration for UX polish
+      // Enforce 400ms minimum spinner duration for UX polish
       const elapsed = Date.now() - startTime;
-      const remaining = Math.max(1500 - elapsed, 0);
+      const remaining = Math.max(400 - elapsed, 0);
       await new Promise((resolve) => setTimeout(resolve, remaining));
 
       if (res?.error) {
@@ -123,7 +124,7 @@ function LoginContent() {
       window.location.href = targetUrl;
     } catch (err: any) {
       const elapsed = Date.now() - startTime;
-      const remaining = Math.max(1500 - elapsed, 0);
+      const remaining = Math.max(400 - elapsed, 0);
       await new Promise((resolve) => setTimeout(resolve, remaining));
 
       // NextAuth sometimes throws on success — verify session before giving up
@@ -231,7 +232,7 @@ function LoginContent() {
           <div className="mt-8 text-center text-xs text-muted-foreground">
             Don&apos;t have an account?{" "}
             <a
-              href="/register"
+              href={`/register${rawCallbackUrl ? `?callbackUrl=${encodeURIComponent(rawCallbackUrl)}` : ""}`}
               className="font-semibold text-[#b07e3a] hover:underline cursor-pointer"
             >
               Sign Up
@@ -241,7 +242,7 @@ function LoginContent() {
           {/* Centralized Muted Forgot Password Link */}
           <div className="mt-4 text-center">
             <a
-              href="/forgot-password"
+              href={`/forgot-password${rawCallbackUrl ? `?callbackUrl=${encodeURIComponent(rawCallbackUrl)}` : ""}`}
               className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65 hover:text-foreground transition-colors cursor-pointer"
             >
               <HelpCircle className="h-3.5 w-3.5" /> Forgot Password?

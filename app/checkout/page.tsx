@@ -56,7 +56,7 @@ function applyPhoneFormat(digits: string, format: string): string {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { cartItems, cartSubtotal, loading: cartLoading } = useCart();
 
   const [processing, setProcessing]       = useState(false);
@@ -98,6 +98,12 @@ export default function CheckoutPage() {
   );
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login?callbackUrl=%2Fcheckout");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
     const t = setTimeout(() => { document.title = "Checkout | Naturalist"; }, 120);
     const sessionTimer = session?.user
       ? setTimeout(() => {
@@ -130,7 +136,7 @@ export default function CheckoutPage() {
   }, []);
 
   // ── ALL HOOKS ABOVE ──
-  if (cartLoading) {
+  if (cartLoading || status === "loading") {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0f1411] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#2d4c38]" />
@@ -173,7 +179,11 @@ export default function CheckoutPage() {
   };
 
   const handleLocalPhone = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, phoneCountry.max);
+    let raw = e.target.value.replace(/\D/g, "");
+    if (raw.startsWith("0")) {
+      raw = raw.substring(1);
+    }
+    raw = raw.slice(0, phoneCountry.max);
     const fmt = applyPhoneFormat(raw, phoneCountry.format);
     setLocalPhone(fmt);
     setFormData(prev => ({ ...prev, phone: `${phoneCountry.dial} ${fmt}` }));
@@ -341,19 +351,25 @@ export default function CheckoutPage() {
 
               {/* Phone — dial code picker + number input */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone Number</label>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center w-full">
+                  <span>Phone Number</span>
+                  <span className="text-[9px] text-[#b07e3a] font-bold uppercase tracking-wider">Exclude leading 0</span>
+                </label>
                 <div className="relative" ref={phoneRef}>
                   <div className="flex items-center rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] focus-within:ring-2 focus-within:ring-[#b07e3a] transition-all overflow-hidden">
                     <button type="button" onClick={() => { setIsPhoneOpen(v => !v); setPhoneQuery(""); }}
-                      className="flex items-center gap-1.5 pl-4 pr-3 py-2.5 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-sm font-semibold text-foreground">
+                      className="flex items-center gap-1 pl-3.5 pr-2.5 py-2.5 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-[11px] font-bold uppercase tracking-wider text-foreground/80 cursor-pointer">
                       <span>{phoneCountry.code}</span>
-                      <span className="text-muted-foreground tabular-nums">{phoneCountry.dial}</span>
+                      <span className="text-muted-foreground/80 tabular-nums">{phoneCountry.dial}</span>
                       <ChevronDown className={`h-3 w-3 text-muted-foreground/60 transition-transform duration-150 ${isPhoneOpen ? "rotate-180" : ""}`} />
                     </button>
                     <input type="tel" value={localPhone} onChange={handleLocalPhone} required inputMode="tel" autoComplete="tel-national"
                       placeholder={phoneCountry.format.replace(/X/g, "0")}
                       className="flex-1 px-3 py-2.5 text-sm bg-transparent text-foreground focus:outline-none placeholder:text-muted-foreground/40" />
                   </div>
+                  <p className="text-[9px] text-muted-foreground/75 mt-1 select-none pl-3">
+                    * Please omit the leading zero of your phone number (e.g. enter 8031234567).
+                  </p>
 
                   {isPhoneOpen && (
                     <div className={dropdownPanelCls}>

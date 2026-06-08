@@ -11,9 +11,10 @@ interface LookupClientProps {
     initials?: string;
   };
   refToken?: string;
+  callbackUrl?: string;
 }
 
-export default function LookupClient({ status: initialStatus, user, refToken }: LookupClientProps) {
+export default function LookupClient({ status: initialStatus, user, refToken, callbackUrl }: LookupClientProps) {
   const [status] = useState(initialStatus);
   const [sendLoading, setSendLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -38,7 +39,14 @@ export default function LookupClient({ status: initialStatus, user, refToken }: 
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("naturalist:navigation-start"));
       setTimeout(() => {
-        window.location.href = href;
+        let targetHref = href;
+        if (callbackUrl) {
+          const separator = targetHref.includes("?") ? "&" : "?";
+          if (!targetHref.includes("callbackUrl=")) {
+            targetHref = `${targetHref}${separator}callbackUrl=${encodeURIComponent(callbackUrl)}`;
+          }
+        }
+        window.location.href = targetHref;
       }, 50);
     }
   };
@@ -58,9 +66,9 @@ export default function LookupClient({ status: initialStatus, user, refToken }: 
 
       const data = await res.json();
 
-      // Enforce 1.5s delay for UX transition feel
+      // Enforce 300ms delay for UX transition feel
       const elapsed = Date.now() - startTime;
-      await new Promise((resolve) => setTimeout(resolve, Math.max(1500 - elapsed, 0)));
+      await new Promise((resolve) => setTimeout(resolve, Math.max(300 - elapsed, 0)));
 
       setSendLoading(false);
 
@@ -82,7 +90,11 @@ export default function LookupClient({ status: initialStatus, user, refToken }: 
       window.dispatchEvent(new Event("naturalist:navigation-start"));
     }
     const targetEmail = user?.maskedEmail || "";
-    window.location.href = `/reset-password?email=${encodeURIComponent(targetEmail.toLowerCase().trim())}&ref=${encodeURIComponent(refToken || "")}`;
+    let target = `/reset-password?email=${encodeURIComponent(targetEmail.toLowerCase().trim())}&ref=${encodeURIComponent(refToken || "")}`;
+    if (callbackUrl) {
+      target += `&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    }
+    window.location.href = target;
   };
 
   // Render NOT FOUND / INVALID / EXPIRED state
@@ -144,7 +156,11 @@ export default function LookupClient({ status: initialStatus, user, refToken }: 
             {/* Footer Navigation */}
             <div className="mt-8 pt-6 border-t border-border/40 text-center flex justify-center w-full">
               <a
-                href="/login"
+                href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  goToRoute("/login");
+                }}
                 className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65 hover:text-foreground transition-colors group cursor-pointer"
               >
                 <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform select-none" /> Back to Sign In
@@ -272,7 +288,11 @@ export default function LookupClient({ status: initialStatus, user, refToken }: 
           {/* Footer Navigation */}
           <div className="mt-8 pt-6 border-t border-border/40 text-center flex justify-center">
             <a
-              href="/login"
+              href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+              onClick={(e) => {
+                e.preventDefault();
+                goToRoute("/login");
+              }}
               className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/65 hover:text-foreground transition-colors group cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform select-none" /> Back to Sign In

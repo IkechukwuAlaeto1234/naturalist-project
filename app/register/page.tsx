@@ -71,6 +71,7 @@ function RegisterContent() {
   const router = useRouter();
   const { status } = useSession();
   const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl");
 
   // Controlled by query search parameter: /register?step=X
   const stepQuery = searchParams.get("step");
@@ -134,11 +135,18 @@ function RegisterContent() {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("naturalist:navigation-start"));
       setTimeout(() => {
+        let targetHref = href;
+        if (callbackUrl) {
+          const separator = targetHref.includes("?") ? "&" : "?";
+          if (!targetHref.includes("callbackUrl=")) {
+            targetHref = `${targetHref}${separator}callbackUrl=${encodeURIComponent(callbackUrl)}`;
+          }
+        }
         const currentPath = window.location.pathname + window.location.search;
-        if (currentPath === href) {
+        if (currentPath === targetHref) {
           window.location.reload();
         } else {
-          window.location.href = href;
+          window.location.href = targetHref;
         }
       }, 50);
     }
@@ -173,11 +181,11 @@ function RegisterContent() {
   // Enforce dynamic URL step query param on start
   useEffect(() => {
     if (!searchParams.get("step")) {
-      router.replace("/register?step=1");
+      router.replace(`/register?step=1${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`);
     } else if (stepQuery && stepQuery !== String(step)) {
-      router.replace(`/register?step=${step}`);
+      router.replace(`/register?step=${step}${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`);
     }
-  }, [searchParams, router, step, stepQuery]);
+  }, [searchParams, router, step, stepQuery, callbackUrl]);
 
   // Stepper boundary guards: "must always start from the beginning of the stuff"
   useEffect(() => {
@@ -204,9 +212,9 @@ function RegisterContent() {
   // NextAuth redirect logic
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/");
+      router.replace(callbackUrl || "/");
     }
-  }, [status, router]);
+  }, [status, router, callbackUrl]);
 
   // Click outside to close custom dropdowns
   useEffect(() => {
@@ -431,7 +439,7 @@ function RegisterContent() {
     setTimeout(() => {
       setLoading(false);
       goToRoute("/register?step=5");
-    }, 1200);
+    }, 300);
   };
 
   const handleFinalSubmit = async () => {
@@ -469,7 +477,7 @@ function RegisterContent() {
         setLoading(false);
         triggerError("An unexpected error occurred during database registration.");
       }
-    }, 1800);
+    }, 400);
   };
 
   // Search filter countries lists
@@ -489,15 +497,23 @@ function RegisterContent() {
 
   // Phone input mask apply
   const handleLocalPhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, phoneCountry.max);
+    let raw = e.target.value.replace(/\D/g, "");
+    if (raw.startsWith("0")) {
+      raw = raw.substring(1);
+    }
+    raw = raw.slice(0, phoneCountry.max);
     const fmt = applyPhoneFormat(raw, phoneCountry.format);
     updatePhone(`${phoneCountry.dial} ${fmt}`, fmt);
   };
 
   // Back arrow link calculations
   const getBackPath = () => {
-    if (step <= 1) return "/login";
-    return `/register?step=${step - 1}`;
+    let base = step <= 1 ? "/login" : `/register?step=${step - 1}`;
+    if (callbackUrl) {
+      const separator = base.includes("?") ? "&" : "?";
+      base = `${base}${separator}callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    }
+    return base;
   };
 
   return (
@@ -826,10 +842,11 @@ function RegisterContent() {
             <div className="animate-fade-in space-y-6">
               <div className="space-y-4">
                 
-                {/* Premium Phone Input with Searchable Custom Dropdown Picker */}
-                <div className="flex flex-col gap-1.5 relative" ref={phoneDropdownRef}>
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                    <Phone className="h-3 w-3 text-muted-foreground" /> Phone Number
+                 {/* Premium Phone Input with Searchable Custom Dropdown Picker */}
+                 <div className="flex flex-col gap-1.5 relative" ref={phoneDropdownRef}>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center w-full">
+                    <span className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-muted-foreground" /> Phone Number</span>
+                    <span className="text-[9px] text-[#b07e3a] font-bold uppercase tracking-wider">Exclude leading 0</span>
                   </label>
                   <div className="flex items-center rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] focus-within:ring-2 focus-within:ring-[#b07e3a] focus-within:border-transparent transition-all overflow-hidden w-full h-12">
                     <button
@@ -838,10 +855,10 @@ function RegisterContent() {
                         setIsPhoneDropdownOpen((v) => !v);
                         setPhoneSearchQuery("");
                       }}
-                      className="flex items-center gap-1.5 pl-4 pr-3 py-3 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-xs font-semibold text-foreground h-full cursor-pointer"
+                      className="flex items-center gap-1 pl-3.5 pr-2.5 py-3 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-[11px] font-bold uppercase tracking-wider text-foreground/80 h-full cursor-pointer"
                     >
                       <span>{phoneCountry.code}</span>
-                      <span className="text-muted-foreground tabular-nums">{phoneCountry.dial}</span>
+                      <span className="text-muted-foreground/80 tabular-nums">{phoneCountry.dial}</span>
                       <ChevronDown
                         className={`h-3 w-3 text-muted-foreground/60 transition-transform duration-150 ${
                           isPhoneDropdownOpen ? "rotate-180" : ""
@@ -858,6 +875,9 @@ function RegisterContent() {
                       className="flex-1 px-4 py-3 text-sm bg-transparent text-foreground focus:outline-none placeholder:text-muted-foreground/40 h-full font-medium"
                     />
                   </div>
+                  <p className="text-[9px] text-muted-foreground/75 mt-1 select-none pl-3">
+                    * Please omit the leading zero of your phone number (e.g. enter 8031234567).
+                  </p>
 
 
                   {isPhoneDropdownOpen && (
@@ -1043,7 +1063,11 @@ function RegisterContent() {
             <div className="mt-8 text-center text-xs text-muted-foreground">
               Already have an account?{" "}
               <a
-                href="/login"
+                href={`/login${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  goToRoute("/login");
+                }}
                 className="font-semibold text-[#b07e3a] hover:underline cursor-pointer"
               >
                 Sign In

@@ -12,7 +12,6 @@ export const metadata: Metadata = {
   title: "Naturalist | Premium Organic Skincare & Wellness",
   description: "Experience premium, sustainable organic skincare crafted with precision. Empowering your natural glow while protecting our planet.",
   keywords: "organic skincare, natural beauty, eco-friendly cosmetics, premium wellness, vegan beauty",
-  // Author field omitted — do not expose team or internal names in page source
   robots: {
     index: true,
     follow: true,
@@ -27,8 +26,7 @@ export const metadata: Metadata = {
   },
 };
 
-
-import React, { Suspense } from "react";
+import React from "react";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/layout/Footer";
 import BackToTop from "../components/ui/BackToTop";
@@ -48,13 +46,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons&display=block" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <Providers>
-          <Suspense fallback={null}>
-            <BrandLoader />
-          </Suspense>
+          <BrandLoader />
           <Navbar />
           <main className="flex-grow flex flex-col">
             {children}

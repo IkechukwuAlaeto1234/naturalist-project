@@ -1,133 +1,196 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {
-  LayoutDashboard,
-  ShoppingBag,
-  Package,
-  FileText,
-  Users,
-  Mail,
-  Inbox,
-  Image as ImageIcon,
-  LogOut,
-  Menu,
-  X,
-  Lock,
-  Loader2,
-  ChevronRight,
-  ShieldCheck,
-  LayoutPanelTop,
-  Boxes,
-  ExternalLink,
-  ChevronDown
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 
+/* ─────────────────────────────────────────────────────────────────
+   Nav items — using Material Symbols Rounded ligatures (Gemini-style)
+   ───────────────────────────────────────────────────────────────── */
 const ADMIN_NAV_ITEMS = [
-  { id: "orders", label: "Orders", href: "/admin/orders", icon: ShoppingBag },
-  { id: "products", label: "Products", href: "/admin/products", icon: Package },
-  { id: "bundles", label: "Bundles", href: "/admin/bundles", icon: Boxes },
-  { id: "pages", label: "Pages", href: "/admin/pages", icon: LayoutPanelTop },
-  { id: "blog", label: "Blog", href: "/admin/blog", icon: FileText },
-  { id: "users", label: "Users", href: "/admin/users", icon: Users },
-  { id: "newsletter", label: "Newsletter", href: "/admin/newsletter", icon: Mail },
-  { id: "contacts", label: "Inquiries", href: "/admin/contacts", icon: Inbox },
-  { id: "cdn", label: "CDN", href: "/admin/cdn", icon: ImageIcon },
+  { id: "dashboard",  label: "Dashboard",   href: "/admin",            icon: "dashboard" },
+  { id: "orders",     label: "Orders",      href: "/admin/orders",     icon: "shopping_bag" },
+  { id: "products",   label: "Products",    href: "/admin/products",   icon: "inventory_2" },
+  { id: "bundles",    label: "Bundles",     href: "/admin/bundles",    icon: "layers" },
+  { id: "pages",      label: "Pages",       href: "/admin/pages",      icon: "web" },
+  { id: "blog",       label: "Blog",        href: "/admin/blog",       icon: "article" },
+  { id: "users",      label: "Users",       href: "/admin/users",      icon: "group" },
+  { id: "newsletter", label: "Newsletter",  href: "/admin/newsletter", icon: "mail" },
+  { id: "contacts",   label: "Inquiries",   href: "/admin/contacts",   icon: "inbox" },
+  { id: "emails",     label: "Email Hub",   href: "/admin/emails",     icon: "bolt" },
+  { id: "cdn",        label: "CDN Assets",  href: "/admin/cdn",        icon: "image" },
 ];
 
-type AdminSessionUser = {
-  role?: string | null;
-};
+type AdminSessionUser = { role?: string | null };
 
+interface AdminNotif {
+  _id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  link?: string;
+  createdAt: string;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   AdminShell
+   ═════════════════════════════════════════════════════════════════ */
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession();
-  const router = useRouter();
+  const router   = useRouter();
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [pagesDropdownOpen, setPagesDropdownOpen] = useState(false);
-  const [customPages, setCustomPages] = useState<any[]>([]);
-  const [mounted, setMounted] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const pagesDropdownRef = useRef<HTMLDivElement>(null);
 
+  /* Sidebar always open on desktop; mobile uses drawer */
+  const [open, setOpen]           = useState(true);
+  /* Mobile drawer */
+  const [mobileOpen, setMobileOpen] = useState(false);
+  /* Profile dropdown */
+  const [profileOpen, setProfileOpen] = useState(false);
+  /* Bell dropdown */
+  const [bellOpen, setBellOpen]       = useState(false);
+  /* Notifications */
+  const [notifications, setNotifications]   = useState<AdminNotif[]>([]);
+  const [notifLoading, setNotifLoading]     = useState(false);
+  /* Search */
+  const [searchQuery, setSearchQuery] = useState("");
+  const [mounted, setMounted]         = useState(false);
+
+  const profileRef     = useRef<HTMLDivElement>(null);
+  const bellRef        = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  /* ── Init ── */
   useEffect(() => {
     setMounted(true);
-    fetch("/api/admin/custom-pages", { cache: "no-store" })
-      .then((r) => r.ok ? r.json() : [])
-      .then((data) => setCustomPages(Array.isArray(data) ? data : []))
-      .catch(() => {});
   }, []);
 
+  /* ── Auth guard ── */
   useEffect(() => {
     if (mounted && status === "unauthenticated") {
       router.push("/login?callbackUrl=" + encodeURIComponent(pathname));
     }
   }, [mounted, status, router, pathname]);
 
-  // Click outside listener for profile dropdown
+  /* ── Close mobile drawer on route change ── */
+  useEffect(() => { setMobileOpen(false); }, [pathname]);
+
+  /* ── Mobile drawer toggle ── */
+  const toggleSidebar = useCallback(() => {
+    setMobileOpen(prev => !prev);
+  }, []);
+
+  /* ── Click-outside profile dropdown ── */
   useEffect(() => {
-    if (!profileDropdownOpen) return;
+    if (!profileOpen) return;
     const handler = (e: MouseEvent) => {
-      if (!profileDropdownRef.current?.contains(e.target as Node)) {
-        setProfileDropdownOpen(false);
-      }
+      if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [profileDropdownOpen]);
+  }, [profileOpen]);
 
-  // Click outside listener for pages dropdown
+  /* ── Click-outside bell dropdown ── */
   useEffect(() => {
-    if (!pagesDropdownOpen) return;
+    if (!bellOpen) return;
     const handler = (e: MouseEvent) => {
-      if (!pagesDropdownRef.current?.contains(e.target as Node)) {
-        setPagesDropdownOpen(false);
-      }
+      if (!bellRef.current?.contains(e.target as Node)) setBellOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [pagesDropdownOpen]);
+  }, [bellOpen]);
 
+  /* ── Fetch admin notifications ── */
+  const fetchNotifications = useCallback(async () => {
+    try {
+      setNotifLoading(true);
+      const res = await fetch("/api/user/notifications", { cache: "no-store" });
+      if (res.ok) setNotifications(await res.json());
+    } catch { /* silent */ } finally {
+      setNotifLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mounted && status === "authenticated") fetchNotifications();
+  }, [mounted, status, fetchNotifications]);
+
+  const handleBellToggle = () => {
+    setBellOpen(prev => {
+      if (!prev) fetchNotifications();
+      return !prev;
+    });
+    setProfileOpen(false);
+  };
+
+  const handleNotifClick = async (notif: AdminNotif) => {
+    if (!notif.read) {
+      await fetch("/api/user/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: notif._id }),
+      });
+      setNotifications(prev => prev.map(n => n._id === notif._id ? { ...n, read: true } : n));
+    }
+    setBellOpen(false);
+    if (notif.link) window.location.href = notif.link;
+  };
+
+  const handleMarkAllRead = async () => {
+    await fetch("/api/user/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  /* ── Body scroll lock on mobile drawer ── */
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: (typeof window !== "undefined" ? window.location.origin : "") + "/login?logout=true" });
+  };
+
+  /* ── Loading ── */
   if (!mounted || status === "loading") {
     return (
-      <div className="min-h-screen bg-[#070908] text-white flex flex-col items-center justify-center gap-4">
+      <div className="min-h-screen bg-[#faf8f4] flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-10 w-10 animate-spin text-[#b07e3a]" />
-        <p className="text-sm font-medium tracking-widest text-[#a3b2a9] uppercase font-serif animate-pulse">Verifying Authority...</p>
+        <p className="text-sm font-medium tracking-widest text-[#8a9e90] uppercase font-serif animate-pulse">Verifying Authority…</p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-[#faf8f4] flex flex-col items-center justify-center gap-4">
+        <Loader2 className="h-10 w-10 animate-spin text-[#b07e3a]" />
+        <p className="text-sm font-medium tracking-widest text-[#8a9e90] uppercase font-serif animate-pulse">Redirecting…</p>
       </div>
     );
   }
 
   const sessionUser = session?.user as AdminSessionUser | undefined;
-  const userEmail = session?.user?.email?.toLowerCase().trim();
-  const isAdmin = userEmail === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
+  const userEmail   = session?.user?.email?.toLowerCase().trim();
+  const isAdmin     = userEmail === "ikechukwualaeto@gmail.com" || sessionUser?.role === "admin";
 
-  // Unauthenticated: proxy.ts will redirect, but show the spinner while that happens
-  // so the user never sees the Access Denied flash during the in-flight redirect.
-  if (status === "unauthenticated") {
-    return (
-      <div className="min-h-screen bg-[#070908] text-white flex flex-col items-center justify-center gap-4">
-        <Loader2 className="h-10 w-10 animate-spin text-[#b07e3a]" />
-        <p className="text-sm font-medium tracking-widest text-[#a3b2a9] uppercase font-serif animate-pulse">Redirecting...</p>
-      </div>
-    );
-  }
-  
   if (!session || !isAdmin) {
     return (
-      <div className="min-h-screen bg-[#070908] text-white flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-        <div className="h-16 w-16 bg-destructive/10 rounded-full flex items-center justify-center mb-6 border border-destructive/20">
-          <Lock className="h-8 w-8 text-destructive animate-pulse" />
+      <div className="min-h-screen bg-[#faf8f4] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100">
+          <span className="ms ms-filled text-red-500" style={{ fontSize: 32 }}>lock</span>
         </div>
-        <h1 className="font-serif text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+        <h1 className="font-serif text-2xl font-bold mb-2 text-[#141f19]">Access Denied</h1>
+        <p className="text-sm text-[#5e6f64] mb-6 leading-relaxed">
           You do not possess the administrative credentials to access the Naturalist command center.
         </p>
         <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="h-11 px-8 rounded-full bg-destructive text-white hover:bg-destructive/90 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+          onClick={handleSignOut}
+          className="h-11 px-8 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
         >
           Sign Out & Return Home
         </button>
@@ -135,356 +198,300 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     );
   }
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
-  };
-
-  const getPublicPreviewPath = () => {
-    if (pathname.startsWith("/admin/pages/edit/")) {
-      const key = pathname.replace("/admin/pages/edit/", "");
-      const pathMap: Record<string, string> = {
-        home: "/",
-        shop: "/shop",
-        bundles: "/bundles",
-        story: "/story",
-        sustainability: "/sustainability",
-        blog: "/blog",
-        "privacy-policy": "/privacy-policy",
-        terms: "/terms",
-        "cookie-policy": "/cookie-policy",
-        "refund-policy": "/refund-policy",
-        contact: "/contact",
-        faq: "/faq",
-      };
-      return pathMap[key] || `/p/${key}`;
-    }
-    if (pathname.startsWith("/admin/pages/edit-custom/")) {
-      const slug = pathname.replace("/admin/pages/edit-custom/", "");
-      return `/p/${slug}`;
-    }
-    if (pathname.startsWith("/admin/products/edit/")) {
-      const slug = pathname.replace("/admin/products/edit/", "");
-      return `/shop/${slug}`;
-    }
-    if (pathname.startsWith("/admin/products")) {
-      return "/shop";
-    }
-    if (pathname.startsWith("/admin/bundles")) {
-      return "/bundles";
-    }
-    if (pathname.startsWith("/admin/blog")) {
-      return "/blog";
-    }
-    return "/";
-  };
-
+  /* ─────────────────────────────────────────────────────────────
+     Render
+     ───────────────────────────────────────────────────────────── */
   return (
-    <div className="dark min-h-screen bg-[#070908] text-white font-sans flex flex-col transition-colors">
-      
-      {/* ── Branded Premium Top Navigation Bar ── */}
-      <header className="sticky top-0 z-40 h-20 border-b border-[#1a241e] bg-[#0c100e]/95 backdrop-blur-md flex items-center justify-between px-6 sm:px-8">
-        
-        {/* Left: Brand logo & badge */}
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {/* Mobile Hamburguer */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-xl text-[#a3b2a9] hover:text-white hover:bg-white/5 transition-all cursor-pointer"
-          >
-            <Menu className="h-5.5 w-5.5" />
-          </button>
-          
-          <div className="flex items-center gap-3">
-            <a href="/admin" className="font-serif text-xl font-bold tracking-tight text-white hover:opacity-90 transition-opacity">
-              Naturalist<span className="text-[#b07e3a]">.</span>
-            </a>
-            <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-widest bg-[#b07e3a]/15 text-[#b07e3a] border border-[#b07e3a]/20 px-2.5 py-1 rounded-full">
-              <ShieldCheck className="h-2.5 w-2.5" /> Admin
-            </span>
+    <div className="min-h-screen bg-[#faf8f4] flex font-sans">
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/20 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════════════
+          Sidebar — Gemini-style
+          Width: 72px (icon-only) → 256px (expanded)
+          NO hover expand. Toggle-only.
+          ══════════════════════════════════════════════════════════ */}
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-40
+          flex flex-col bg-white border-r border-[#e8e0d5]
+          overflow-hidden w-64
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        {/* ── Logo / Brand row ── */}
+        <div className="h-16 flex items-center flex-shrink-0 px-5 gap-3 border-b border-[#e8e0d5]">
+          {/* N orb */}
+          <div className="h-9 w-9 rounded-full bg-[#2d4c38] flex items-center justify-center flex-shrink-0">
+            <span className="font-serif text-sm font-black text-white">N</span>
           </div>
+          {/* Brand name */}
+          <a href="/admin" className="flex-1 min-w-0 hover:opacity-75 transition-opacity whitespace-nowrap">
+            <span className="font-serif text-[15px] font-extrabold tracking-tight text-[#141f19]">Naturalist</span>
+            <span className="font-serif text-[15px] font-extrabold tracking-tight text-[#b07e3a]"> Admin</span>
+          </a>
         </div>
 
-        {/* Center: Desktop horizontal navigation links */}
-        <div className="hidden lg:block flex-1 max-w-4xl mx-8">
-          <nav className="flex items-center justify-center gap-1 xl:gap-2.5 py-2">
-            {ADMIN_NAV_ITEMS.filter((item) => ["orders", "products", "bundles", "pages"].includes(item.id)).map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
-              
-              if (item.id === "pages") {
-                return (
-                  <div
-                    key={item.id}
-                    className="relative"
-                    ref={pagesDropdownRef}
+        {/* ── Nav items ── */}
+        <nav className="flex-1 sidebar-scroll overflow-y-auto overflow-x-hidden py-3 space-y-0.5 px-2">
+          {ADMIN_NAV_ITEMS.map((item) => {
+            const isActive =
+              item.id === "dashboard"
+                ? pathname === "/admin"
+                : pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
+
+            return (
+              <div key={item.id} className="relative group/nav">
+                <a
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`
+                    flex items-center gap-3 rounded-2xl transition-all duration-200 overflow-hidden
+                    ${open ? "px-3 py-2.5" : "justify-center px-0 py-2.5 mx-auto w-12 h-12"}
+                    ${isActive
+                      ? "bg-[#e8f0eb] text-[#2d4c38]"
+                      : "text-[#5e6f64] hover:bg-[#f0ebe2] hover:text-[#141f19]"
+                    }
+                  `}
+                >
+                  {/* Material Symbol icon */}
+                  <span
+                    className={`ms flex-shrink-0 transition-all ${isActive ? "ms-filled text-[#2d4c38]" : "text-[#8a9e90]"}`}
+                    style={{ fontSize: 22 }}
                   >
-                    <button
-                      type="button"
-                      onClick={() => setPagesDropdownOpen(!pagesDropdownOpen)}
-                      className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap cursor-pointer ${
-                        isActive
-                          ? "bg-[#2d4c38] text-white shadow-[0_2px_12px_rgba(45,76,56,0.3)]"
-                          : "text-[#a3b2a9] hover:text-white hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <item.icon className="h-3.5 w-3.5" />
-                      <span>{item.label}</span>
-                      <ChevronDown className="h-3 w-3 text-[#768e80]" />
-                    </button>
-                    
-                    {pagesDropdownOpen && (
-                      <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-[760px] bg-[#0c100e]/95 backdrop-blur-md border border-[#1a241e] p-6 rounded-2xl shadow-2xl z-50 text-left grid grid-cols-3 gap-6 animate-scale-up">
-                        {/* Column 1: Storefront Pages */}
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a]">Storefront Pages</span>
-                            <a
-                              href="/admin/pages"
-                              onClick={() => setPagesDropdownOpen(false)}
-                              className="text-[8px] font-bold bg-[#b07e3a]/15 text-[#b07e3a] border border-[#b07e3a]/25 px-2 py-0.5 rounded-full hover:bg-[#b07e3a]/25 transition-all"
-                            >
-                              Manage All
-                            </a>
-                          </div>
-                          <div className="flex flex-col gap-1 max-h-[380px] overflow-y-auto scrollbar-thin pr-1">
-                            <a href="/admin/pages/edit/home" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Home Page</span>
-                              <span className="text-[9px] text-[#768e80]">Banners, standards & ethos</span>
-                            </a>
-                            <a href="/admin/pages/edit/shop" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Shop Page</span>
-                              <span className="text-[9px] text-[#768e80]">Product filters & headlines</span>
-                            </a>
-                            <a href="/admin/pages/edit/bundles" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Ritual Bundles</span>
-                              <span className="text-[9px] text-[#768e80]">Set branding & tags</span>
-                            </a>
-                            <a href="/admin/pages/edit/story" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Our Story</span>
-                              <span className="text-[9px] text-[#768e80]">Milestones & brand values</span>
-                            </a>
-                            <a href="/admin/pages/edit/sustainability" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Sustainability</span>
-                              <span className="text-[9px] text-[#768e80]">Pillars & statistics</span>
-                            </a>
-                            <a href="/admin/pages/edit/blog" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Blog Index</span>
-                              <span className="text-[9px] text-[#768e80]">Blog hero & defaults</span>
-                            </a>
-                            
-                            <div className="h-px bg-[#1a241e] my-2 w-full" />
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a] px-3 mb-1 block">Legal Policies</span>
-                            <a href="/admin/pages/edit/privacy-policy" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-lg text-[11px] text-white hover:bg-white/[0.03] transition-all block">Privacy Policy</a>
-                            <a href="/admin/pages/edit/terms" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-lg text-[11px] text-white hover:bg-white/[0.03] transition-all block">Terms of Service</a>
-                            <a href="/admin/pages/edit/cookie-policy" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-lg text-[11px] text-white hover:bg-white/[0.03] transition-all block">Cookie Policy</a>
-                            <a href="/admin/pages/edit/refund-policy" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-1.5 rounded-lg text-[11px] text-white hover:bg-white/[0.03] transition-all block">Refund Policy</a>
-                          </div>
-                        </div>
-                        
-                        {/* Column 2: Content & Catalog */}
-                        <div className="flex flex-col gap-3">
-                          <div>
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a]">Editorial & Media</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <a href="/admin/products" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Products Catalog</span>
-                              <span className="text-[9px] text-[#768e80]">Manage storefront inventory</span>
-                            </a>
-                            <a href="/admin/bundles" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Ritual Bundles</span>
-                              <span className="text-[9px] text-[#768e80]">Group product sets</span>
-                            </a>
-                            <a href="/admin/blog" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Blog Articles</span>
-                              <span className="text-[9px] text-[#768e80]">Write posts & review comments</span>
-                            </a>
-                            <a href="/admin/cdn" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">CDN Assets Uploads</span>
-                              <span className="text-[9px] text-[#768e80]">Optimize website image assets</span>
-                            </a>
-                          </div>
+                    {item.icon}
+                  </span>
 
-                          <div className="h-px bg-[#1a241e] my-2 w-full" />
-                          <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a]">Custom Pages</span>
-                            <a href="/admin/pages/new" onClick={() => setPagesDropdownOpen(false)} className="text-[8px] font-bold bg-[#b07e3a]/15 text-[#b07e3a] border border-[#b07e3a]/25 px-2 py-0.5 rounded-full hover:bg-[#b07e3a]/25 transition-all">New Page</a>
-                          </div>
-                          <div className="flex flex-col gap-1 max-h-[140px] overflow-y-auto scrollbar-thin">
-                            {customPages.length === 0 ? (
-                              <span className="text-[10px] text-[#768e80] italic px-3 py-1.5">No custom pages</span>
-                            ) : (
-                              customPages.map((p) => (
-                                <a
-                                  key={p.metadata?.slug}
-                                  href={`/admin/pages/edit-custom/${p.metadata?.slug}`}
-                                  onClick={() => setPagesDropdownOpen(false)}
-                                  className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all truncate"
-                                >
-                                  {p.title || `/p/${p.metadata?.slug}`}
-                                </a>
-                              ))
-                            )}
-                          </div>
-                        </div>
+                  {/* Label — only visible when open */}
+                  <span className={`text-sm font-semibold whitespace-nowrap transition-all duration-300 ${open ? "opacity-100" : "opacity-0 w-0 overflow-hidden"} ${isActive ? "font-bold text-[#141f19]" : ""}`}>
+                    {item.label}
+                  </span>
+                </a>
 
-                        {/* Column 3: Audience & Admin */}
-                        <div className="flex flex-col gap-3">
-                          <div>
-                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#b07e3a]">Audience & Access</span>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <a href="/admin/newsletter" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Newsletter Subscriptions</span>
-                              <span className="text-[9px] text-[#768e80]">Email subscriber database</span>
-                            </a>
-                            <a href="/admin/contacts" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">Contact Inquiries</span>
-                              <span className="text-[9px] text-[#768e80]">Customer support correspondence</span>
-                            </a>
-                            <a href="/admin/users" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">User Directory</span>
-                              <span className="text-[9px] text-[#768e80]">Credential overrides & roles</span>
-                            </a>
-                            <a href="/admin/users?tab=logs" onClick={() => setPagesDropdownOpen(false)} className="px-3 py-2 rounded-xl text-xs text-[#a3b2a9] hover:text-white hover:bg-white/[0.03] transition-all flex flex-col">
-                              <span className="font-serif font-bold text-white">System Audit Logs</span>
-                              <span className="text-[9px] text-[#768e80]">Chronological security registry</span>
-                            </a>
-                          </div>
-                        </div>
+                {/* Tooltip always available for collapsed mobile drawer state */}
+                <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-3 z-[9999] opacity-0 group-hover/nav:opacity-100 transition-opacity duration-150 lg:hidden">
+                  <div className="bg-[#1f2937] text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-lg whitespace-nowrap">
+                    {item.label}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+
+        {/* ── Footer removed — user info lives in header dropdown ── */}
+      </aside>
+
+      {/* ══════════════════════════════════════════════════════════
+          Right column: Header + Content
+          ══════════════════════════════════════════════════════════ */}
+      <div
+        className="flex flex-col flex-1 min-w-0 lg:ml-64"
+      >
+
+        {/* ── Gemini-style Top Header ── */}
+        <header className="sticky top-0 z-30 h-16 bg-white border-b border-[#e8e0d5] flex items-center gap-3 px-4 sm:px-5">
+
+          {/* Mobile hamburger */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="lg:hidden p-2 rounded-2xl text-[#5e6f64] hover:text-[#141f19] hover:bg-[#f5f2ed] transition-all cursor-pointer flex-shrink-0"
+            aria-label="Open menu"
+          >
+            <span className="ms" style={{ fontSize: 22 }}>menu</span>
+          </button>
+
+          {/* ── Gemini-style centered search bar ── */}
+          <div className="flex-1 max-w-xl mx-auto">
+            <div className="relative group">
+              <span className="ms absolute left-4 top-1/2 -translate-y-1/2 text-[#8a9e90] group-focus-within:text-[#2d4c38] transition-colors pointer-events-none" style={{ fontSize: 18 }}>search</span>
+              <input
+                ref={searchInputRef}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search orders, products, inquiries…"
+                className="w-full h-10 pl-11 pr-4 rounded-full bg-[#f5f2ed] border border-[#e2dacd] text-sm text-[#141f19] placeholder-[#8a9e90] focus:outline-none focus:border-[#b07e3a] focus:bg-white transition-all"
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setSearchQuery("");
+                    searchInputRef.current?.blur();
+                  }
+                }}
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-[#8a9e90] hover:text-[#141f19] hover:bg-[#e2dacd] transition-all cursor-pointer"
+                >
+                  <span className="ms" style={{ fontSize: 16 }}>close</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Right actions ── */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+
+            {/* Bell */}
+            <div className="relative" ref={bellRef}>
+              <button
+                onClick={handleBellToggle}
+                className="relative h-9 w-9 rounded-full flex items-center justify-center text-[#5e6f64] hover:text-[#141f19] hover:bg-[#f5f2ed] transition-all cursor-pointer"
+                aria-label="Notifications"
+                title="Notifications"
+              >
+                <span className="ms" style={{ fontSize: 22 }}>notifications</span>
+                {notifications.some(n => !n.read) && (
+                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#b07e3a] ring-2 ring-white" />
+                )}
+              </button>
+
+              {bellOpen && (
+                <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl border border-[#e2dacd] bg-white shadow-xl z-50 overflow-hidden">
+                  {/* Header */}
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-[#e2dacd]">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[#8a9e90]">Notifications</p>
+                    {notifications.some(n => !n.read) && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider cursor-pointer"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Body */}
+                  <div className="max-h-72 overflow-y-auto">
+                    {notifLoading ? (
+                      <div className="flex items-center justify-center py-8 gap-2">
+                        <span className="ms animate-spin text-[#b07e3a]" style={{ fontSize: 20 }}>progress_activity</span>
+                        <span className="text-xs text-[#8a9e90]">Loading…</span>
+                      </div>
+                    ) : notifications.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-10 gap-2 text-center px-4">
+                        <span className="ms text-[#e2dacd]" style={{ fontSize: 36 }}>notifications_off</span>
+                        <p className="text-xs font-semibold text-[#8a9e90]">No notifications yet</p>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-[#f5f2ed]">
+                        {notifications.slice(0, 10).map((notif) => (
+                          <button
+                            key={notif._id}
+                            onClick={() => handleNotifClick(notif)}
+                            className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-[#faf8f4] transition-colors cursor-pointer ${
+                              !notif.read ? "bg-[#b07e3a]/5" : ""
+                            }`}
+                          >
+                            <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                              !notif.read ? "bg-[#b07e3a]" : "bg-transparent"
+                            }`} />
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-xs leading-snug truncate ${
+                                !notif.read ? "font-bold text-[#141f19]" : "font-medium text-[#5e6f64]"
+                              }`}>
+                                {notif.title}
+                              </p>
+                              <p className="text-[11px] text-[#8a9e90] mt-0.5 line-clamp-2 leading-relaxed">
+                                {notif.message}
+                              </p>
+                              <p className="text-[10px] text-[#8a9e90]/60 mt-1">
+                                {new Date(notif.createdAt).toLocaleDateString("en-US", {
+                                  month: "short", day: "numeric",
+                                  hour: "2-digit", minute: "2-digit",
+                                })}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
-                );
-              }
 
-              return (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all whitespace-nowrap ${
-                    isActive
-                      ? "bg-[#2d4c38] text-white shadow-[0_2px_12px_rgba(45,76,56,0.3)]"
-                      : "text-[#a3b2a9] hover:text-white hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <item.icon className="h-3.5 w-3.5" />
-                  <span>{item.label}</span>
-                </a>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Right: View Shop & User profile avatar */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-
-          {/* Profile Dropdown */}
-          <div className="relative" ref={profileDropdownRef}>
-            <button
-              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className="flex items-center gap-2 px-3 py-2 rounded-full border border-[#1a241e] bg-white/[0.02] hover:bg-white/[0.04] transition-all cursor-pointer"
-            >
-              <div className="h-6.5 w-6.5 rounded-full bg-[#2d4c38] flex items-center justify-center font-bold text-xs text-[#b07e3a]">
-                {session.user?.name ? session.user.name[0].toUpperCase() : "A"}
-              </div>
-              <span className="hidden md:inline text-xs font-bold text-[#a3b2a9] truncate max-w-[80px]">
-                {session.user?.name?.split(" ")[0]}
-              </span>
-              <ChevronDown className="h-3 w-3 text-[#4a5c50]" />
-            </button>
-
-            {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2.5 w-52 origin-top-right rounded-2xl border border-[#1a241e] bg-[#0c100e] p-2 shadow-2xl z-50">
-                <div className="px-3 py-2 border-b border-[#1a241e] mb-1">
-                  <p className="text-xs font-bold text-white truncate">{session.user?.name}</p>
-                  <p className="text-[10px] text-[#a3b2a9] truncate">{session.user?.email}</p>
+                  {/* Footer */}
+                  {notifications.length > 0 && (
+                    <div className="border-t border-[#e2dacd] px-4 py-2.5">
+                      <a
+                        href="/account/notifications"
+                        className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
+                      >
+                        View all notifications
+                      </a>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={handleSignOut}
-                  className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs font-bold uppercase tracking-wider text-red-400 hover:bg-red-500/5 rounded-xl transition-all cursor-pointer text-left"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
+              )}
+            </div>
 
-      </header>
+            {/* Profile dropdown */}
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border border-[#e2dacd] bg-white hover:bg-[#f5f2ed] transition-all cursor-pointer"
+                title="Account menu"
+              >
+                <div className="h-6 w-6 rounded-full bg-[#2d4c38] flex items-center justify-center font-bold text-[10px] text-[#b07e3a]">
+                  {session.user?.name ? session.user.name[0].toUpperCase() : "A"}
+                </div>
+                <span className="hidden sm:inline text-xs font-semibold text-[#5e6f64] truncate max-w-[80px]">
+                  {session.user?.name?.split(" ")[0]}
+                </span>
+                <span className="ms text-[#8a9e90]" style={{ fontSize: 16 }}>expand_more</span>
+              </button>
 
-      {/* ── Mobile Sidebar Drawer ── */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 z-50 bg-[#070908]/80 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0c100e] border-r border-[#1a241e] flex flex-col justify-between transform lg:hidden transition-transform duration-300 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div>
-          <div className="p-6 border-b border-[#1a241e] flex items-center justify-between">
-            <a href="/admin" className="font-serif text-xl font-bold tracking-tight text-white">
-              Naturalist<span className="text-[#b07e3a]">.</span>
-            </a>
-            <button onClick={() => setSidebarOpen(false)} className="text-[#a3b2a9] hover:text-white cursor-pointer">
-              <X className="h-5.5 w-5.5" />
-            </button>
-          </div>
-
-          <nav className="p-4 space-y-1.5 overflow-y-auto">
-            {ADMIN_NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href || (item.href !== "/admin" && pathname?.startsWith(item.href));
-              return (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                    isActive
-                      ? "bg-[#2d4c38] text-white"
-                      : "text-[#a3b2a9] hover:text-white hover:bg-white/[0.04]"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+              {profileOpen && (
+                <div className="absolute right-0 mt-2 w-52 origin-top-right rounded-2xl border border-[#e2dacd] bg-white p-2 shadow-xl z-50 animate-fade-in">
+                  <div className="px-3 py-2 border-b border-[#e2dacd] mb-1">
+                    <p className="text-xs font-bold text-[#141f19] truncate">{session.user?.name}</p>
+                    <p className="text-[10px] text-[#8a9e90] truncate">{session.user?.email}</p>
                   </div>
-                  {isActive && <ChevronRight className="h-3.5 w-3.5 text-white/50" />}
-                </a>
-              );
-            })}
-          </nav>
-        </div>
-
-        <div className="p-4 border-t border-[#1a241e]">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.02] border border-[#1a241e] mb-3">
-            <div className="h-8 w-8 rounded-lg overflow-hidden bg-[#2d4c38] flex items-center justify-center font-bold text-sm text-[#b07e3a]">
-              {session.user?.name ? session.user.name[0].toUpperCase() : "A"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-white truncate leading-none">{session.user?.name}</p>
-              <p className="text-[10px] text-[#a3b2a9] truncate mt-1 leading-none">{session.user?.email}</p>
+                  <a
+                    href="/"
+                    target="_blank"
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-[#5e6f64] hover:bg-[#f5f2ed] rounded-xl transition-all"
+                  >
+                    <span className="ms" style={{ fontSize: 16 }}>open_in_new</span>
+                    View Storefront
+                  </a>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer text-left mt-0.5"
+                  >
+                    <span className="ms" style={{ fontSize: 16 }}>logout</span>
+                    Sign Out
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/5 transition-all cursor-pointer text-left"
+        </header>
+
+        {/* ── Main Content ── */}
+        <main
+          className={`flex-1 admin-content-area ${
+            pathname === "/admin/email-sandbox"
+              ? "overflow-hidden flex flex-col h-[calc(100vh-64px)]"
+              : "overflow-y-auto p-6 lg:p-8"
+          }`}
+        >
+          <div
+            className={`animate-fade-in ${
+              pathname === "/admin/email-sandbox"
+                ? "w-full h-full flex flex-col min-h-0"
+                : "max-w-5xl mx-auto"
+            }`}
           >
-            <LogOut className="h-4 w-4" />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* ── Main Viewport Content Area ── */}
-      <main className={`flex-1 bg-[#070908] ${pathname === "/admin/email-sandbox" ? "overflow-hidden flex flex-col h-[calc(100vh-80px)]" : "overflow-y-auto p-6 lg:p-10"}`}>
-        <div className={`animate-fade-in ${pathname === "/admin/email-sandbox" ? "w-full h-full flex flex-col min-h-0" : "max-w-5xl mx-auto"}`}>
-          {children}
-        </div>
-      </main>
-
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

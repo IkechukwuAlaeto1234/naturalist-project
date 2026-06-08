@@ -5,7 +5,8 @@ import Image from "next/image";
 
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
-import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShieldCheck, Truck, RotateCcw } from "lucide-react";
+import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShieldCheck, Truck, RotateCcw, Lock, Loader2, X } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function CartPage() {
   const router = useRouter();
@@ -17,6 +18,33 @@ export default function CartPage() {
   } = useCart();
   const [mounted, setMounted] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [countdown, setCountdown] = useState(5);
+
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showAuthModal) {
+      setCountdown(5);
+      timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(new Event("naturalist:navigation-start"));
+            }
+            router.push("/register?callbackUrl=%2Fcheckout");
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [showAuthModal, router]);
 
   useEffect(() => {
     const mountedTimer = setTimeout(() => setMounted(true), 0);
@@ -233,7 +261,13 @@ export default function CartPage() {
 
                 {/* Secure Checkout Button */}
                 <button
-                  onClick={() => router.push("/checkout")}
+                  onClick={() => {
+                    if (status === "authenticated" && session?.user) {
+                      router.push("/checkout");
+                    } else {
+                      setShowAuthModal(true);
+                    }
+                  }}
                   className="w-full flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.2)] cursor-pointer select-none shrink-0"
                 >
                   Proceed to Checkout
@@ -277,6 +311,82 @@ export default function CartPage() {
                 className="flex-1 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
               >
                 Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Countdown Auth Check Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
+          {/* Backdrop overlay */}
+          <div
+            className="fixed inset-0 bg-[#0c120e]/60 dark:bg-black/80 backdrop-blur-sm transition-opacity duration-300 cursor-pointer"
+            onClick={() => setShowAuthModal(false)}
+          />
+
+          {/* Modal Card Container */}
+          <div
+            className="relative w-full max-w-md transform overflow-hidden rounded-[32px] border border-[#b07e3a]/10 dark:border-white/10 bg-white/95 dark:bg-[#151c18]/95 backdrop-blur-xl p-8 shadow-2xl transition-all duration-300 animate-modal-slide-in flex flex-col items-center text-center"
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowAuthModal(false)}
+              className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer flex-shrink-0"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Lock Circle Icon */}
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#b07e3a]/10 text-[#b07e3a] dark:text-[#c4924c] animate-icon-pop">
+              <Lock className="h-9 w-9 stroke-[2]" />
+            </div>
+
+            <h3 className="font-serif text-2xl font-black text-foreground tracking-tight mb-2">
+              You are not Signed In
+            </h3>
+            
+            <p className="text-xs text-muted-foreground leading-relaxed max-w-xs mb-4">
+              You have to be signed in before proceeding.
+            </p>
+            
+            <div className="flex items-center gap-2 text-[11px] text-[#b07e3a] font-bold uppercase tracking-wider mb-6 bg-[#b07e3a]/5 dark:bg-[#b07e3a]/10 px-4 py-1.5 rounded-full border border-[#b07e3a]/10">
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-[#b07e3a]" />
+              <span>Redirecting to sign up in {countdown}s...</span>
+            </div>
+            
+            <div className="flex flex-col gap-3 w-full">
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("naturalist:navigation-start"));
+                  }
+                  router.push("/register?callbackUrl=%2Fcheckout");
+                }}
+                className="w-full flex h-12 items-center justify-center rounded-full bg-[#2d4c38] hover:bg-[#3a6349] hover:scale-[1.01] active:scale-[0.99] text-xs font-bold uppercase tracking-widest text-white transition-all shadow-lg shadow-[#2d4c38]/10 cursor-pointer"
+              >
+                Sign Up Now
+              </button>
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new Event("naturalist:navigation-start"));
+                  }
+                  router.push("/login?callbackUrl=%2Fcheckout");
+                }}
+                className="w-full flex h-12 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-xs font-bold uppercase tracking-widest text-foreground transition-all cursor-pointer"
+              >
+                Sign In Instead
+              </button>
+              <button
+                onClick={() => setShowAuthModal(false)}
+                className="w-full flex h-10 items-center justify-center rounded-full border border-transparent hover:bg-muted/30 text-xs font-bold uppercase tracking-widest text-muted-foreground/65 hover:text-muted-foreground transition-all cursor-pointer"
+              >
+                Stay on Cart
               </button>
             </div>
           </div>

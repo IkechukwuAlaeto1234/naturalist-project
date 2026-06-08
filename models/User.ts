@@ -14,6 +14,11 @@ export interface IUser extends Document {
   resetTokenExpires?: Date;
   secondaryEmail?: string;
   isSecondaryEmailVerified?: boolean;
+  about?: string;
+  pronouns?: string;
+  website?: string;
+  username?: string;
+  settings?: Record<string, any>;
   sessions?: Array<{
     id: string;
     ipAddress: string;
@@ -92,6 +97,31 @@ const UserSchema = new Schema<IUser>(
     isSecondaryEmailVerified: {
       type: Boolean,
       default: false,
+    },
+    about: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    pronouns: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    website: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    username: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    settings: {
+      type: Map,
+      of: Schema.Types.Mixed,
+      default: {},
     },
     sessions: [
       {

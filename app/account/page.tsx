@@ -106,7 +106,11 @@ export default function AccountHubPage() {
   };
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+    if (typeof window !== "undefined") {
+      signOut({ callbackUrl: window.location.origin + "/login?logout=true" });
+    } else {
+      signOut({ callbackUrl: "/login?logout=true" });
+    }
   };
 
   if (!mounted || status === "loading") {

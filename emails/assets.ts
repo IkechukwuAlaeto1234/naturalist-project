@@ -39,6 +39,7 @@ export const EMAIL_ASSETS = {
   colored: `${appUrl}/cdn/image/upload/v1780787309/email/colored.jpg`,
   newsletter: `${appUrl}/cdn/image/upload/v1780787310/email/newsletter.jpg`,
   passwordSuccessIllustration: `${appUrl}/cdn/image/upload/v1780787311/email/password_has_been_reset_successfully_concept_illus.jpg`,
+  orderConfirmation: `${appUrl}/cdn/image/upload/v1780813790/email/an_ecommerce_concept_of_order_confirm_flat_illustration.jpg`,
 
   // Brand Logo
   logoTransparentWhite: `${appUrl}/cdn/image/upload/v1780751081/brand/logo_transparent_white.png`,

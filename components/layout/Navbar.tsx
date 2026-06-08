@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "../../context/CartContext";
-import { LogOut, Settings, ShoppingBag, Search, Bell, X, ArrowRight, ChevronRight } from "lucide-react";
 
 /* ─────────────────────────────────────────
    Inline icon components (no extra packages)
@@ -76,6 +75,15 @@ const SPRING: React.CSSProperties = {
 /* ═════════════════════════════════════════
    Component
    ═════════════════════════════════════════ */
+interface NavNotification {
+  _id: string;
+  title: string;
+  message: string;
+  read: boolean;
+  link?: string;
+  createdAt: string;
+}
+
 export default function Navbar() {
   const pathname                                = usePathname();
   const { data: session }                       = useSession();
@@ -86,6 +94,8 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen]         = useState(false);
   const [mounted, setMounted]                   = useState(false);
   const [customLinks, setCustomLinks]           = useState<any[]>([]);
+  const [notifications, setNotifications]       = useState<NavNotification[]>([]);
+  const [notifLoading, setNotifLoading]         = useState(false);
   const searchRef               = useRef<HTMLInputElement>(null);
   const desktopSearchInputRef    = useRef<HTMLInputElement>(null);
   const profileRef              = useRef<HTMLDivElement>(null);
@@ -108,6 +118,58 @@ export default function Navbar() {
       })
       .catch(() => {});
   }, []);
+
+  /* Fetch notifications when session is ready */
+  useEffect(() => {
+    if (!session) return;
+    fetchNotifications();
+  }, [session]);
+
+  const fetchNotifications = async () => {
+    try {
+      setNotifLoading(true);
+      const res = await fetch("/api/user/notifications", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (e) {
+      // silent fail — bell just shows empty
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  const handleBellOpen = () => {
+    setIsBellOpen(!isBellOpen);
+    setIsProfileOpen(false);
+    setIsSearchOpen(false);
+    if (!isBellOpen && session) fetchNotifications();
+  };
+
+  const handleNotifClick = async (notif: NavNotification) => {
+    if (!notif.read) {
+      await fetch("/api/user/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: notif._id }),
+      });
+      setNotifications(prev =>
+        prev.map(n => n._id === notif._id ? { ...n, read: true } : n)
+      );
+    }
+    setIsBellOpen(false);
+    window.location.href = `/account/notifications/${notif._id}`;
+  };
+
+  const handleMarkAllRead = async () => {
+    await fetch("/api/user/notifications", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
 
   /* Close everything on route change */
   useEffect(() => {
@@ -147,7 +209,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handler);
   }, [isBellOpen]);
 
-  /* Click-outside: close search dropdowns (both mobile and desktop) */
+  /* Click-outside: close search dropdowns */
   useEffect(() => {
     if (!isSearchOpen) return;
     const handler = (e: MouseEvent) => {
@@ -173,16 +235,17 @@ export default function Navbar() {
   }
 
   const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+    if (typeof window !== "undefined") {
+      signOut({ callbackUrl: window.location.origin + "/login?logout=true" });
+    } else {
+      signOut({ callbackUrl: "/login?logout=true" });
+    }
   };
 
   if (pathname?.startsWith("/admin")) {
     return null;
   }
 
-  /* ─────────────────────────────────────────
-     Render
-     ───────────────────────────────────────── */
   const allLinks = [...navLinks, ...customLinks];
 
   return (
@@ -197,11 +260,8 @@ export default function Navbar() {
           {/* Hamburger + Logo */}
           <div
             className="flex items-center gap-4 flex-shrink-0 transition-all duration-500 ease-out"
-            style={{
-              width: isSearchOpen ? "125px" : "192px",
-            }}
+            style={{ width: isSearchOpen ? "125px" : "192px" }}
           >
-            {/* ── Hamburger (mobile only) ── */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={`${PILL} h-10 w-10 min-w-10 min-h-10 aspect-square flex-col gap-1.5 md:hidden flex-shrink-0`}
@@ -215,7 +275,6 @@ export default function Navbar() {
               <span className="relative block w-[16px] h-[1.5px] rounded-full bg-white" />
             </button>
 
-            {/* ── Logo ── */}
             <div className="flex-shrink-0 text-center md:text-left">
               <a
                 href="/"
@@ -226,12 +285,11 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* - Desktop Center: Nav Links and Inline Search - */}
+          {/* Desktop Center: Nav Links + Inline Search */}
           <div
             ref={desktopSearchWrapperRef}
             className="hidden md:flex flex-1 items-center justify-between relative h-12 px-6"
           >
-            {/* Nav links - slides left when search opens, remains fully visible */}
             <nav
               className="flex items-center gap-6 lg:gap-8 transition-all duration-500 ease-out"
               style={{
@@ -261,7 +319,6 @@ export default function Navbar() {
               })}
             </nav>
 
-            {/* Inline premium search - slides in from right when open */}
             <div
               className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 overflow-hidden transition-all duration-500 ease-out shadow-[0_2px_10px_rgba(28,46,36,0.06)] focus-within:border-[#b07e3a]"
               style={{
@@ -293,15 +350,15 @@ export default function Navbar() {
                 aria-label="Submit search"
               >
                 <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-                <Search className="relative text-white/80 group-hover:text-white h-[18px] w-[18px] transition-colors" />
+                <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
               </button>
             </div>
           </div>
 
-          {/* ── Action buttons ── */}
+          {/* Action buttons */}
           <div className="flex items-center justify-end gap-2 sm:gap-3 flex-shrink-0 md:min-w-[192px] md:w-auto">
 
-            {/* Search */}
+            {/* Search toggle (desktop) */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className={`${PILL} hidden md:flex h-10 w-10 sm:h-11 sm:w-11`}
@@ -309,43 +366,107 @@ export default function Navbar() {
               aria-label={isSearchOpen ? "Close Search" : "Search"}
             >
               <span className={PILL_GLOW} />
-              {isSearchOpen
-                ? <X className={`${PILL_ICON} h-[17px] w-[17px]`} />
-                : <Search className={`${PILL_ICON} h-[17px] w-[17px]`} />}
+              <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>{isSearchOpen ? "close" : "search"}</span>
             </button>
 
             {/* Notification bell — authenticated only */}
             {session && (
               <div className="relative" ref={bellRef}>
                 <button
-                  onClick={() => { setIsBellOpen(!isBellOpen); setIsProfileOpen(false); setIsSearchOpen(false); }}
+                  onClick={handleBellOpen}
                   className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
                   aria-label="Notifications"
                   aria-expanded={isBellOpen}
                 >
                   <span className={PILL_GLOW} />
-                  <Bell className={`${PILL_ICON} h-[17px] w-[17px]`} />
-                  <span className="absolute top-[9px] right-[9px] h-[7px] w-[7px] rounded-full bg-[#b07e3a] ring-2 ring-[#1c2e24]" />
+                  <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>notifications</span>
+                  {notifications.some(n => !n.read) && (
+                    <span className="absolute top-[9px] right-[9px] h-[7px] w-[7px] rounded-full bg-[#b07e3a] ring-2 ring-[#1c2e24]" />
+                  )}
                 </button>
 
                 {isBellOpen && (
                   <>
                     <div onClick={() => setIsBellOpen(false)} className="fixed inset-0 z-30" />
-                    <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-2xl border border-border/40 bg-card p-4 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
-                      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">Notifications</p>
-                      <div className="flex flex-col items-center justify-center py-8 text-center gap-2">
-                        <Bell className="h-8 w-8 text-muted-foreground/30" />
-                        <p className="text-xs text-muted-foreground">No new notifications</p>
+                    <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-80 -translate-x-1/2 rounded-2xl border border-border/40 bg-card shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-80 sm:max-w-none sm:translate-x-0 sm:origin-top-right overflow-hidden">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notifications</p>
+                        {notifications.some(n => !n.read) && (
+                          <button
+                            onClick={handleMarkAllRead}
+                            className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider cursor-pointer"
+                          >
+                            Mark all read
+                          </button>
+                        )}
                       </div>
+
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifLoading ? (
+                          <div className="flex items-center justify-center py-10 gap-2">
+                            <span className="ms animate-spin text-[#b07e3a]" style={{ fontSize: 18 }}>progress_activity</span>
+                            <span className="text-xs text-muted-foreground">Loading…</span>
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center py-10 text-center gap-2 px-4">
+                            <span className="ms text-muted-foreground/30" style={{ fontSize: 36 }}>notifications_off</span>
+                            <p className="text-xs font-semibold text-muted-foreground">You&apos;re all caught up</p>
+                            <p className="text-[11px] text-muted-foreground/60">No notifications yet</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-border/30">
+                            {notifications.slice(0, 10).map((notif) => (
+                              <button
+                                key={notif._id}
+                                onClick={() => handleNotifClick(notif)}
+                                className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-muted/60 transition-colors cursor-pointer ${
+                                  !notif.read ? "bg-[#b07e3a]/5" : ""
+                                }`}
+                              >
+                                <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                                  !notif.read ? "bg-[#b07e3a]" : "bg-transparent"
+                                }`} />
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-xs leading-snug truncate ${
+                                    !notif.read ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                                  }`}>
+                                    {notif.title}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+                                    {notif.message}
+                                  </p>
+                                  <p className="text-[10px] text-muted-foreground/50 mt-1">
+                                    {new Date(notif.createdAt).toLocaleDateString("en-US", {
+                                      month: "short", day: "numeric",
+                                      hour: "2-digit", minute: "2-digit"
+                                    })}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {notifications.length > 0 && (
+                        <div className="border-t border-border/40 px-4 py-2.5">
+                          <a
+                            href="/account/notifications"
+                            onClick={() => setIsBellOpen(false)}
+                            className="text-xs font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
+                          >
+                            View all notifications
+                          </a>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
               </div>
             )}
 
-            {/* ── Profile / Auth ── */}
+            {/* Profile / Auth */}
             {session ? (
-              /* Authenticated — avatar circle, no name in button */
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => { setIsProfileOpen(!isProfileOpen); setIsBellOpen(false); }}
@@ -371,38 +492,34 @@ export default function Navbar() {
                   <>
                     <div onClick={() => setIsProfileOpen(false)} className="fixed inset-0 z-30" />
                     <div className="absolute right-0 mt-2.5 z-40 w-52 origin-top-right rounded-2xl border border-border/40 bg-card p-2 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
-                      {/* User info header */}
                       <div className="px-3 py-2 mb-1 border-b border-border/40">
                         <p className="text-xs font-bold text-foreground truncate">{session.user?.name}</p>
                         <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
                       </div>
-
                       <a
                         href="/account"
                         onClick={() => setIsProfileOpen(false)}
                         className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
                       >
-                        <PersonIcon className="h-4 w-4 flex-shrink-0" />
+                        <span className="ms" style={{ fontSize: 16 }}>person</span>
                         My Account
                       </a>
-
                       {(session.user as any)?.role === "admin" && (
                         <a
                           href="/admin"
                           onClick={() => setIsProfileOpen(false)}
                           className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[#b07e3a] dark:text-[#d4a362] rounded-xl hover:bg-[#b07e3a]/10 transition-colors font-medium"
                         >
-                          <Settings className="h-4 w-4 flex-shrink-0" />
+                          <span className="ms" style={{ fontSize: 16 }}>admin_panel_settings</span>
                           Admin Panel
                         </a>
                       )}
-
                       <div className="border-t border-border/40 mt-1 pt-1">
                         <button
                           onClick={() => { setIsProfileOpen(false); handleSignOut(); }}
                           className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/8 rounded-xl transition-colors"
                         >
-                          <LogOut className="h-4 w-4 flex-shrink-0" />
+                          <span className="ms" style={{ fontSize: 16 }}>logout</span>
                           Sign Out
                         </button>
                       </div>
@@ -411,7 +528,6 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              /* Unauthenticated — person icon + sign in / create account dropdown */
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen(!isProfileOpen)}
@@ -421,33 +537,32 @@ export default function Navbar() {
                   aria-expanded={isProfileOpen}
                 >
                   <span className={PILL_GLOW} />
-                  <PersonIcon className={`${PILL_ICON} h-[19px] w-[19px]`} />
+                  <span className={`${PILL_ICON} ms`} style={{ fontSize: 22 }}>person</span>
                 </button>
 
                 {isProfileOpen && (
                   <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
-                      {/* Greeting */}
-                      <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
-                      <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                        Sign in to access your rituals, track orders, and unlock exclusive offers.
-                      </p>
-                      <div className="flex gap-3">
-                        <a
-                          href="/login"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex flex-1 items-center justify-center h-11 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all shadow-sm"
-                        >
-                          Sign In
-                        </a>
-                        <a
-                          href="/register"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex flex-1 items-center justify-center h-11 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all"
-                        >
-                          Create Account
-                        </a>
-                      </div>
+                    <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
+                    <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                      Sign in to access your rituals, track orders, and unlock exclusive offers.
+                    </p>
+                    <div className="flex gap-3">
+                      <a
+                        href="/login"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex flex-1 items-center justify-center h-11 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all shadow-sm"
+                      >
+                        Sign In
+                      </a>
+                      <a
+                        href="/register"
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex flex-1 items-center justify-center h-11 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all"
+                      >
+                        Create Account
+                      </a>
                     </div>
+                  </div>
                 )}
               </div>
             )}
@@ -461,7 +576,7 @@ export default function Navbar() {
               aria-label="Shopping cart"
             >
               <span className={PILL_GLOW} />
-              <ShoppingBag className={`${PILL_ICON} h-[17px] w-[17px]`} />
+              <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>shopping_bag</span>
               {cartCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#b07e3a] text-[9px] font-bold text-white shadow-sm">
                   {cartCount}
@@ -472,15 +587,13 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ── Centered Premium Floating Dropdown Search Widget (Mobile Only) ── */}
+        {/* Mobile search dropdown */}
         {isSearchOpen && (
           <div
             ref={searchWrapperRef}
             className="md:hidden border-t border-border/20 bg-card/95 backdrop-blur-xl py-4 px-6 flex justify-center animate-fade-in-down pointer-events-auto"
           >
-            <div
-              className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 shadow-[0_4px_20px_rgba(28,46,36,0.06)] transition-all duration-300 w-full max-w-[400px]"
-            >
+            <div className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 shadow-[0_4px_20px_rgba(28,46,36,0.06)] transition-all duration-300 w-full max-w-[400px]">
               <input
                 ref={searchRef}
                 type="search"
@@ -504,20 +617,14 @@ export default function Navbar() {
                 aria-label="Submit search"
               >
                 <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-                <Search className="relative text-white/80 group-hover:text-white h-[18px] w-[18px] transition-colors" />
+                <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
               </button>
             </div>
           </div>
         )}
       </header>
 
-      {/* ══════════════════════════════════════════════════════
-          Mobile menu — Piqo-style floating dropdown card
-          ══════════════════════════════════════════════════════ */}
-      {/* ══════════════════════════════════════════════════════
-          Mobile menu — Piqo-style vertical slide-out drawer
-          ══════════════════════════════════════════════════════ */}
-      {/* Blurred backdrop overlay (rendered standalone to animate backdrop smoothly) */}
+      {/* Mobile backdrop */}
       {isMobileMenuOpen && (
         <div
           onClick={() => setIsMobileMenuOpen(false)}
@@ -525,7 +632,7 @@ export default function Navbar() {
         />
       )}
 
-      {/* Left drawer panel */}
+      {/* Mobile drawer */}
       <div
         className="fixed inset-y-0 left-0 z-50 w-[320px] sm:w-[380px] h-full bg-white dark:bg-[#0f1411] border-r border-[#e2dacd] dark:border-white/[0.08] shadow-2xl overflow-y-auto flex flex-col justify-between md:hidden"
         style={{
@@ -536,7 +643,6 @@ export default function Navbar() {
         aria-modal="true"
         aria-label="Site navigation"
       >
-        {/* Container wrapper */}
         <div className="relative flex flex-col h-full justify-between">
           {/* Botanical SVG pattern */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
@@ -551,10 +657,9 @@ export default function Navbar() {
             <rect width="100%" height="100%" fill="url(#menuPattern)" />
           </svg>
 
-          {/* Gold accent line at top */}
           <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#b07e3a]/60 to-transparent pointer-events-none z-10" />
 
-          {/* Header (No close X button, styled exactly like normal desktop header logo) */}
+          {/* Drawer header */}
           <div className="relative z-10 flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#e2dacd]/60 dark:border-white/[0.07]">
             <a
               href="/"
@@ -563,15 +668,12 @@ export default function Navbar() {
               Naturalist.
             </a>
             <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setIsSearchOpen(true);
-              }}
+              onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}
               className="md:hidden group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
               aria-label="Search"
             >
               <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-              <Search className="relative text-white/80 group-hover:text-white h-[18px] w-[18px] transition-colors" />
+              <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
             </button>
           </div>
 
@@ -601,7 +703,6 @@ export default function Navbar() {
                       >
                         {link.label}
                       </span>
-                      {/* Premium active sliding underline effect */}
                       <span
                         className={`absolute bottom-0 left-0 h-[2px] bg-[#b07e3a] transition-all duration-300 ${
                           isActive ? "w-full" : "w-0 group-hover:w-[40%]"
@@ -609,13 +710,14 @@ export default function Navbar() {
                       />
                     </div>
                   </div>
-                  <ChevronRight
-                    className={`h-4.5 w-4.5 flex-shrink-0 transition-all duration-300 ${
+                  <span
+                    className={`ms flex-shrink-0 transition-all duration-300 ${
                       isActive
                         ? "text-[#b07e3a] translate-x-0.5"
                         : "text-[#5e6f64]/40 group-hover:text-[#b07e3a] group-hover:translate-x-1"
                     }`}
-                  />
+                    style={{ fontSize: 18 }}
+                  >chevron_right</span>
                 </a>
               );
             })}

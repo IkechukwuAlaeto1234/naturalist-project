@@ -20,6 +20,7 @@ function ResetPasswordContent() {
   const refToken = searchParams.get("ref") || "";
   const verifiedFromQuery = searchParams.get("verified") === "true";
   const tokenFromQuery = searchParams.get("token") || "";
+  const callbackUrl = searchParams.get("callbackUrl");
 
   // Split steps: 1 = Enter Passcode, 2 = Set New Password
   const [resetStep, setResetStep] = useState<1 | 2>(1);
@@ -55,7 +56,14 @@ function ResetPasswordContent() {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new Event("naturalist:navigation-start"));
       setTimeout(() => {
-        window.location.href = href;
+        let targetHref = href;
+        if (callbackUrl) {
+          const separator = targetHref.includes("?") ? "&" : "?";
+          if (!targetHref.includes("callbackUrl=")) {
+            targetHref = `${targetHref}${separator}callbackUrl=${encodeURIComponent(callbackUrl)}`;
+          }
+        }
+        window.location.href = targetHref;
       }, 50);
     }
   };
@@ -166,10 +174,10 @@ function ResetPasswordContent() {
     setPhaseIndex(0);
     setVerificationModalOpen(true);
 
-    // Dynamic phase loader steps (cycles every 1200ms during 4.8s, matching forgot-password)
+    // Dynamic phase loader steps (cycles every 300ms during 1.2s, matching forgot-password)
     const phaseInterval = setInterval(() => {
       setPhaseIndex((prev) => (prev < 3 ? prev + 1 : prev));
-    }, 1200);
+    }, 300);
 
     const startTime = Date.now();
     let passcodeValid = false;
@@ -192,7 +200,7 @@ function ResetPasswordContent() {
     }
 
     const elapsed = Date.now() - startTime;
-    const remaining = Math.max(4800 - elapsed, 0);
+    const remaining = Math.max(1200 - elapsed, 0);
     await new Promise((resolve) => setTimeout(resolve, remaining));
     clearInterval(phaseInterval);
 
@@ -210,7 +218,11 @@ function ResetPasswordContent() {
     setVerificationModalOpen(false);
     const token = tokenFields.join("");
     // Snappy browser navigation to step 2 that triggers the official Brand Loader dynamically!
-    window.location.href = `/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}&ref=${encodeURIComponent(refToken)}&token=${token}&verified=true`;
+    let target = `/reset-password?email=${encodeURIComponent(email.toLowerCase().trim())}&ref=${encodeURIComponent(refToken)}&token=${token}&verified=true`;
+    if (callbackUrl) {
+      target += `&callbackUrl=${encodeURIComponent(callbackUrl)}`;
+    }
+    window.location.href = target;
   };
 
   // Step 2: Save Password Action
@@ -527,7 +539,7 @@ function ResetPasswordContent() {
         isOpen={successModalOpen}
         onClose={() => {
           setSuccessModalOpen(false);
-          window.location.href = "/login?reset=true";
+          window.location.href = `/login?reset=true${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
         }}
         title="Reset Successful"
         message={successMessage}
@@ -536,7 +548,7 @@ function ResetPasswordContent() {
         showClose={false}
         onAction={() => {
           setSuccessModalOpen(false);
-          window.location.href = "/login?reset=true";
+          window.location.href = `/login?reset=true${callbackUrl ? `&callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`;
         }}
         actionIcon={null}
       />

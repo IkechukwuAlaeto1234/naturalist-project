@@ -19,16 +19,35 @@ export interface IShippingAddress {
   phone: string;
 }
 
+export interface IStatusEvent {
+  status: string;
+  note: string;
+  timestamp: Date;
+  location?: string;
+}
+
+export interface IRouteWaypoint {
+  lat: number;
+  lng: number;
+  label: string;
+}
+
 export interface IOrder extends Document {
   orderNumber?: string;
   user: mongoose.Types.ObjectId;
   items: IOrderItem[];
   shippingAddress: IShippingAddress;
   paymentStatus: "pending" | "paid" | "failed";
-  shippingStatus: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  shippingStatus: "pending" | "processing" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
   paymentMethod: string;
   stripeSessionId?: string;
   totalAmount: number;
+  // Tracking fields
+  trackingNumber?: string;
+  carrier?: string;
+  estimatedDelivery?: Date;
+  statusHistory: IStatusEvent[];
+  routeWaypoints: IRouteWaypoint[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -70,6 +89,19 @@ const ShippingAddressSchema = new Schema<IShippingAddress>({
   phone: { type: String, required: true },
 });
 
+const StatusEventSchema = new Schema<IStatusEvent>({
+  status:    { type: String, required: true },
+  note:      { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  location:  { type: String },
+}, { _id: false });
+
+const RouteWaypointSchema = new Schema<IRouteWaypoint>({
+  lat:   { type: Number, required: true },
+  lng:   { type: Number, required: true },
+  label: { type: String, required: true },
+}, { _id: false });
+
 const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: {
@@ -91,7 +123,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     shippingStatus: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled"],
+      enum: ["pending", "processing", "shipped", "out_for_delivery", "delivered", "cancelled"],
       default: "pending",
     },
     paymentMethod: {
@@ -107,6 +139,12 @@ const OrderSchema = new Schema<IOrder>(
       required: true,
       min: [0, "Total amount cannot be negative"],
     },
+    // ── Tracking fields ───────────────────────────────────────────
+    trackingNumber:   { type: String },
+    carrier:          { type: String },
+    estimatedDelivery:{ type: Date },
+    statusHistory:    { type: [StatusEventSchema], default: [] },
+    routeWaypoints:   { type: [RouteWaypointSchema], default: [] },
   },
   {
     timestamps: true,
