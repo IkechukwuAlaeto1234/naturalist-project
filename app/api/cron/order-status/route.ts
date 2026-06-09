@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { autoAdvanceShippedOrders } from "@/lib/order-automation";
 
-/**
- * GET /api/cron/order-status
- *
- * Called by Vercel Cron (every 30 minutes) or Render's cron service.
- * Protected by CRON_SECRET — set this in your env variables.
- *
- * Vercel cron config (vercel.json):
- * {
- *   "crons": [{ "path": "/api/cron/order-status", "schedule": "*/30 * * * *" }]
- * }
- *
- * Render: add a Cron Job service pointing to this URL every 30 minutes.
- */
+// GET /api/cron/order-status
+//
+// Called by Vercel Cron (every 30 minutes) or Render's cron service.
+// Protected by CRON_SECRET — set this in your env variables.
+//
+// Vercel cron config (vercel.json):
+// {
+//   "crons": [{ "path": "/api/cron/order-status", "schedule": "*/30 * * * *" }]
+// }
+//
+// Render: add a Cron Job service pointing to this URL every 30 minutes.
 export async function GET(req: NextRequest) {
   try {
     // ── Verify cron secret ──────────────────────────────────────
