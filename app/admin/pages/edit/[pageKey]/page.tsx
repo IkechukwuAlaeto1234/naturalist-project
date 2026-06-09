@@ -281,7 +281,7 @@ function ImageField({
         const d = await res.json();
         throw new Error(d.error || "Proxy failed");
       }
-      const { url, publicId } = await res.json();
+      const { url, publicId, sizeBytes } = await res.json();
       const proxied = proxyCloudinaryUrl(url);
       commitUrl(proxied);
 
@@ -293,7 +293,7 @@ function ImageField({
           url: proxied,
           publicId: publicId,
           originalName: urlInput.split("/").pop() || "proxied_image",
-          sizeBytes: 0,
+          sizeBytes: sizeBytes || 0,
         }),
       }).catch(() => {});
     } catch (err: any) {

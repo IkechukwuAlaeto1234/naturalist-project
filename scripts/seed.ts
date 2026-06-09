@@ -337,7 +337,7 @@ async function seed() {
           heroSubtext: "Formulated with high-efficacy, wild-harvested white sage, bakuchiol, and organic seaweed to unleash your skin's natural radiance.",
           heroPrimaryCta: "Shop All Rituals",
           heroSecondaryCta: "Our Botanical Ethos",
-          heroImage: "/cdn/hero-banner.jpg",
+          heroImage: "/cdn/image/upload/v1780528756/naturalist/pages/kbijaiehbkyygbashfrw.jpg",
           sectionBadge: "Formulation Ethos",
           sectionHeadline: "The Naturalist Standard",
           sectionSubtext: "Experience organic beauty crafted with absolute precision. High efficacy meets planet-first preservation.",

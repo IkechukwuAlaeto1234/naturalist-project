@@ -11,6 +11,7 @@ import { Order } from "@/models/Order";
 import { Notification } from "@/models/Notification";
 import { OrderConfirmationEmail } from "@/emails/OrderConfirmationEmail";
 import { AdminNewOrderEmail } from "@/emails/AdminNewOrderEmail";
+import { autoAdvanceToProcessing } from "@/lib/order-automation";
 
 /**
  * POST /api/webhooks/stripe
@@ -68,8 +69,10 @@ export async function POST(req: Request) {
       }
 
       order.paymentStatus = "paid";
-      order.shippingStatus = "processing";
       await order.save();
+
+      // Auto-advance to processing immediately
+      await autoAdvanceToProcessing(order._id.toString());
 
       const customer = order.user as any; // populated
       const customerName: string = customer?.name || "Customer";

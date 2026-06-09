@@ -94,7 +94,7 @@ function ImageUpload({ value, onChange }: { value: string; onChange: (v: string)
           url: proxied,
           publicId: data.publicId,
           originalName: urlInput.split("/").pop() || "proxied_image",
-          sizeBytes: 0,
+          sizeBytes: data.sizeBytes || 0,
         }),
       }).catch(() => {});
     } catch (e: any) {

@@ -101,6 +101,70 @@ export async function sendEmail({
   // Dynamically resolve all buttons and unsubscribe placeholders in the rendered template
   const finalHtml = await resolveEmailPlaceholders(html, to);
 
+  // ── Gmail REST API (Primary if GMAIL_REFRESH_TOKEN is set) ────────────────
+  if (
+    process.env.GMAIL_REFRESH_TOKEN &&
+    process.env.GOOGLE_CLIENT_ID &&
+    process.env.GOOGLE_CLIENT_SECRET
+  ) {
+    try {
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          refresh_token: process.env.GMAIL_REFRESH_TOKEN,
+          grant_type: "refresh_token",
+        }),
+      });
+
+      const tokenData = await tokenRes.json();
+      if (!tokenRes.ok || !tokenData.access_token) {
+        throw new Error(tokenData.error_description || tokenData.error || "Failed to refresh Gmail API access token");
+      }
+
+      const accessToken = tokenData.access_token;
+      const encodedSubject = `=?utf-8?B?${Buffer.from(subject).toString("base64")}?=`;
+      const emailParts = [
+        `From: ${fromName} <${fromEmail}>`,
+        `To: ${to}`,
+        `Subject: ${encodedSubject}`,
+        `MIME-Version: 1.0`,
+        `Content-Type: text/html; charset=utf-8`,
+        `List-Unsubscribe: <${unsubscribeUrl}>`,
+        `List-Unsubscribe-Post: List-Unsubscribe=One-Click`,
+        ``,
+        finalHtml,
+      ];
+      const rawMessage = emailParts.join("\r\n");
+      const base64UrlMessage = Buffer.from(rawMessage)
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+      const sendRes = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          raw: base64UrlMessage,
+        }),
+      });
+
+      if (sendRes.ok) {
+        const sendData = await sendRes.json();
+        return { success: true, id: sendData.id, provider: "gmail" };
+      }
+      console.warn("Gmail API send failed, trying Resend/SMTP fallbacks...", await sendRes.text());
+    } catch (err) {
+      console.error("Gmail API delivery failed, trying Resend/SMTP fallbacks...", err);
+    }
+  }
+
   // ── Resend primary ──────────────────────────────────────────────────────
   if (resend) {
     try {

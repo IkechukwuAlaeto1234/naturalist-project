@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(
-      { url: result.secure_url, publicId: result.public_id },
+      { url: result.secure_url, publicId: result.public_id, sizeBytes: result.bytes },
       { status: 200 }
     );
   } catch (error: any) {
