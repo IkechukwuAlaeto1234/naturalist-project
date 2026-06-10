@@ -52,6 +52,21 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block" rel="stylesheet" />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
+        {/* Material Symbols font-load guard:
+            Adds icons-loading to <body> immediately (before paint),
+            then removes it once document.fonts is ready.
+            Runs before React hydration so no hydration mismatch. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            document.body.classList.add('icons-loading');
+            document.fonts.ready.then(function() {
+              document.body.classList.remove('icons-loading');
+            });
+            setTimeout(function() {
+              document.body.classList.remove('icons-loading');
+            }, 3000);
+          })()
+        ` }} />
         <Providers>
           <BrandLoader />
           <Navbar />

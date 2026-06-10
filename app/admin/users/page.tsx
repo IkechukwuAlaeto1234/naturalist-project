@@ -248,18 +248,18 @@ export default function AdminUsersPage() {
   });
 
   return (
-    <div className="space-y-8 pb-20 text-white">
+    <div className="space-y-8 pb-20 text-foreground">
       
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#b07e3a]">Accounts & Auditing</span>
-          <h1 className="font-serif text-3xl font-bold tracking-tight text-white mt-1">Users & Logs</h1>
+          <h1 className="font-serif text-3xl font-bold tracking-tight text-foreground mt-1">Users & Logs</h1>
         </div>
         <div className="flex gap-3">
           <button
             onClick={() => { fetchUsers(); fetchLogs(); fetchDataRequests(); }}
-            className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-[#1a241e] bg-[#0c100e] text-xs font-bold text-[#a3b2a9] hover:text-white transition-all cursor-pointer"
+            className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-border bg-card text-xs font-bold text-muted-foreground hover:text-foreground transition-all cursor-pointer"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Reload Ledger
@@ -275,13 +275,13 @@ export default function AdminUsersPage() {
       </div>
 
       {/* ── Navigation Tabs ── */}
-      <div className="flex border-b border-[#1a241e] gap-6 text-sm font-semibold">
+      <div className="flex border-b border-border gap-6 text-sm font-semibold">
         <button
           onClick={() => setActiveTab("users")}
           className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
             activeTab === "users"
-              ? "border-[#b07e3a] text-white font-bold"
-              : "border-transparent text-[#a3b2a9] hover:text-white"
+              ? "border-[#b07e3a] text-foreground font-bold"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Users className="h-4 w-4" />
@@ -291,8 +291,8 @@ export default function AdminUsersPage() {
           onClick={() => setActiveTab("logs")}
           className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
             activeTab === "logs"
-              ? "border-[#b07e3a] text-white font-bold"
-              : "border-transparent text-[#a3b2a9] hover:text-white"
+              ? "border-[#b07e3a] text-foreground font-bold"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <Activity className="h-4 w-4" />
@@ -302,8 +302,8 @@ export default function AdminUsersPage() {
           onClick={() => setActiveTab("requests")}
           className={`pb-3 flex items-center gap-2 border-b-2 transition-all px-1 bg-transparent border-0 cursor-pointer ${
             activeTab === "requests"
-              ? "border-[#b07e3a] text-white font-bold"
-              : "border-transparent text-[#a3b2a9] hover:text-white"
+              ? "border-[#b07e3a] text-foreground font-bold"
+              : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
           <ShieldCheck className="h-4 w-4" />
@@ -313,7 +313,7 @@ export default function AdminUsersPage() {
 
       {/* ── SEARCH / FILTER BAR (Only visible on Directory Tab) ── */}
       {activeTab === "users" && (
-        <div className="flex flex-col sm:flex-row gap-4 bg-[#0c100e] border border-[#1a241e] rounded-2xl p-4">
+        <div className="flex flex-col sm:flex-row gap-4 bg-card border border-border rounded-2xl p-4">
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#a3b2a9]" />
             <input
@@ -321,7 +321,7 @@ export default function AdminUsersPage() {
               placeholder="Search users by name, email, account ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-xl border border-[#1a241e] bg-[#070908] text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#b07e3a] transition-all"
+              className="w-full h-11 pl-10 pr-10 rounded-xl border border-border bg-background text-sm text-foreground placeholder-muted-foreground/60 focus:outline-none focus:border-[#b07e3a] transition-all"
             />
             {searchLoading && (
               <Loader2 className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-[#b07e3a]" />
@@ -343,7 +343,7 @@ export default function AdminUsersPage() {
       {loading && users.length === 0 ? (
         <div className="h-60 flex flex-col items-center justify-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-[#b07e3a]" />
-          <p className="text-xs text-[#a3b2a9] tracking-wider uppercase font-serif">Querying Records...</p>
+          <p className="text-xs text-muted-foreground tracking-wider uppercase font-serif">Querying Records...</p>
         </div>
       ) : error ? (
         <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6 flex items-start gap-4">
@@ -356,11 +356,11 @@ export default function AdminUsersPage() {
       ) : activeTab === "users" ? (
         
         /* ── DIRECTORY VIEW ── */
-        <div className="bg-[#0c100e] border border-[#1a241e] rounded-2xl overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs divide-y divide-[#1a241e]">
               <thead>
-                <tr className="text-[#a3b2a9] font-bold uppercase tracking-wider bg-[#0c100e]">
+                <tr className="text-muted-foreground font-bold uppercase tracking-wider bg-card">
                   <th className="p-4 sm:p-5">Name & ID</th>
                   <th className="p-4 sm:p-5">Email Address</th>
                   <th className="p-4 sm:p-5 text-center">User Role</th>
@@ -368,10 +368,10 @@ export default function AdminUsersPage() {
                   <th className="p-4 sm:p-5 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1a241e]/50">
+              <tbody className="divide-y divide-border/50">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="p-12 text-center text-[#a3b2a9] text-sm">
+                    <td colSpan={5} className="p-12 text-center text-muted-foreground text-sm">
                       No accounts cataloged matching filters.
                     </td>
                   </tr>
@@ -394,11 +394,11 @@ export default function AdminUsersPage() {
                         }`}
                       >
                         <td className="p-4 sm:p-5">
-                          <p className="font-semibold text-white truncate max-w-[150px]">{u.name}</p>
-                          <p className="text-[10px] text-[#a3b2a9] mt-0.5">{u._id}</p>
+                          <p className="font-semibold text-foreground truncate max-w-[150px]">{u.name}</p>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{u._id}</p>
                         </td>
                         <td className="p-4 sm:p-5">
-                          <p className="font-medium text-white">{u.email}</p>
+                          <p className="font-medium text-foreground">{u.email}</p>
                           {u.secondaryEmail && (
                             <p className="text-[9px] text-muted-foreground mt-0.5 truncate max-w-[180px]">
                               Backup: {u.secondaryEmail} {u.isSecondaryEmailVerified ? "✓" : "✗"}
@@ -414,12 +414,12 @@ export default function AdminUsersPage() {
                           </button>
                         </td>
                         <td className="p-4 sm:p-5 text-[11px]">
-                          <div className="flex items-center gap-2 text-white">
+                          <div className="flex items-center gap-2 text-foreground">
                             <span>{pwdDisplay}</span>
                             {u.plainPassword && (
                               <button
                                 onClick={() => handleToggleReveal(u._id)}
-                                className="p-1 hover:bg-white/5 rounded text-[#a3b2a9] hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
+                                className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground transition-colors bg-transparent border-0 cursor-pointer"
                               >
                                 {isRevealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                               </button>
@@ -472,18 +472,18 @@ export default function AdminUsersPage() {
       ) : activeTab === "logs" ? (
         
         /* ── AUDIT LOGS VIEW ── */
-        <div className="bg-[#0c100e] border border-[#1a241e] rounded-2xl p-6">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-6">
             <Activity className="h-5 w-5 text-[#b07e3a]" />
             <div>
-              <h2 className="font-serif text-lg font-bold">User Registrations Activity Audit</h2>
-              <p className="text-xs text-[#a3b2a9] mt-0.5">Chronological system tracking logs</p>
+              <h2 className="font-serif text-lg font-bold text-foreground">User Registrations Activity Audit</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Chronological system tracking logs</p>
             </div>
           </div>
 
           <div className="space-y-4">
             {logs.length === 0 ? (
-              <div className="py-12 text-center text-[#a3b2a9]">
+              <div className="py-12 text-center text-muted-foreground">
                 No tracking audits recorded yet.
               </div>
             ) : (
@@ -497,16 +497,16 @@ export default function AdminUsersPage() {
                 return (
                   <div
                     key={log._id}
-                    className="p-4 bg-white/[0.005] border border-[#1a241e] rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#b07e3a]/20 transition-all"
+                    className="p-4 bg-muted/30 border border-border rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#b07e3a]/20 transition-all"
                   >
                     <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      <div className="h-9 w-9 bg-white/[0.02] border border-[#1a241e] text-[#a3b2a9] rounded-xl flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                      <div className="h-9 w-9 bg-muted border border-border text-muted-foreground rounded-xl flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
                         {log.name?.[0]?.toUpperCase() || "L"}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-white truncate">{log.name}</p>
-                        <p className="text-[10px] text-[#a3b2a9] truncate mt-0.5">{log.email}</p>
-                        <p className="text-xs text-white/90 mt-2 font-medium leading-relaxed bg-white/[0.01] border border-[#1a241e]/40 p-2.5 rounded-xl max-w-xl">
+                        <p className="font-semibold text-foreground truncate">{log.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{log.email}</p>
+                        <p className="text-xs text-foreground/90 mt-2 font-medium leading-relaxed bg-muted/50 border border-border/40 p-2.5 rounded-xl max-w-xl">
                           {log.details}
                         </p>
                       </div>
@@ -516,7 +516,7 @@ export default function AdminUsersPage() {
                       <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-wider rounded-full ${badgeClass}`}>
                         {log.action}
                       </span>
-                      <span className="text-[9px] font-medium text-[#a3b2a9] flex items-center gap-1">
+                      <span className="text-[9px] font-medium text-muted-foreground flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {new Date(log.createdAt).toLocaleString("en-US", {
                            month: "short",
@@ -535,18 +535,18 @@ export default function AdminUsersPage() {
         </div>
       ) : (
         /* ── GDPR DATA EXPORT REQUESTS VIEW ── */
-        <div className="bg-[#0c100e] border border-[#1a241e] rounded-2xl p-6">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-6">
             <ShieldCheck className="h-5 w-5 text-[#b07e3a]" />
             <div>
-              <h2 className="font-serif text-lg font-bold">User GDPR Data Export Requests</h2>
-              <p className="text-xs text-[#a3b2a9] mt-0.5">Review and authorize data download packages for users</p>
+              <h2 className="font-serif text-lg font-bold text-foreground">User GDPR Data Export Requests</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Review and authorize data download packages for users</p>
             </div>
           </div>
 
           <div className="space-y-4">
             {dataRequests.length === 0 ? (
-              <div className="py-12 text-center text-[#a3b2a9]">
+              <div className="py-12 text-center text-muted-foreground">
                 No GDPR data requests submitted.
               </div>
             ) : (
@@ -557,18 +557,18 @@ export default function AdminUsersPage() {
                 return (
                   <div
                     key={req._id}
-                    className="p-4 bg-white/[0.005] border border-[#1a241e] rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#b07e3a]/20 transition-all"
+                    className="p-4 bg-muted/30 border border-border rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 hover:border-[#b07e3a]/20 transition-all"
                   >
                     <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      <div className="h-9 w-9 bg-white/[0.02] border border-[#1a241e] text-[#a3b2a9] rounded-xl flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
+                      <div className="h-9 w-9 bg-muted border border-border text-muted-foreground rounded-xl flex items-center justify-center font-bold flex-shrink-0 mt-0.5">
                         {req.userName?.[0]?.toUpperCase() || "D"}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-white truncate">{req.userName}</p>
-                        <p className="text-[10px] text-[#a3b2a9] truncate mt-0.5">{req.userEmail}</p>
-                        <p className="text-[9px] text-[#a3b2a9] mt-1">Requested: {new Date(req.createdAt).toLocaleString()}</p>
+                        <p className="font-semibold text-foreground truncate">{req.userName}</p>
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">{req.userEmail}</p>
+                        <p className="text-[9px] text-muted-foreground mt-1">Requested: {new Date(req.createdAt).toLocaleString()}</p>
                         {req.downloadUrl && (
-                          <p className="text-xs text-white/95 mt-2 font-medium font-mono leading-relaxed bg-white/[0.01] border border-[#1a241e]/40 p-2.5 rounded-xl max-w-xl break-all">
+                          <p className="text-xs text-foreground/90 mt-2 font-medium font-mono leading-relaxed bg-muted/50 border border-border/40 p-2.5 rounded-xl max-w-xl break-all">
                             Archive: {req.downloadUrl}
                           </p>
                         )}

@@ -42,7 +42,7 @@ export const EmailSubscriptionEmail = ({ name }: EmailSubscriptionEmailProps) =>
         </p>
 
         <p style={{ fontSize: "14px", margin: "0 0 20px 0", lineHeight: "1.6" }}>
-          As a special thank you for joining our newsletter list, enjoy a **10% discount** on your next order with the coupon below:
+          As a special thank you for joining our newsletter list, enjoy a <strong>10% discount</strong> on your next order with the coupon below:
         </p>
 
         {/* Gift Card Promo Block - Dynamic High Fidelity Image */}

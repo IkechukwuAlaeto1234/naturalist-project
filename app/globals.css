@@ -2,6 +2,30 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ── Material Symbols: hide raw text until font loaded ─────────
+   Body gets .icons-loading on mount; JS removes it once the font
+   is ready via document.fonts.load(). During that window, .ms
+   elements are replaced visually with a shimmer skeleton so no
+   raw ligature text flashes to the user.
+   ──────────────────────────────────────────────────────────── */
+.icons-loading .ms {
+  color: transparent !important;
+  background: linear-gradient(90deg, #e2dacd 25%, #f4efe6 50%, #e2dacd 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+  min-width: 1em;
+  min-height: 1em;
+  display: inline-block;
+  vertical-align: middle;
+}
+.dark.icons-loading .ms,
+.dark .icons-loading .ms {
+  background: linear-gradient(90deg, #1e2621 25%, #27312a 50%, #1e2621 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
 /* Material Symbols Rounded utility class */
 .ms {
   font-family: 'Material Symbols Rounded', sans-serif;

@@ -86,7 +86,7 @@ interface NavNotification {
 
 export default function Navbar() {
   const pathname                                = usePathname();
-  const { data: session }                       = useSession();
+  const { data: session, status }             = useSession();
   const { setIsCartOpen, cartCount }            = useCart();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen]       = useState(false);
@@ -369,202 +369,212 @@ export default function Navbar() {
               <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>{isSearchOpen ? "close" : "search"}</span>
             </button>
 
-            {/* Notification bell — authenticated only */}
-            {session && (
-              <div className="relative" ref={bellRef}>
-                <button
-                  onClick={handleBellOpen}
-                  className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
-                  aria-label="Notifications"
-                  aria-expanded={isBellOpen}
-                >
-                  <span className={PILL_GLOW} />
-                  <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>notifications</span>
-                  {notifications.some(n => !n.read) && (
-                    <span className="absolute top-[9px] right-[9px] h-[7px] w-[7px] rounded-full bg-[#b07e3a] ring-2 ring-[#1c2e24]" />
-                  )}
-                </button>
-
-                {isBellOpen && (
-                  <>
-                    <div onClick={() => setIsBellOpen(false)} className="fixed inset-0 z-30" />
-                    <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-80 -translate-x-1/2 rounded-2xl border border-border/40 bg-card shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-80 sm:max-w-none sm:translate-x-0 sm:origin-top-right overflow-hidden">
-                      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notifications</p>
-                        {notifications.some(n => !n.read) && (
-                          <button
-                            onClick={handleMarkAllRead}
-                            className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider cursor-pointer"
-                          >
-                            Mark all read
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="max-h-80 overflow-y-auto">
-                        {notifLoading ? (
-                          <div className="flex items-center justify-center py-10 gap-2">
-                            <span className="ms animate-spin text-[#b07e3a]" style={{ fontSize: 18 }}>progress_activity</span>
-                            <span className="text-xs text-muted-foreground">Loading…</span>
-                          </div>
-                        ) : notifications.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-10 text-center gap-2 px-4">
-                            <span className="ms text-muted-foreground/30" style={{ fontSize: 36 }}>notifications_off</span>
-                            <p className="text-xs font-semibold text-muted-foreground">You&apos;re all caught up</p>
-                            <p className="text-[11px] text-muted-foreground/60">No notifications yet</p>
-                          </div>
-                        ) : (
-                          <div className="divide-y divide-border/30">
-                            {notifications.slice(0, 10).map((notif) => (
-                              <button
-                                key={notif._id}
-                                onClick={() => handleNotifClick(notif)}
-                                className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-muted/60 transition-colors cursor-pointer ${
-                                  !notif.read ? "bg-[#b07e3a]/5" : ""
-                                }`}
-                              >
-                                <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                                  !notif.read ? "bg-[#b07e3a]" : "bg-transparent"
-                                }`} />
-                                <div className="min-w-0 flex-1">
-                                  <p className={`text-xs leading-snug truncate ${
-                                    !notif.read ? "font-bold text-foreground" : "font-medium text-muted-foreground"
-                                  }`}>
-                                    {notif.title}
-                                  </p>
-                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
-                                    {notif.message}
-                                  </p>
-                                  <p className="text-[10px] text-muted-foreground/50 mt-1">
-                                    {new Date(notif.createdAt).toLocaleDateString("en-US", {
-                                      month: "short", day: "numeric",
-                                      hour: "2-digit", minute: "2-digit"
-                                    })}
-                                  </p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {notifications.length > 0 && (
-                        <div className="border-t border-border/40 px-4 py-2.5">
-                          <a
-                            href="/account/notifications"
-                            onClick={() => setIsBellOpen(false)}
-                            className="text-xs font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
-                          >
-                            View all notifications
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Profile / Auth */}
-            {session ? (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => { setIsProfileOpen(!isProfileOpen); setIsBellOpen(false); }}
-                  className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
-                  aria-label="Profile menu"
-                  aria-expanded={isProfileOpen}
-                >
-                  <span className={PILL_GLOW} />
-                  {session.user?.image ? (
-                    <img
-                      src={session.user.image}
-                      alt="Profile Picture"
-                      className="h-7 w-7 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white flex-shrink-0">
-                      {session.user?.name ? session.user.name[0].toUpperCase() : "U"}
-                    </div>
-                  )}
-                </button>
-
-                {isProfileOpen && (
-                  <>
-                    <div onClick={() => setIsProfileOpen(false)} className="fixed inset-0 z-30" />
-                    <div className="absolute right-0 mt-2.5 z-40 w-52 origin-top-right rounded-2xl border border-border/40 bg-card p-2 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
-                      <div className="px-3 py-2 mb-1 border-b border-border/40">
-                        <p className="text-xs font-bold text-foreground truncate">{session.user?.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
-                      </div>
-                      <a
-                        href="/account"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
-                      >
-                        <span className="ms" style={{ fontSize: 16 }}>person</span>
-                        My Account
-                      </a>
-                      {(session.user as any)?.role === "admin" && (
-                        <a
-                          href="/admin"
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[#b07e3a] dark:text-[#d4a362] rounded-xl hover:bg-[#b07e3a]/10 transition-colors font-medium"
-                        >
-                          <span className="ms" style={{ fontSize: 16 }}>admin_panel_settings</span>
-                          Admin Panel
-                        </a>
-                      )}
-                      <div className="border-t border-border/40 mt-1 pt-1">
-                        <button
-                          onClick={() => { setIsProfileOpen(false); handleSignOut(); }}
-                          className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/8 rounded-xl transition-colors"
-                        >
-                          <span className="ms" style={{ fontSize: 16 }}>logout</span>
-                          Sign Out
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+            {/* Auth-dependent buttons: two skeleton pills while session resolves */}
+            {status === "loading" ? (
+              <>
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-[#1c2e24]/60 animate-pulse flex-shrink-0" />
+                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-[#1c2e24]/60 animate-pulse flex-shrink-0" />
+              </>
             ) : (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
-                  className={`${PILL} h-11 w-11`}
-                  data-tooltip="Account"
-                  aria-label="Account menu"
-                  aria-expanded={isProfileOpen}
-                >
-                  <span className={PILL_GLOW} />
-                  <span className={`${PILL_ICON} ms`} style={{ fontSize: 22 }}>person</span>
-                </button>
+              <>
+                {/* Notification bell — authenticated only */}
+                {session && (
+                  <div className="relative" ref={bellRef}>
+                    <button
+                      onClick={handleBellOpen}
+                      className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
+                      aria-label="Notifications"
+                      aria-expanded={isBellOpen}
+                    >
+                      <span className={PILL_GLOW} />
+                      <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>notifications</span>
+                      {notifications.some(n => !n.read) && (
+                        <span className="absolute top-[9px] right-[9px] h-[7px] w-[7px] rounded-full bg-[#b07e3a] ring-2 ring-[#1c2e24]" />
+                      )}
+                    </button>
 
-                {isProfileOpen && (
-                  <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
-                    <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
-                    <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                      Sign in to access your rituals, track orders, and unlock exclusive offers.
-                    </p>
-                    <div className="flex gap-3">
-                      <a
-                        href="/login"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex flex-1 items-center justify-center h-11 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all shadow-sm"
-                      >
-                        Sign In
-                      </a>
-                      <a
-                        href="/register"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex flex-1 items-center justify-center h-11 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all"
-                      >
-                        Create Account
-                      </a>
-                    </div>
+                    {isBellOpen && (
+                      <>
+                        <div onClick={() => setIsBellOpen(false)} className="fixed inset-0 z-30" />
+                        <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-80 -translate-x-1/2 rounded-2xl border border-border/40 bg-card shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-80 sm:max-w-none sm:translate-x-0 sm:origin-top-right overflow-hidden">
+                          <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notifications</p>
+                            {notifications.some(n => !n.read) && (
+                              <button
+                                onClick={handleMarkAllRead}
+                                className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider cursor-pointer"
+                              >
+                                Mark all read
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="max-h-80 overflow-y-auto">
+                            {notifLoading ? (
+                              <div className="flex items-center justify-center py-10 gap-2">
+                                <span className="ms animate-spin text-[#b07e3a]" style={{ fontSize: 18 }}>progress_activity</span>
+                                <span className="text-xs text-muted-foreground">Loading…</span>
+                              </div>
+                            ) : notifications.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center py-10 text-center gap-2 px-4">
+                                <span className="ms text-muted-foreground/30" style={{ fontSize: 36 }}>notifications_off</span>
+                                <p className="text-xs font-semibold text-muted-foreground">You&apos;re all caught up</p>
+                                <p className="text-[11px] text-muted-foreground/60">No notifications yet</p>
+                              </div>
+                            ) : (
+                              <div className="divide-y divide-border/30">
+                                {notifications.slice(0, 10).map((notif) => (
+                                  <button
+                                    key={notif._id}
+                                    onClick={() => handleNotifClick(notif)}
+                                    className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-muted/60 transition-colors cursor-pointer ${
+                                      !notif.read ? "bg-[#b07e3a]/5" : ""
+                                    }`}
+                                  >
+                                    <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                                      !notif.read ? "bg-[#b07e3a]" : "bg-transparent"
+                                    }`} />
+                                    <div className="min-w-0 flex-1">
+                                      <p className={`text-xs leading-snug truncate ${
+                                        !notif.read ? "font-bold text-foreground" : "font-medium text-muted-foreground"
+                                      }`}>
+                                        {notif.title}
+                                      </p>
+                                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
+                                        {notif.message}
+                                      </p>
+                                      <p className="text-[10px] text-muted-foreground/50 mt-1">
+                                        {new Date(notif.createdAt).toLocaleDateString("en-US", {
+                                          month: "short", day: "numeric",
+                                          hour: "2-digit", minute: "2-digit"
+                                        })}
+                                      </p>
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {notifications.length > 0 && (
+                            <div className="border-t border-border/40 px-4 py-2.5">
+                              <a
+                                href="/account/notifications"
+                                onClick={() => setIsBellOpen(false)}
+                                className="text-xs font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
+                              >
+                                View all notifications
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
-              </div>
+
+                {/* Profile / Auth */}
+                {session ? (
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => { setIsProfileOpen(!isProfileOpen); setIsBellOpen(false); }}
+                      className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
+                      aria-label="Profile menu"
+                      aria-expanded={isProfileOpen}
+                    >
+                      <span className={PILL_GLOW} />
+                      {session.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt="Profile Picture"
+                          className="h-7 w-7 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white flex-shrink-0">
+                          {session.user?.name ? session.user.name[0].toUpperCase() : "U"}
+                        </div>
+                      )}
+                    </button>
+
+                    {isProfileOpen && (
+                      <>
+                        <div onClick={() => setIsProfileOpen(false)} className="fixed inset-0 z-30" />
+                        <div className="absolute right-0 mt-2.5 z-40 w-52 origin-top-right rounded-2xl border border-border/40 bg-card p-2 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
+                          <div className="px-3 py-2 mb-1 border-b border-border/40">
+                            <p className="text-xs font-bold text-foreground truncate">{session.user?.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
+                          </div>
+                          <a
+                            href="/account"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
+                          >
+                            <span className="ms" style={{ fontSize: 16 }}>person</span>
+                            My Account
+                          </a>
+                          {(session.user as any)?.role === "admin" && (
+                            <a
+                              href="/admin"
+                              onClick={() => setIsProfileOpen(false)}
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[#b07e3a] dark:text-[#d4a362] rounded-xl hover:bg-[#b07e3a]/10 transition-colors font-medium"
+                            >
+                              <span className="ms" style={{ fontSize: 16 }}>admin_panel_settings</span>
+                              Admin Panel
+                            </a>
+                          )}
+                          <div className="border-t border-border/40 mt-1 pt-1">
+                            <button
+                              onClick={() => { setIsProfileOpen(false); handleSignOut(); }}
+                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/8 rounded-xl transition-colors"
+                            >
+                              <span className="ms" style={{ fontSize: 16 }}>logout</span>
+                              Sign Out
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="relative" ref={profileRef}>
+                    <button
+                      onClick={() => setIsProfileOpen(!isProfileOpen)}
+                      className={`${PILL} h-11 w-11`}
+                      data-tooltip="Account"
+                      aria-label="Account menu"
+                      aria-expanded={isProfileOpen}
+                    >
+                      <span className={PILL_GLOW} />
+                      <span className={`${PILL_ICON} ms`} style={{ fontSize: 22 }}>person</span>
+                    </button>
+
+                    {isProfileOpen && (
+                      <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
+                        <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
+                        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
+                          Sign in to access your rituals, track orders, and unlock exclusive offers.
+                        </p>
+                        <div className="flex gap-3">
+                          <a
+                            href="/login"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex flex-1 items-center justify-center h-11 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all shadow-sm"
+                          >
+                            Sign In
+                          </a>
+                          <a
+                            href="/register"
+                            onClick={() => setIsProfileOpen(false)}
+                            className="flex flex-1 items-center justify-center h-11 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all"
+                          >
+                            Create Account
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Cart */}
