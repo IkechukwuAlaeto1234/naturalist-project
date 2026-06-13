@@ -18,6 +18,7 @@ const ADMIN_NAV_ITEMS = [
   { id: "users",      label: "Users",       href: "/admin/users",      icon: "group" },
   { id: "newsletter", label: "Newsletter",  href: "/admin/newsletter", icon: "mail" },
   { id: "contacts",   label: "Inquiries",   href: "/admin/contacts",   icon: "inbox" },
+  { id: "chats",      label: "Support Chat", href: "/admin/chats",      icon: "support_agent" },
   { id: "emails",     label: "Email Hub",   href: "/admin/emails",     icon: "bolt" },
   { id: "cdn",        label: "CDN Assets",  href: "/admin/cdn",        icon: "image" },
 ];

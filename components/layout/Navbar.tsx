@@ -30,6 +30,7 @@ const NAV_LINKS = [
   { href: "/p/story",          label: "Our Story" },
   { href: "/p/sustainability", label: "Sustainability" },
   { href: "/p/blog",           label: "Blog" },
+  { href: "/support",          label: "Support" },
 ];
 
 /* ─────────────────────────────────────────

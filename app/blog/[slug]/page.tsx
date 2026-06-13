@@ -48,10 +48,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
 
     const pageUrl = `${SITE_URL}/blog/${post.slug}`;
-    const coverImageUrl = resolveAbsoluteUrl(post.coverImage ?? "");
-    const ogImage = coverImageUrl
-      ? [{ url: coverImageUrl, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
-      : [];
 
     // Guard publishedAt — new Date(undefined) throws "Invalid time value" which
     // Next.js silently catches, wiping ALL metadata and falling back to layout.tsx.
@@ -74,13 +70,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         ...(publishedTime ? { publishedTime } : {}),
         ...(post.authorName ? { authors: [post.authorName] } : {}),
         ...(post.tags?.length ? { tags: post.tags } : {}),
-        images: ogImage,
+        // OG image is auto-served by app/blog/[slug]/opengraph-image.tsx
       },
       twitter: {
         card: "summary_large_image",
         title: post.title,
         description: post.excerpt ?? undefined,
-        images: ogImage.map((img) => img.url),
+        // Twitter image auto-picked from opengraph-image.tsx
       },
     };
   } catch (err) {

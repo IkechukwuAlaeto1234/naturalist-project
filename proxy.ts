@@ -169,9 +169,11 @@ export const config = {
     // ── CDN subdomain rewrite ──────────────────────────────────────────────
     "/cdn/:path*",
 
-    // ── All API routes except static Next.js internals ─────────────────────
+    // ── All API routes except static Next.js internals and public guest APIs ─
     // Auth APIs, geo, products, etc. need headers/tracing but NOT full page
     // session checks — NextAuth handles session via the route handlers directly.
-    "/api/((?!_next).*)",
+    // /api/support/* is explicitly excluded: those routes serve unauthenticated
+    // guest users (support chat widget) and must not be gated by the middleware.
+    "/api/((?!_next|support).*)",
   ],
 };

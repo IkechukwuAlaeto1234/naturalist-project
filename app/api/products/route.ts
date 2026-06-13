@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/models/Product";
 import { productSchema } from "@/lib/validations";
@@ -85,6 +86,7 @@ export async function POST(req: Request) {
       slug,
     });
 
+    revalidateTag("products", "max");
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("POST product error:", error);
