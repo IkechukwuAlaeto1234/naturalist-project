@@ -1,0 +1,109 @@
+# ─────────────────────────────────────────────────────────────────
+# Naturalist — Render Blueprint (Infrastructure as Code)
+# ─────────────────────────────────────────────────────────────────
+# This file defines how Render deploys the Naturalist Next.js app.
+# Commit this file — it IS version control for your deployment config.
+#
+# SECRETS (sync: false): Fill these in Render dashboard → Environment.
+# They are listed here so nothing gets forgotten on a fresh deploy.
+# ─────────────────────────────────────────────────────────────────
+
+services:
+  - type: web
+    name: naturalist-project
+    runtime: node
+    region: oregon
+    plan: free
+
+    # ── Build & Start ─────────────────────────────────────────────
+    # --include=dev ensures @types/* and other devDependencies are
+    # installed even when NODE_ENV=production (fixes the react-dom
+    # type-check failure that was breaking builds on Render).
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+
+    # ── Health Check ──────────────────────────────────────────────
+    healthCheckPath: /
+
+    # ── Environment Variables ─────────────────────────────────────
+    envVars:
+
+      # -- Non-secret, safe to hardcode here ----------------------
+      - key: NODE_ENV
+        value: production
+
+      - key: NPM_CONFIG_PRODUCTION
+        value: "false"          # critical: keeps devDeps installed at build time
+
+      - key: NEXT_PUBLIC_MOCK_AUTH
+        value: "false"          # NEVER true in production
+
+      - key: EMAIL_FROM_NAME
+        value: Naturalist
+
+      # -- Secrets: fill these in Render dashboard → Environment ---
+      # App URLs (set to your actual Render URL or custom domain)
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+
+      - key: NEXTAUTH_URL
+        sync: false
+
+      - key: AUTH_URL
+        sync: false
+
+      # Database
+      - key: MONGODB_URI
+        sync: false
+
+      # Auth.js / NextAuth secrets
+      - key: AUTH_SECRET
+        generateValue: true     # Render auto-generates a secure value on first deploy
+
+      - key: NEXTAUTH_SECRET
+        sync: false
+
+      # Google OAuth
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+      # Email — Resend
+      - key: RESEND_API_KEY
+        sync: false
+
+      - key: EMAIL_FROM
+        sync: false
+
+      # Email — Gmail API fallback
+      - key: GMAIL_REFRESH_TOKEN
+        sync: false
+
+      # Cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+
+      - key: CLOUDINARY_API_KEY
+        sync: false
+
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # Stripe
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+      - key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        sync: false
+
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # Admin
+      - key: ADMIN_EMAIL
+        sync: false
