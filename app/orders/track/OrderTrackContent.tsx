@@ -116,6 +116,9 @@ function TrackContent() {
   const [refreshing, setRefreshing]   = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+
   const fetchTracking = useCallback(async (silent = false) => {
     if (!orderId) { setError("No order ID provided."); setLoading(false); return; }
     if (!silent) setLoading(true); else setRefreshing(true);
@@ -141,6 +144,15 @@ function TrackContent() {
     intervalRef.current = setInterval(() => fetchTracking(true), 30000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [fetchTracking]);
+
+  /* ── Hydration Guard ── */
+  if (!mounted) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="h-12 w-12 rounded-full border-2 border-[#e2dacd] border-t-[#b07e3a] animate-spin" />
+      </div>
+    );
+  }
 
   /* ── Loading ── */
   if (loading) return (
