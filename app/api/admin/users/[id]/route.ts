@@ -75,7 +75,13 @@ export async function PUT(
       user.email = email.toLowerCase().trim();
     }
 
-    if (role && role !== user.role) {
+    // Track whether a role or suspension change is happening — these require
+    // immediate session invalidation so the user can't keep acting under
+    // their old JWT-cached role/status.
+    const roleChanging    = role !== undefined && role !== user.role;
+    const suspendChanging = isSuspended !== undefined && isSuspended !== user.isSuspended;
+
+    if (roleChanging) {
       changes.push(`role changed from "${user.role}" to "${role}"`);
       user.role = role;
     }
@@ -85,7 +91,7 @@ export async function PUT(
       user.isVerified = isVerified;
     }
 
-    if (isSuspended !== undefined && isSuspended !== user.isSuspended) {
+    if (suspendChanging) {
       changes.push(isSuspended ? "suspended account" : "unsuspended account");
       user.isSuspended = isSuspended;
     }
@@ -107,9 +113,19 @@ export async function PUT(
 
     if (plainPassword) {
       changes.push("updated password manually");
-      // Also hash it
       const bcrypt = require("bcryptjs");
       user.password = await bcrypt.hash(plainPassword, 12);
+    }
+
+    // ── Session invalidation ────────────────────────────────────────────────
+    // If the role or suspension status changed, wipe ALL stored sessions for
+    // the affected user. Auth.js JWT tokens remain valid on the client until
+    // they expire, but clearing the DB sessions means the next server-side
+    // auth check (proxy middleware / API guard) will find no active session
+    // record and redirect the user to sign in again with their new role/status.
+    if (roleChanging || suspendChanging) {
+      changes.push("all active sessions invalidated (re-login required)");
+      user.sessions = [];
     }
 
     if (changes.length > 0) {
@@ -119,12 +135,17 @@ export async function PUT(
       await AccountLog.create({
         email: user.email,
         name: user.name,
-        action: isSuspended !== undefined && isSuspended !== !user.isSuspended ? (isSuspended ? "suspend" : "unsuspend") : "update",
+        action: suspendChanging ? (isSuspended ? "suspend" : "unsuspend") : "update",
         details: `Account modified by Admin (${adminUser.email || "System"}). Changes: ${changes.join(", ")}.`,
       });
     }
 
-    return NextResponse.json(user, { status: 200 });
+    // Tell the client whether a forced sign-out is required so the admin UI
+    // can show an appropriate message.
+    return NextResponse.json(
+      { ...user.toObject(), _sessionInvalidated: roleChanging || suspendChanging },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("PUT admin user update error:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });

@@ -1,737 +1,885 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState, useEffect, useRef, useLayoutEffect, useCallback,
+} from "react";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useCart } from "../../context/CartContext";
+import {
+  useCurrency, CURRENCIES, LANGUAGES, COUNTRIES,
+  type CurrencyCode, type LanguageCode, type CountryConfig,
+} from "@/context/CurrencyContext";
+import { CountryFlag, CURRENCY_TO_COUNTRY } from "@/components/ui/CountryFlag";
 
 /* ─────────────────────────────────────────
-   Inline icon components (no extra packages)
+   Static nav data
    ───────────────────────────────────────── */
 
-const PersonIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-  </svg>
-);
-
-const TwitterIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.911-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
-
-const InstagramIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
-  </svg>
-);
-
-const YoutubeIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-  </svg>
-);
-
-const LinkedinIcon = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-  </svg>
-);
-
-/* ─────────────────────────────────────────
-   Static data
-   ───────────────────────────────────────── */
-
-const navLinks = [
-  { href: "/p/shop",           label: "Shop",           num: "01" },
-  { href: "/p/bundles",        label: "Ritual Bundles",  num: "02" },
-  { href: "/p/story",          label: "Our Story",       num: "03" },
-  { href: "/p/sustainability", label: "Sustainability",  num: "04" },
-  { href: "/p/blog",           label: "Blog",           num: "05" },
+const SHOP_CATEGORIES = [
+  { label: "All Products",    href: "/p/shop",                       icon: "inventory_2", desc: "Browse the full collection" },
+  { label: "Cleansers",       href: "/p/shop?category=Cleanser",     icon: "water_drop",  desc: "Gentle botanical cleansers" },
+  { label: "Serums",          href: "/p/shop?category=Serum",        icon: "science",     desc: "Concentrated actives" },
+  { label: "Toners",          href: "/p/shop?category=Toner",        icon: "spa",         desc: "Balance & restore" },
+  { label: "Moisturizers",    href: "/p/shop?category=Moisturizer",  icon: "opacity",     desc: "Nourishing botanicals" },
+  { label: "Treatments",      href: "/p/shop?category=Treatment",    icon: "healing",     desc: "Targeted botanical care" },
 ];
 
-const socialLinks = [
-  { label: "X (Twitter)", icon: TwitterIcon },
-  { label: "Instagram",   icon: InstagramIcon },
-  { label: "YouTube",     icon: YoutubeIcon },
-  { label: "LinkedIn",    icon: LinkedinIcon },
+const NAV_LINKS = [
+  { href: "/p/bundles",        label: "Ritual Bundles" },
+  { href: "/p/story",          label: "Our Story" },
+  { href: "/p/sustainability", label: "Sustainability" },
+  { href: "/p/blog",           label: "Blog" },
 ];
 
 /* ─────────────────────────────────────────
-   Shared pill button classes
+   Locale Popover (globe icon → opens here)
    ───────────────────────────────────────── */
-const PILL =
-  "group relative flex items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_16px_rgba(45,76,56,0.30)] hover:shadow-[0_2px_20px_rgba(176,126,58,0.20)] transition-all duration-300 cursor-pointer flex-shrink-0 aspect-square";
-const PILL_GLOW =
-  "absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none";
-const PILL_ICON = "relative text-white/80 group-hover:text-white transition-colors";
+function LocalePopover({
+  anchorRef,
+  onClose,
+}: {
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  onClose: () => void;
+}) {
+  const {
+    currency, language, country, geoLoading,
+    setCurrency, setLanguage, setCountry,
+  } = useCurrency();
 
-/* Spring easing for the X animation */
-const SPRING: React.CSSProperties = {
-  transition: "transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.25s ease, box-shadow 0.3s ease",
-};
-
-/* ═════════════════════════════════════════
-   Component
-   ═════════════════════════════════════════ */
-interface NavNotification {
-  _id: string;
-  title: string;
-  message: string;
-  read: boolean;
-  link?: string;
-  createdAt: string;
-}
-
-export default function Navbar() {
-  const pathname                                = usePathname();
-  const { data: session, status }             = useSession();
-  const { setIsCartOpen, cartCount }            = useCart();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen]       = useState(false);
-  const [isBellOpen, setIsBellOpen]             = useState(false);
-  const [isSearchOpen, setIsSearchOpen]         = useState(false);
-  const [mounted, setMounted]                   = useState(false);
-  const [customLinks, setCustomLinks]           = useState<any[]>([]);
-  const [notifications, setNotifications]       = useState<NavNotification[]>([]);
-  const [notifLoading, setNotifLoading]         = useState(false);
-  const searchRef               = useRef<HTMLInputElement>(null);
-  const desktopSearchInputRef    = useRef<HTMLInputElement>(null);
-  const profileRef              = useRef<HTMLDivElement>(null);
-  const bellRef                 = useRef<HTMLDivElement>(null);
-  const searchWrapperRef        = useRef<HTMLDivElement>(null);
-  const desktopSearchWrapperRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const [tab, setTab] = useState<"country" | "currency" | "language">("country");
 
   useEffect(() => {
-    setMounted(true);
+    const handler = (e: MouseEvent) => {
+      if (
+        !ref.current?.contains(e.target as Node) &&
+        !anchorRef.current?.contains(e.target as Node)
+      ) onClose();
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [onClose, anchorRef]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 top-[calc(100%+10px)] z-[200] w-[340px] rounded-2xl border border-border/40 bg-card shadow-2xl overflow-hidden animate-scale-up"
+    >
+      {/* Header */}
+      <div className="px-5 pt-4 pb-3 border-b border-border/40">
+        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          Location &amp; Preferences
+        </p>
+        <p className="text-[11px] text-muted-foreground/60 mt-0.5 leading-relaxed">
+          {geoLoading ? "Detecting your location…" : "Auto-detected. Prices shown in your currency; payments in USD."}
+        </p>
+      </div>
+
+      {/* Tab bar */}
+      <div className="flex border-b border-border/40">
+        {(["country", "currency", "language"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`flex-1 py-2.5 text-[10px] font-bold uppercase tracking-wider transition-colors cursor-pointer ${
+              tab === t
+                ? "text-primary border-b-2 border-primary"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {/* Options */}
+      <div className="max-h-56 overflow-y-auto py-1.5">
+        {tab === "country" && COUNTRIES.map((c) => (
+          <button
+            key={c.code}
+            onClick={() => { setCountry(c); onClose(); }}
+            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm text-left transition-colors cursor-pointer ${
+              country.code === c.code
+                ? "bg-primary/10 text-primary font-semibold"
+                : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <span className="w-7 flex-shrink-0 flex items-center justify-start"><CountryFlag countryCode={c.code} size={20} /></span>
+            <span className="flex-1">{c.name}</span>
+            <span className="text-[10px] text-muted-foreground font-mono">{c.defaultCurrency}</span>
+            {country.code === c.code && <span className="ms text-primary" style={{ fontSize: 16 }}>check</span>}
+          </button>
+        ))}
+
+        {tab === "currency" && Object.values(CURRENCIES).map((c) => (
+          <button
+            key={c.code}
+            onClick={() => { setCurrency(c.code as CurrencyCode); onClose(); }}
+            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm text-left transition-colors cursor-pointer ${
+              currency === c.code
+                ? "bg-primary/10 text-primary font-semibold"
+                : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <span className="w-7 flex-shrink-0 flex items-center justify-start"><CountryFlag countryCode={CURRENCY_TO_COUNTRY[c.code] || "us"} size={20} /></span>
+            <span className="flex-1">{c.name}</span>
+            <span className="text-xs font-mono text-muted-foreground">{c.symbol} {c.code}</span>
+            {currency === c.code && <span className="ms text-primary" style={{ fontSize: 16 }}>check</span>}
+          </button>
+        ))}
+
+        {tab === "language" && Object.values(LANGUAGES).map((l) => (
+          <button
+            key={l.code}
+            onClick={() => { setLanguage(l.code as LanguageCode); onClose(); }}
+            className={`w-full flex items-center gap-3 px-5 py-2.5 text-sm text-left transition-colors cursor-pointer ${
+              language === l.code
+                ? "bg-primary/10 text-primary font-semibold"
+                : "text-foreground hover:bg-muted"
+            }`}
+          >
+            <span className="flex-1 font-medium">{l.nativeName}</span>
+            <span className="text-[11px] text-muted-foreground">{l.name}</span>
+            {language === l.code && <span className="ms text-primary" style={{ fontSize: 16 }}>check</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Shop Mega-Menu — rendered fixed so it
+   escapes the header's stacking context
+   ───────────────────────────────────────── */
+function ShopMegaMenu({
+  visible,
+  top,
+  onClose,
+}: {
+  visible: boolean;
+  top: number;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      role="dialog"
+      aria-label="Shop categories"
+      style={{
+        position: "fixed",
+        top,
+        left: 0,
+        right: 0,
+        zIndex: 500,
+        pointerEvents: visible ? "auto" : "none",
+        display: "flex",
+        justifyContent: "center",
+        padding: "0 1.5rem",
+      }}
+    >
+      <div
+        className={`w-full max-w-3xl rounded-3xl border border-border/40 shadow-[0_24px_64px_rgba(0,0,0,0.12),0_0_1px_rgba(0,0,0,0.06)] bg-white dark:bg-[#111a14] overflow-hidden transition-all duration-250 ${
+          visible
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
+        style={{ transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)" }}
+      >
+        {/* Header strip */}
+        <div className="flex items-center gap-4 px-7 py-4 bg-[#0d1510] border-b border-white/[0.06]">
+          <span className="ms text-[#b07e3a]" style={{ fontSize: 20 }}>spa</span>
+          <div>
+            <p className="text-sm font-bold text-white leading-none">The Shop</p>
+            <p className="text-[11px] text-white/40 mt-0.5">Wild-harvested botanical formulas</p>
+          </div>
+          <a
+            href="/p/shop"
+            onClick={onClose}
+            className="ml-auto flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#b07e3a] hover:opacity-70 transition-opacity"
+          >
+            View All <span className="ms" style={{ fontSize: 13 }}>arrow_forward</span>
+          </a>
+        </div>
+
+        {/* Categories */}
+        <div className="grid grid-cols-3 gap-2 p-5">
+          {SHOP_CATEGORIES.map((cat) => (
+            <a
+              key={cat.href}
+              href={cat.href}
+              onClick={onClose}
+              className="group flex items-start gap-3 p-3 rounded-xl hover:bg-[#f4efe6] dark:hover:bg-[#1e2621] transition-colors duration-150"
+            >
+              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 dark:bg-primary/20 group-hover:bg-primary/20 transition-colors">
+                <span className="ms text-primary dark:text-emerald-400" style={{ fontSize: 18 }}>{cat.icon}</span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground group-hover:text-primary dark:group-hover:text-emerald-400 transition-colors leading-tight">{cat.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 leading-tight">{cat.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-border/30 dark:border-white/[0.06] px-7 py-3 bg-muted/30 dark:bg-[#0a0d0b]">
+          <p className="text-[11px] text-muted-foreground">
+            <span className="text-[#b07e3a] font-semibold">Free shipping</span> on orders over $75
+          </p>
+          <a
+            href="/p/bundles"
+            onClick={onClose}
+            className="text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors"
+          >
+            View Ritual Bundles →
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────
+   Pill icon button helper
+   ───────────────────────────────────────── */
+function PillBtn({
+  onClick,
+  href,
+  label,
+  badge,
+  children,
+}: {
+  onClick?: () => void;
+  href?: string;
+  label: string;
+  badge?: number;
+  children: React.ReactNode;
+}) {
+  const cls = "group relative flex items-center justify-center h-10 w-10 rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-250 cursor-pointer flex-shrink-0";
+  const inner = (
+    <>
+      <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
+      {children}
+      {badge != null && badge > 0 && (
+        <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#b07e3a] text-[9px] font-bold text-white shadow-sm z-10">
+          {badge > 9 ? "9+" : badge}
+        </span>
+      )}
+    </>
+  );
+  if (href) return <a href={href} className={cls} aria-label={label}>{inner}</a>;
+  return <button onClick={onClick} className={cls} aria-label={label}>{inner}</button>;
+}
+
+/* ─────────────────────────────────────────
+   Notification type
+   ───────────────────────────────────────── */
+interface NavNotification {
+  _id: string; title: string; message: string; read: boolean;
+  link?: string; createdAt: string;
+}
+
+/* ═════════════════════════════════════════
+   MAIN NAVBAR — single row, Dribbble-inspired
+   ═════════════════════════════════════════ */
+export default function Navbar() {
+  const pathname             = usePathname();
+  const { data: session, status } = useSession();
+  const { setIsCartOpen, cartCount } = useCart();
+  const { country, currency, geoLoading } = useCurrency();
+
+  const [mounted,           setMounted]           = useState(false);
+  const [customLinks,       setCustomLinks]        = useState<any[]>([]);
+  const [notifications,     setNotifications]      = useState<NavNotification[]>([]);
+  const [notifLoading,      setNotifLoading]       = useState(false);
+  const [showShop,          setShowShop]           = useState(false);
+  const [showProfile,       setShowProfile]        = useState(false);
+  const [showBell,          setShowBell]           = useState(false);
+  const [showLocale,        setShowLocale]         = useState(false);
+  const [mobileOpen,        setMobileOpen]         = useState(false);
+  const [mobileShopOpen,    setMobileShopOpen]     = useState(false);
+  const [searchQuery,       setSearchQuery]        = useState("");
+  const [showMobileSearch,  setShowMobileSearch]   = useState(false);
+  const [megaMenuTop,       setMegaMenuTop]        = useState(64);
+
+  const headerRef  = useRef<HTMLElement>(null);
+  const shopRef    = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const bellRef    = useRef<HTMLDivElement>(null);
+  const globeRef   = useRef<HTMLButtonElement>(null);
+  const searchRef  = useRef<HTMLInputElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  /* Track header bottom for fixed mega-menu positioning */
+  useLayoutEffect(() => {
+    const updateTop = () => {
+      if (headerRef.current) {
+        setMegaMenuTop(headerRef.current.getBoundingClientRect().bottom + 8);
+      }
+    };
+    updateTop();
+    window.addEventListener("scroll",  updateTop, { passive: true });
+    window.addEventListener("resize",  updateTop);
+    return () => {
+      window.removeEventListener("scroll",  updateTop);
+      window.removeEventListener("resize",  updateTop);
+    };
+  }, [mounted]);
+
+  /* Fetch custom nav links */
+  useEffect(() => {
     fetch("/api/custom-pages", { cache: "no-store" })
-      .then(res => res.ok ? res.json() : [])
-      .then(data => {
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => {
         if (Array.isArray(data)) {
-          setCustomLinks(data.map((page, idx) => ({
-            href: `/p/${page.metadata?.slug}`,
-            label: page.title,
-            num: String(6 + idx).padStart(2, '0')
-          })));
+          setCustomLinks(
+            data
+              .filter((p: any) => p.metadata?.showInNavbar === true)
+              .map((p: any) => ({ href: `/p/${p.metadata?.slug}`, label: p.title }))
+          );
         }
       })
       .catch(() => {});
   }, []);
 
-  /* Fetch notifications when session is ready */
-  useEffect(() => {
-    if (!session) return;
-    fetchNotifications();
-  }, [session]);
-
-  const fetchNotifications = async () => {
+  /* Notifications */
+  const fetchNotifications = useCallback(async () => {
     try {
       setNotifLoading(true);
       const res = await fetch("/api/user/notifications", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data);
-      }
-    } catch (e) {
-      // silent fail — bell just shows empty
-    } finally {
-      setNotifLoading(false);
-    }
-  };
+      if (res.ok) setNotifications(await res.json());
+    } catch {} finally { setNotifLoading(false); }
+  }, []);
 
-  const handleBellOpen = () => {
-    setIsBellOpen(!isBellOpen);
-    setIsProfileOpen(false);
-    setIsSearchOpen(false);
-    if (!isBellOpen && session) fetchNotifications();
-  };
-
-  const handleNotifClick = async (notif: NavNotification) => {
-    if (!notif.read) {
-      await fetch("/api/user/notifications", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: notif._id }),
-      });
-      setNotifications(prev =>
-        prev.map(n => n._id === notif._id ? { ...n, read: true } : n)
-      );
-    }
-    setIsBellOpen(false);
-    window.location.href = `/account/notifications/${notif._id}`;
-  };
-
-  const handleMarkAllRead = async () => {
-    await fetch("/api/user/notifications", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  useEffect(() => {
+    if (session) fetchNotifications();
+  }, [session, fetchNotifications]);
 
   /* Close everything on route change */
   useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsProfileOpen(false);
-    setIsBellOpen(false);
-    setIsSearchOpen(false);
+    setShowShop(false); setShowProfile(false); setShowBell(false);
+    setShowLocale(false); setMobileOpen(false); setMobileShopOpen(false);
+    setShowMobileSearch(false);
   }, [pathname]);
 
-  /* Auto-focus search inputs */
+  /* Click-outside: shop */
   useEffect(() => {
-    if (isSearchOpen) {
-      setTimeout(() => {
-        searchRef.current?.focus();
-        desktopSearchInputRef.current?.focus();
-      }, 50);
-    }
-  }, [isSearchOpen]);
-
-  /* Click-outside: close profile dropdown */
-  useEffect(() => {
-    if (!isProfileOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (!profileRef.current?.contains(e.target as Node)) setIsProfileOpen(false);
+    if (!showShop) return;
+    const h = (e: MouseEvent) => {
+      if (!shopRef.current?.contains(e.target as Node)) setShowShop(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isProfileOpen]);
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showShop]);
 
-  /* Click-outside: close bell dropdown */
+  /* Click-outside: profile */
   useEffect(() => {
-    if (!isBellOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (!bellRef.current?.contains(e.target as Node)) setIsBellOpen(false);
+    if (!showProfile) return;
+    const h = (e: MouseEvent) => {
+      if (!profileRef.current?.contains(e.target as Node)) setShowProfile(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isBellOpen]);
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showProfile]);
 
-  /* Click-outside: close search dropdowns */
+  /* Click-outside: bell */
   useEffect(() => {
-    if (!isSearchOpen) return;
-    const handler = (e: MouseEvent) => {
-      const clickedOutsideMobile = !searchWrapperRef.current?.contains(e.target as Node);
-      const clickedOutsideDesktop = !desktopSearchWrapperRef.current?.contains(e.target as Node);
-      if (clickedOutsideMobile && clickedOutsideDesktop) {
-        setIsSearchOpen(false);
-      }
+    if (!showBell) return;
+    const h = (e: MouseEvent) => {
+      if (!bellRef.current?.contains(e.target as Node)) setShowBell(false);
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [isSearchOpen]);
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [showBell]);
 
-  /* Body scroll lock while mobile menu open */
+  /* Body lock when mobile open */
   useEffect(() => {
-    document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
-  }, [isMobileMenuOpen]);
+  }, [mobileOpen]);
 
-  /* SSR placeholder */
   if (!mounted) {
-    return <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/50 backdrop-blur-md h-20" />;
+    return (
+      <header style={{ height: 64 }} className="sticky top-0 z-40 w-full border-b border-border/40 glass-panel" />
+    );
   }
 
-  const handleSignOut = () => {
-    if (typeof window !== "undefined") {
-      signOut({ callbackUrl: window.location.origin + "/login?logout=true" });
-    } else {
-      signOut({ callbackUrl: "/login?logout=true" });
-    }
-  };
+  if (pathname?.startsWith("/admin")) return null;
 
-  if (pathname?.startsWith("/admin")) {
-    return null;
-  }
+  const handleSignOut = () => signOut({ callbackUrl: (typeof window !== "undefined" ? window.location.origin : "") + "/login?logout=true" });
+  const handleSearch  = (q: string) => { if (q.trim()) window.location.href = `/search?q=${encodeURIComponent(q.trim())}`; };
 
-  const allLinks = [...navLinks, ...customLinks];
+  const unreadCount = notifications.filter((n) => !n.read).length;
+  const cfgCurrency = CURRENCIES[currency];
+
+  /* ── All nav links for desktop ── */
+  const allNavLinks = [
+    ...NAV_LINKS,
+    ...customLinks,
+  ];
 
   return (
     <>
-      {/* ══════════════════════════════════════
-          Sticky bar
-          ══════════════════════════════════════ */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/40 glass-panel backdrop-blur-md">
-
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
-
-          {/* Hamburger + Logo */}
-          <div
-            className="flex items-center gap-4 flex-shrink-0 transition-all duration-500 ease-out"
-            style={{ width: isSearchOpen ? "125px" : "192px" }}
-          >
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`${PILL} h-10 w-10 min-w-10 min-h-10 aspect-square flex-col gap-1.5 md:hidden flex-shrink-0`}
-              data-tooltip="Menu"
-              aria-label={isMobileMenuOpen ? "Close menu" : "Open navigation menu"}
-              aria-expanded={isMobileMenuOpen}
-            >
-              <span className={PILL_GLOW} />
-              <span className="relative block w-[16px] h-[1.5px] rounded-full bg-white" />
-              <span className="relative block w-[16px] h-[1.5px] rounded-full bg-white" />
-              <span className="relative block w-[16px] h-[1.5px] rounded-full bg-white" />
-            </button>
-
-            <div className="flex-shrink-0 text-center md:text-left">
-              <a
-                href="/"
-                className="font-serif text-[1.35rem] sm:text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity inline-block"
-              >
-                Naturalist.
-              </a>
-            </div>
-          </div>
-
-          {/* Desktop Center: Nav Links + Inline Search */}
-          <div
-            ref={desktopSearchWrapperRef}
-            className="hidden md:flex flex-1 items-center justify-between relative h-12 px-6"
-          >
-            <nav
-              className="flex items-center gap-6 lg:gap-8 transition-all duration-500 ease-out"
-              style={{
-                opacity: 1,
-                pointerEvents: "auto",
-                whiteSpace: "nowrap",
-                transform: isSearchOpen ? "translateX(-50px)" : "translateX(0px)",
-                marginLeft: isSearchOpen ? "0px" : "auto",
-                marginRight: isSearchOpen ? "auto" : "auto",
-              }}
-            >
-              {allLinks.map((link) => {
-                const isActive = pathname === link.href;
-                return (
-                  <a
-                    key={link.href}
-                    href={link.href}
-                    className={`text-sm font-medium transition-colors hover:text-primary ${
-                      isActive
-                        ? "text-primary border-b-2 border-primary/80 pb-1"
-                        : "text-muted-foreground"
-                    }`}
+      {/* ══════════════════════════════
+          Single-row sticky header
+          ══════════════════════════════ */}
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-40 w-full border-b border-border/40 glass-panel"
+        style={{ height: 64, overflow: "visible" }}
+      >
+        <div className="mx-auto flex h-full max-w-7xl items-center gap-3 px-4 sm:px-8">
+          {showMobileSearch ? (
+            <div className="flex md:hidden items-center w-full gap-3 h-full animate-fade-in">
+              <div className="flex-grow flex items-center h-10 border border-border/80 bg-muted/40 dark:bg-[#1a2520]/60 focus-within:ring-2 focus-within:ring-primary/40 rounded-full overflow-hidden px-3">
+                <span className="ms text-muted-foreground me-2" style={{ fontSize: 18 }}>search</span>
+                <input
+                  type="text"
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleSearch(searchQuery);
+                    if (e.key === "Escape") { setSearchQuery(""); setShowMobileSearch(false); }
+                  }}
+                  placeholder="Search rituals…"
+                  className="flex-grow text-xs text-foreground placeholder-muted-foreground/50 bg-transparent focus:outline-none pr-1"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="flex-shrink-0 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all cursor-pointer flex items-center justify-center bg-transparent border-0"
+                    aria-label="Clear Search"
                   >
-                    {link.label}
-                  </a>
-                );
-              })}
-            </nav>
-
-            <div
-              className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 overflow-hidden transition-all duration-500 ease-out shadow-[0_2px_10px_rgba(28,46,36,0.06)] focus-within:border-[#b07e3a]"
-              style={{
-                width: isSearchOpen ? "320px" : "0px",
-                opacity: isSearchOpen ? 1 : 0,
-                pointerEvents: isSearchOpen ? "auto" : "none",
-                marginLeft: isSearchOpen ? "1.5rem" : "0px",
-              }}
-            >
-              <input
-                ref={desktopSearchInputRef}
-                type="search"
-                placeholder="Search rituals..."
-                className="w-full bg-transparent border-none text-[#1c2e24] dark:text-white placeholder-[#2d4c38]/60 dark:placeholder-white/40 text-sm font-medium focus:outline-none pr-3"
-                onKeyDown={(e) => {
-                  if (e.key === "Escape") setIsSearchOpen(false);
-                  if (e.key === "Enter") {
-                    window.location.href = `/search?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
-                  }
-                }}
-              />
+                    <span className="ms text-xs" style={{ fontSize: 14 }}>close</span>
+                  </button>
+                )}
+              </div>
               <button
-                onClick={() => {
-                  if (desktopSearchInputRef.current?.value) {
-                    window.location.href = `/search?q=${encodeURIComponent(desktopSearchInputRef.current.value)}`;
-                  }
-                }}
-                className="group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
-                aria-label="Submit search"
+                onClick={() => { setShowMobileSearch(false); setSearchQuery(""); }}
+                className="flex-shrink-0 text-xs font-bold uppercase tracking-wider text-[#b07e3a] hover:text-white bg-[#b07e3a]/15 hover:bg-[#b07e3a] px-4 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all border border-[#b07e3a]/30 hover:border-transparent active:scale-95 shadow-sm hover:shadow-md"
               >
-                <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-                <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
+                Cancel
               </button>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* ── Mobile hamburger ── */}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className="flex flex-col gap-[5px] items-center justify-center h-10 w-10 flex-shrink-0 md:hidden cursor-pointer group"
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              >
+            <span className={`block h-[1.5px] rounded-full bg-foreground transition-all duration-300 ${mobileOpen ? "w-[18px] rotate-45 translate-y-[6.5px]" : "w-[18px]"}`} />
+            <span className={`block h-[1.5px] rounded-full bg-foreground transition-all duration-300 ${mobileOpen ? "opacity-0 w-0" : "w-[14px]"}`} />
+            <span className={`block h-[1.5px] rounded-full bg-foreground transition-all duration-300 ${mobileOpen ? "w-[18px] -rotate-45 -translate-y-[6.5px]" : "w-[18px]"}`} />
+          </button>
 
-          {/* Action buttons */}
-          <div className="flex items-center justify-end gap-2 sm:gap-3 flex-shrink-0 md:min-w-[192px] md:w-auto">
-
-            {/* Search toggle (desktop) */}
-            <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className={`${PILL} hidden md:flex h-10 w-10 sm:h-11 sm:w-11`}
-              data-tooltip={isSearchOpen ? "Close Search" : "Search"}
-              aria-label={isSearchOpen ? "Close Search" : "Search"}
-            >
-              <span className={PILL_GLOW} />
-              <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>{isSearchOpen ? "close" : "search"}</span>
-            </button>
-
-            {/* Auth-dependent buttons: two skeleton pills while session resolves */}
-            {status === "loading" ? (
-              <>
-                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-[#1c2e24]/60 animate-pulse flex-shrink-0" />
-                <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full bg-[#1c2e24]/60 animate-pulse flex-shrink-0" />
-              </>
-            ) : (
-              <>
-                {/* Notification bell — authenticated only */}
-                {session && (
-                  <div className="relative" ref={bellRef}>
-                    <button
-                      onClick={handleBellOpen}
-                      className={`${PILL} h-10 w-10 sm:h-11 sm:w-11 flex`}
-                      aria-label="Notifications"
-                      aria-expanded={isBellOpen}
-                    >
-                      <span className={PILL_GLOW} />
-                      <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>notifications</span>
-                      {notifications.some(n => !n.read) && (
-                        <span className="absolute top-[9px] right-[9px] h-[7px] w-[7px] rounded-full bg-[#b07e3a] ring-2 ring-[#1c2e24]" />
-                      )}
-                    </button>
-
-                    {isBellOpen && (
-                      <>
-                        <div onClick={() => setIsBellOpen(false)} className="fixed inset-0 z-30" />
-                        <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-80 -translate-x-1/2 rounded-2xl border border-border/40 bg-card shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-2.5 sm:w-80 sm:max-w-none sm:translate-x-0 sm:origin-top-right overflow-hidden">
-                          <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
-                            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notifications</p>
-                            {notifications.some(n => !n.read) && (
-                              <button
-                                onClick={handleMarkAllRead}
-                                className="text-[10px] font-bold text-[#b07e3a] hover:underline uppercase tracking-wider cursor-pointer"
-                              >
-                                Mark all read
-                              </button>
-                            )}
-                          </div>
-
-                          <div className="max-h-80 overflow-y-auto">
-                            {notifLoading ? (
-                              <div className="flex items-center justify-center py-10 gap-2">
-                                <span className="ms animate-spin text-[#b07e3a]" style={{ fontSize: 18 }}>progress_activity</span>
-                                <span className="text-xs text-muted-foreground">Loading…</span>
-                              </div>
-                            ) : notifications.length === 0 ? (
-                              <div className="flex flex-col items-center justify-center py-10 text-center gap-2 px-4">
-                                <span className="ms text-muted-foreground/30" style={{ fontSize: 36 }}>notifications_off</span>
-                                <p className="text-xs font-semibold text-muted-foreground">You&apos;re all caught up</p>
-                                <p className="text-[11px] text-muted-foreground/60">No notifications yet</p>
-                              </div>
-                            ) : (
-                              <div className="divide-y divide-border/30">
-                                {notifications.slice(0, 10).map((notif) => (
-                                  <button
-                                    key={notif._id}
-                                    onClick={() => handleNotifClick(notif)}
-                                    className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-muted/60 transition-colors cursor-pointer ${
-                                      !notif.read ? "bg-[#b07e3a]/5" : ""
-                                    }`}
-                                  >
-                                    <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${
-                                      !notif.read ? "bg-[#b07e3a]" : "bg-transparent"
-                                    }`} />
-                                    <div className="min-w-0 flex-1">
-                                      <p className={`text-xs leading-snug truncate ${
-                                        !notif.read ? "font-bold text-foreground" : "font-medium text-muted-foreground"
-                                      }`}>
-                                        {notif.title}
-                                      </p>
-                                      <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">
-                                        {notif.message}
-                                      </p>
-                                      <p className="text-[10px] text-muted-foreground/50 mt-1">
-                                        {new Date(notif.createdAt).toLocaleDateString("en-US", {
-                                          month: "short", day: "numeric",
-                                          hour: "2-digit", minute: "2-digit"
-                                        })}
-                                      </p>
-                                    </div>
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-
-                          {notifications.length > 0 && (
-                            <div className="border-t border-border/40 px-4 py-2.5">
-                              <a
-                                href="/account/notifications"
-                                onClick={() => setIsBellOpen(false)}
-                                className="text-xs font-bold text-[#b07e3a] hover:underline uppercase tracking-wider"
-                              >
-                                View all notifications
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* Profile / Auth */}
-                {session ? (
-                  <div className="relative" ref={profileRef}>
-                    <button
-                      onClick={() => { setIsProfileOpen(!isProfileOpen); setIsBellOpen(false); }}
-                      className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
-                      aria-label="Profile menu"
-                      aria-expanded={isProfileOpen}
-                    >
-                      <span className={PILL_GLOW} />
-                      {session.user?.image ? (
-                        <img
-                          src={session.user.image}
-                          alt="Profile Picture"
-                          className="h-7 w-7 rounded-full object-cover flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="relative flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-xs font-bold text-white flex-shrink-0">
-                          {session.user?.name ? session.user.name[0].toUpperCase() : "U"}
-                        </div>
-                      )}
-                    </button>
-
-                    {isProfileOpen && (
-                      <>
-                        <div onClick={() => setIsProfileOpen(false)} className="fixed inset-0 z-30" />
-                        <div className="absolute right-0 mt-2.5 z-40 w-52 origin-top-right rounded-2xl border border-border/40 bg-card p-2 shadow-2xl ring-1 ring-black/5 animate-fade-in-up">
-                          <div className="px-3 py-2 mb-1 border-b border-border/40">
-                            <p className="text-xs font-bold text-foreground truncate">{session.user?.name}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
-                          </div>
-                          <a
-                            href="/account"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors"
-                          >
-                            <span className="ms" style={{ fontSize: 16 }}>person</span>
-                            My Account
-                          </a>
-                          {(session.user as any)?.role === "admin" && (
-                            <a
-                              href="/admin"
-                              onClick={() => setIsProfileOpen(false)}
-                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-[#b07e3a] dark:text-[#d4a362] rounded-xl hover:bg-[#b07e3a]/10 transition-colors font-medium"
-                            >
-                              <span className="ms" style={{ fontSize: 16 }}>admin_panel_settings</span>
-                              Admin Panel
-                            </a>
-                          )}
-                          <div className="border-t border-border/40 mt-1 pt-1">
-                            <button
-                              onClick={() => { setIsProfileOpen(false); handleSignOut(); }}
-                              className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/8 rounded-xl transition-colors"
-                            >
-                              <span className="ms" style={{ fontSize: 16 }}>logout</span>
-                              Sign Out
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="relative" ref={profileRef}>
-                    <button
-                      onClick={() => setIsProfileOpen(!isProfileOpen)}
-                      className={`${PILL} h-11 w-11`}
-                      data-tooltip="Account"
-                      aria-label="Account menu"
-                      aria-expanded={isProfileOpen}
-                    >
-                      <span className={PILL_GLOW} />
-                      <span className={`${PILL_ICON} ms`} style={{ fontSize: 22 }}>person</span>
-                    </button>
-
-                    {isProfileOpen && (
-                      <div className="fixed left-1/2 top-[5rem] z-40 w-[calc(100vw-1rem)] max-w-72 -translate-x-1/2 rounded-3xl border border-border/30 bg-card p-5 shadow-2xl ring-1 ring-black/5 animate-fade-in-up sm:absolute sm:top-full sm:right-0 sm:left-auto sm:mt-3 sm:w-72 sm:max-w-none sm:translate-x-0 sm:origin-top-right">
-                        <p className="text-lg font-bold text-foreground mb-1">Welcome, Guest!</p>
-                        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">
-                          Sign in to access your rituals, track orders, and unlock exclusive offers.
-                        </p>
-                        <div className="flex gap-3">
-                          <a
-                            href="/login"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex flex-1 items-center justify-center h-11 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all shadow-sm"
-                          >
-                            Sign In
-                          </a>
-                          <a
-                            href="/register"
-                            onClick={() => setIsProfileOpen(false)}
-                            className="flex flex-1 items-center justify-center h-11 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all"
-                          >
-                            Create Account
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Cart */}
-            <a
-              href="/cart"
-              className={`${PILL} h-10 w-10 sm:h-11 sm:w-11`}
-              data-tooltip="Shopping Cart"
-              data-tooltip-align="right"
-              aria-label="Shopping cart"
-            >
-              <span className={PILL_GLOW} />
-              <span className={`${PILL_ICON} ms`} style={{ fontSize: 20 }}>shopping_bag</span>
-              {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#b07e3a] text-[9px] font-bold text-white shadow-sm">
-                  {cartCount}
-                </span>
-              )}
-            </a>
-
-          </div>
-        </div>
-
-        {/* Mobile search dropdown */}
-        {isSearchOpen && (
-          <div
-            ref={searchWrapperRef}
-            className="md:hidden border-t border-border/20 bg-card/95 backdrop-blur-xl py-4 px-6 flex justify-center animate-fade-in-down pointer-events-auto"
+          {/* ── Logo ── */}
+          <a
+            href="/"
+            className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-primary hover:opacity-90 transition-opacity flex-shrink-0"
           >
-            <div className="flex items-center bg-white dark:bg-[#111a14] border-2 border-[#1c2e24] dark:border-[#2d4c38]/80 rounded-full pl-5 pr-[5px] h-12 shadow-[0_4px_20px_rgba(28,46,36,0.06)] transition-all duration-300 w-full max-w-[400px]">
+            Naturalist.
+          </a>
+
+          {/* ── Desktop nav links ── */}
+          <nav className="hidden md:flex items-center gap-0.5 ml-4 flex-shrink-0">
+            {/* Shop with mega-menu */}
+            <div ref={shopRef} className="relative">
+              <button
+                onMouseEnter={() => setShowShop(true)}
+                onFocus={() => setShowShop(true)}
+                onClick={() => setShowShop((s) => !s)}
+                className={`flex items-center gap-1 h-9 px-3.5 text-[13.5px] font-medium rounded-full transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  pathname?.includes("/shop") || pathname?.includes("/p/shop")
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                }`}
+              >
+                Shop
+                <span
+                  className={`ms transition-transform duration-200 ${showShop ? "rotate-180" : ""}`}
+                  style={{ fontSize: 15 }}
+                >
+                  expand_more
+                </span>
+              </button>
+              {/* Hover bridge to keep mega-menu alive when moving mouse down */}
+              {showShop && (
+                <div
+                  className="absolute left-0 right-0 top-full h-6 z-10"
+                  onMouseLeave={() => setShowShop(false)}
+                />
+              )}
+            </div>
+
+            {/* Other links */}
+            {allNavLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className={`h-9 px-3.5 flex items-center text-[13.5px] font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+                  pathname === link.href
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                }`}
+              >
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* ── Flex spacer ── */}
+          <div className="flex-1 min-w-0" />
+
+          {/* ── Search (desktop, prominent) ── */}
+          <div className="hidden md:flex items-center">
+            <div className="flex items-center h-10 w-64 border border-border/50 bg-[#141f19]/05 dark:bg-[#1a2520]/60 hover:border-border/80 focus-within:border-primary/80 focus-within:ring-2 focus-within:ring-primary/40 rounded-full overflow-hidden px-3">
+              <button
+                onClick={() => handleSearch(searchQuery)}
+                className="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors cursor-pointer flex items-center justify-center me-2 bg-transparent border-0"
+                aria-label="Submit Search"
+              >
+                <span className="ms" style={{ fontSize: 18 }}>search</span>
+              </button>
               <input
                 ref={searchRef}
-                type="search"
-                autoFocus
-                placeholder="Search rituals..."
-                className="w-full bg-transparent border-none text-[#1c2e24] dark:text-white placeholder-[#2d4c38]/60 dark:placeholder-white/40 text-sm font-medium focus:outline-none pr-3"
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Escape") setIsSearchOpen(false);
-                  if (e.key === "Enter") {
-                    window.location.href = `/search?q=${encodeURIComponent((e.target as HTMLInputElement).value)}`;
-                  }
+                  if (e.key === "Enter") handleSearch(searchQuery);
+                  if (e.key === "Escape") setSearchQuery("");
                 }}
+                placeholder="Search rituals…"
+                className="flex-1 text-xs text-foreground placeholder-muted-foreground/50 bg-transparent focus:outline-none pr-1"
               />
-              <button
-                onClick={() => {
-                  if (searchRef.current?.value) {
-                    window.location.href = `/search?q=${encodeURIComponent(searchRef.current.value)}`;
-                  }
-                }}
-                className="group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
-                aria-label="Submit search"
-              >
-                <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-                <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
-              </button>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="flex-shrink-0 p-1 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-all cursor-pointer flex items-center justify-center bg-transparent border-0"
+                  aria-label="Clear Search"
+                >
+                  <span className="ms text-xs" style={{ fontSize: 14 }}>close</span>
+                </button>
+              )}
             </div>
           </div>
-        )}
+
+          {/* ── Globe (locale selector) ── */}
+          <div className="relative hidden md:block">
+            <button
+              ref={globeRef}
+              onClick={() => setShowLocale((s) => !s)}
+              className="flex items-center gap-1.5 h-10 px-3 rounded-full border border-border/50 bg-muted/30 hover:bg-muted/60 hover:border-border/80 transition-all duration-200 text-muted-foreground hover:text-foreground cursor-pointer flex-shrink-0"
+              title="Change location & currency"
+            >
+              {geoLoading ? (
+                <span className="ms animate-spin text-muted-foreground/50" style={{ fontSize: 17 }}>progress_activity</span>
+              ) : (
+                <>
+                  <CountryFlag countryCode={country.code} size={18} className="me-1" />
+                  <span className="text-[11px] font-mono font-semibold">{cfgCurrency.code}</span>
+                  <span className="ms text-muted-foreground/50" style={{ fontSize: 13 }}>expand_more</span>
+                </>
+              )}
+            </button>
+            {showLocale && (
+              <LocalePopover anchorRef={globeRef} onClose={() => setShowLocale(false)} />
+            )}
+          </div>
+
+          {/* ── Action icons ── */}
+          <div className="flex items-center gap-2">
+
+            {/* Mobile search */}
+            <button
+              onClick={() => setShowMobileSearch(true)}
+              className="flex md:hidden items-center justify-center h-10 w-10 rounded-full text-muted-foreground hover:text-foreground transition-colors cursor-pointer bg-transparent border-0"
+              aria-label="Search"
+            >
+              <span className="ms" style={{ fontSize: 22 }}>search</span>
+            </button>
+
+            {/* Bell — auth only */}
+            {status === "authenticated" && session && (
+              <div className="relative" ref={bellRef}>
+                <PillBtn label="Notifications" onClick={() => { setShowBell(!showBell); setShowProfile(false); }} badge={unreadCount}>
+                  <span className="ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>notifications</span>
+                </PillBtn>
+
+                {showBell && (
+                  <>
+                    <div onClick={() => setShowBell(false)} className="fixed inset-0 z-40" />
+                    <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-80 rounded-2xl border border-border/40 bg-card shadow-2xl overflow-hidden animate-scale-up">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-border/40">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Notifications</p>
+                        {unreadCount > 0 && (
+                          <button
+                            onClick={async () => {
+                              await fetch("/api/user/notifications", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+                              setNotifications((p) => p.map((n) => ({ ...n, read: true })));
+                            }}
+                            className="text-[10px] font-bold text-accent hover:underline uppercase tracking-wider cursor-pointer"
+                          >
+                            Mark all read
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifLoading ? (
+                          <div className="flex items-center justify-center py-10 gap-2">
+                            <span className="ms animate-spin text-accent" style={{ fontSize: 18 }}>progress_activity</span>
+                            <span className="text-xs text-muted-foreground">Loading…</span>
+                          </div>
+                        ) : notifications.length === 0 ? (
+                          <div className="flex flex-col items-center py-10 text-center gap-2 px-4">
+                            <span className="ms text-muted-foreground/30" style={{ fontSize: 36 }}>notifications_off</span>
+                            <p className="text-xs font-semibold text-muted-foreground">You&apos;re all caught up</p>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-border/30">
+                            {notifications.slice(0, 10).map((n) => (
+                              <button
+                                key={n._id}
+                                onClick={() => { setShowBell(false); window.location.href = `/account/notifications/${n._id}`; }}
+                                className={`w-full text-left px-4 py-3 flex gap-3 items-start hover:bg-muted/60 transition-colors cursor-pointer ${!n.read ? "bg-accent/5" : ""}`}
+                              >
+                                <span className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${!n.read ? "bg-accent" : "bg-transparent"}`} />
+                                <div className="min-w-0 flex-1">
+                                  <p className={`text-xs leading-snug truncate ${!n.read ? "font-bold text-foreground" : "font-medium text-muted-foreground"}`}>{n.title}</p>
+                                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-relaxed">{n.message}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {notifications.length > 0 && (
+                        <div className="border-t border-border/40 px-4 py-2.5">
+                          <a href="/account/notifications" onClick={() => setShowBell(false)} className="text-xs font-bold text-accent hover:underline uppercase tracking-wider">
+                            View all
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Profile */}
+            <div className="relative" ref={profileRef}>
+              {status === "loading" ? (
+                <div className="h-10 w-10 rounded-full bg-[#1c2e24]/60 animate-pulse flex-shrink-0" />
+              ) : session ? (
+                <>
+                  <PillBtn label="Account menu" onClick={() => { setShowProfile(!showProfile); setShowBell(false); }}>
+                    {session.user?.image ? (
+                      <img src={session.user.image} alt="Profile" className="h-6 w-6 rounded-full object-cover" />
+                    ) : (
+                      <span className="text-white/90 text-xs font-bold">
+                        {session.user?.name ? session.user.name[0].toUpperCase() : "U"}
+                      </span>
+                    )}
+                  </PillBtn>
+
+                  {showProfile && (
+                    <>
+                      <div onClick={() => setShowProfile(false)} className="fixed inset-0 z-40" />
+                      <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-52 rounded-2xl border border-border/40 bg-card p-2 shadow-2xl animate-scale-up">
+                        <div className="px-3 py-2 mb-1 border-b border-border/40">
+                          <p className="text-xs font-bold text-foreground truncate">{session.user?.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{session.user?.email}</p>
+                        </div>
+                        <a href="/account" onClick={() => setShowProfile(false)} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors">
+                          <span className="ms" style={{ fontSize: 16 }}>person</span> My Account
+                        </a>
+                        {(session.user as any)?.role === "admin" && (
+                          <a href="/admin" onClick={() => setShowProfile(false)} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-accent rounded-xl hover:bg-accent/10 transition-colors font-medium">
+                            <span className="ms" style={{ fontSize: 16 }}>admin_panel_settings</span> Admin Panel
+                          </a>
+                        )}
+                        <div className="border-t border-border/40 mt-1 pt-1">
+                          <button onClick={() => { setShowProfile(false); handleSignOut(); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-sm text-destructive hover:bg-destructive/8 rounded-xl transition-colors">
+                            <span className="ms" style={{ fontSize: 16 }}>logout</span> Sign Out
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  <PillBtn label="Account" onClick={() => setShowProfile(!showProfile)}>
+                    <span className="ms text-white/80 group-hover:text-white" style={{ fontSize: 21 }}>person</span>
+                  </PillBtn>
+                  {showProfile && (
+                    <>
+                      <div onClick={() => setShowProfile(false)} className="fixed inset-0 z-40" />
+                      <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-border/30 bg-card p-5 shadow-2xl animate-scale-up">
+                        <p className="text-base font-bold text-foreground mb-1">Welcome back</p>
+                        <p className="text-sm text-muted-foreground mb-5 leading-relaxed">Sign in to track orders and unlock exclusive botanical rituals.</p>
+                        <div className="flex gap-3">
+                          <a href="/login" onClick={() => setShowProfile(false)} className="flex flex-1 items-center justify-center h-10 rounded-full bg-[#1c2e24] text-xs font-semibold text-white hover:bg-[#243829] transition-all">Sign In</a>
+                          <a href="/register" onClick={() => setShowProfile(false)} className="flex flex-1 items-center justify-center h-10 rounded-full border border-border/70 text-xs font-semibold text-foreground hover:bg-muted transition-all">Register</a>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Cart */}
+            <PillBtn href="/cart" label="Shopping cart">
+              <span className="ms text-white/80 group-hover:text-white" style={{ fontSize: 20 }}>shopping_bag</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#b07e3a] text-[9px] font-bold text-white shadow-sm z-10">
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </PillBtn>
+
+          </div>
+          </>
+          )}
+        </div>
       </header>
 
-      {/* Mobile backdrop */}
-      {isMobileMenuOpen && (
+      {/* ══════════════════════════════
+          Fixed Shop Mega-Menu (outside
+          header stacking context)
+          ══════════════════════════════ */}
+      <div
+        onMouseEnter={() => setShowShop(true)}
+        onMouseLeave={() => setShowShop(false)}
+      >
+        <ShopMegaMenu visible={showShop} top={megaMenuTop} onClose={() => setShowShop(false)} />
+      </div>
+
+      {/* ══════════════════════════════
+          Mobile backdrop
+          ══════════════════════════════ */}
+      {mobileOpen && (
         <div
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="fixed inset-0 z-50 bg-[#141f19]/40 backdrop-blur-sm md:hidden animate-fade-in transition-all duration-300 cursor-pointer"
+          onClick={() => setMobileOpen(false)}
+          className="fixed inset-0 z-50 bg-[#141f19]/50 backdrop-blur-sm md:hidden animate-fade-in"
         />
       )}
 
-      {/* Mobile drawer */}
+      {/* ══════════════════════════════
+          Mobile side drawer
+          ══════════════════════════════ */}
       <div
-        className="fixed inset-y-0 left-0 z-50 w-[320px] sm:w-[380px] h-full bg-white dark:bg-[#0f1411] border-r border-[#e2dacd] dark:border-white/[0.08] shadow-2xl overflow-y-auto flex flex-col justify-between md:hidden"
-        style={{
-          transform: isMobileMenuOpen ? "translateX(0)" : "translateX(-100%)",
-          transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
-        }}
         role="dialog"
         aria-modal="true"
         aria-label="Site navigation"
+        className="fixed inset-y-0 left-0 z-50 w-[300px] sm:w-[360px] bg-white dark:bg-[#0f1411] border-r border-border/40 shadow-2xl overflow-y-auto flex flex-col md:hidden"
+        style={{
+          transform: mobileOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)",
+        }}
       >
-        <div className="relative flex flex-col h-full justify-between">
-          {/* Botanical SVG pattern */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true">
-            <defs>
-              <pattern id="menuPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-                <path d="M15 50 Q30 15 50 15 Q37 37 15 50Z" fill="#b07e3a" opacity="0.035" />
-                <path d="M15 50 Q30 85 50 85 Q37 63 15 50Z" fill="#b07e3a" opacity="0.02" />
-                <path d="M70 15 Q85 33 88 50 Q74 38 70 15Z" fill="#2d4c38" opacity="0.04" />
-                <path d="M70 85 Q85 67 88 50 Q74 62 70 85Z" fill="#2d4c38" opacity="0.03" />
-              </pattern>
-            </defs>
-            <rect width="100%" height="100%" fill="url(#menuPattern)" />
-          </svg>
+        {/* Drawer top accent */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#b07e3a]/50 to-transparent" />
 
-          <div className="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#b07e3a]/60 to-transparent pointer-events-none z-10" />
+        {/* Logo row */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-border/40">
+          <a href="/" className="font-serif text-xl font-bold text-primary">Naturalist.</a>
+          <button onClick={() => setMobileOpen(false)} className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted text-muted-foreground transition-colors cursor-pointer">
+            <span className="ms" style={{ fontSize: 20 }}>close</span>
+          </button>
+        </div>
 
-          {/* Drawer header */}
-          <div className="relative z-10 flex items-center justify-between gap-3 px-5 pt-5 pb-4 border-b border-[#e2dacd]/60 dark:border-white/[0.07]">
-            <a
-              href="/"
-              className="font-serif text-2xl font-bold tracking-tight text-primary dark:text-[#f4f6f4] hover:opacity-90 transition-opacity"
-            >
-              Naturalist.
-            </a>
+        {/* Mobile locale strip */}
+        <div className="px-6 py-3 border-b border-border/30">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Your Location</p>
+          <div className="flex items-center gap-3">
+            <CountryFlag countryCode={country.code} size={22} />
+            <span className="text-sm font-medium text-foreground">{country.name}</span>
+            <span className="ml-auto text-xs font-mono font-bold text-accent">{cfgCurrency.code}</span>
+          </div>
+        </div>
+
+        {/* Nav links */}
+        <nav className="flex-1 px-4 py-4">
+
+          {/* Shop accordion */}
+          <div className="border-b border-border/30">
             <button
-              onClick={() => { setIsMobileMenuOpen(false); setIsSearchOpen(true); }}
-              className="md:hidden group relative flex h-10 w-10 items-center justify-center rounded-full border bg-[#1c2e24] border-[#2d4c38]/80 hover:border-[#b07e3a]/60 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.15)] transition-all duration-300 flex-shrink-0 cursor-pointer"
-              aria-label="Search"
+              onClick={() => setMobileShopOpen((s) => !s)}
+              className="group w-full flex items-center justify-between py-4 cursor-pointer"
             >
-              <span className="absolute inset-0 rounded-full bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none" />
-              <span className="relative ms text-white/80 group-hover:text-white transition-colors" style={{ fontSize: 20 }}>search</span>
+              <span className="font-serif text-[22px] font-bold text-foreground/60 group-hover:text-primary transition-colors">
+                Shop
+              </span>
+              <span className={`ms text-muted-foreground/40 transition-all duration-300 ${mobileShopOpen ? "rotate-90 text-accent" : ""}`} style={{ fontSize: 18 }}>
+                chevron_right
+              </span>
             </button>
+            <div className={`overflow-hidden transition-all duration-300 ${mobileShopOpen ? "max-h-[360px] pb-4" : "max-h-0"}`}>
+              <div className="grid grid-cols-2 gap-2 pl-2">
+                {SHOP_CATEGORIES.map((cat) => (
+                  <a
+                    key={cat.href}
+                    href={cat.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-muted/40 hover:bg-primary/10 transition-colors"
+                  >
+                    <span className="ms text-primary" style={{ fontSize: 16 }}>{cat.icon}</span>
+                    <span className="text-xs font-semibold text-foreground">{cat.label}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Nav links */}
-          <nav className="relative z-10 px-5 py-4 flex-1 overflow-y-auto flex flex-col justify-start">
-            {allLinks.map((link) => {
-              const isActive = pathname === link.href;
-              return (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className={`group flex items-center justify-between py-4 border-b border-[#e2dacd]/50 dark:border-white/[0.05] transition-all duration-200 ${
-                    isActive ? "" : "hover:pl-1.5"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold tracking-[0.2em] text-[#b07e3a]/80 group-hover:text-[#b07e3a] transition-colors w-5 flex-shrink-0">
-                      {link.num}
-                    </span>
-                    <div className="relative py-1">
-                      <span
-                        className={`font-serif font-bold text-2xl tracking-tight leading-none transition-colors ${
-                          isActive
-                            ? "text-[#2d4c38] dark:text-white"
-                            : "text-[#5e6f64] group-hover:text-[#2d4c38] dark:text-[#a3b2a9] dark:hover:text-white"
-                        }`}
-                      >
-                        {link.label}
-                      </span>
-                      <span
-                        className={`absolute bottom-0 left-0 h-[2px] bg-[#b07e3a] transition-all duration-300 ${
-                          isActive ? "w-full" : "w-0 group-hover:w-[40%]"
-                        }`}
-                      />
-                    </div>
-                  </div>
-                  <span
-                    className={`ms flex-shrink-0 transition-all duration-300 ${
-                      isActive
-                        ? "text-[#b07e3a] translate-x-0.5"
-                        : "text-[#5e6f64]/40 group-hover:text-[#b07e3a] group-hover:translate-x-1"
-                    }`}
-                    style={{ fontSize: 18 }}
-                  >chevron_right</span>
-                </a>
-              );
-            })}
-          </nav>
+          {/* Other links */}
+          {allNavLinks.map((link, idx) => (
+            <a
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              className={`group flex items-center justify-between py-4 border-b border-border/30 transition-all duration-200 ${
+                pathname === link.href ? "" : "hover:pl-1.5"
+              }`}
+            >
+              <span className={`font-serif text-[22px] font-bold transition-colors ${
+                pathname === link.href
+                  ? "text-primary"
+                  : "text-foreground/60 group-hover:text-primary"
+              }`}>
+                {link.label}
+              </span>
+              <span className={`ms transition-colors ${pathname === link.href ? "text-accent" : "text-muted-foreground/30 group-hover:text-accent"}`} style={{ fontSize: 18 }}>
+                chevron_right
+              </span>
+            </a>
+          ))}
+        </nav>
+
+        {/* Drawer footer */}
+        <div className="px-6 py-4 border-t border-border/40">
+          {session ? (
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold flex-shrink-0">
+                {session.user?.name?.[0]?.toUpperCase() ?? "U"}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-foreground truncate">{session.user?.name}</p>
+                <p className="text-[11px] text-muted-foreground truncate">{session.user?.email}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-3">
+              <a href="/login" onClick={() => setMobileOpen(false)} className="flex flex-1 items-center justify-center h-10 rounded-full bg-primary text-primary-foreground text-xs font-semibold">Sign In</a>
+              <a href="/register" onClick={() => setMobileOpen(false)} className="flex flex-1 items-center justify-center h-10 rounded-full border border-border text-xs font-semibold text-foreground">Register</a>
+            </div>
+          )}
         </div>
       </div>
     </>

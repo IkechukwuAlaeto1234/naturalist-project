@@ -64,6 +64,8 @@ interface AccountLog {
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [logs, setLogs] = useState<AccountLog[]>([]);
+  const [logPage, setLogPage] = useState(1);
+  const logsPerPage = 10;
   const [dataRequests, setDataRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -72,6 +74,12 @@ export default function AdminUsersPage() {
   const [searchLoading, setSearchLoading] = useState(false);
   const [roleFilter, setRoleFilter] = useState("");
   const [activeTab, setActiveTab] = useState<"users" | "logs" | "requests">("users");
+  const [notification, setNotification] = useState<{ type: "success" | "info"; message: string } | null>(null);
+
+  const showNotification = (type: "success" | "info", message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 6000);
+  };
 
   // Password visibility registry: map user ID -> boolean
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, boolean>>({});
@@ -194,10 +202,16 @@ export default function AdminUsersPage() {
         throw new Error(data.error || "Suspension modification failed.");
       }
       const data = await res.json();
-      
-      // Update state
       setUsers(users.map((u) => (u._id === user._id ? data : u)));
-      fetchLogs(); // refresh audit logs
+      fetchLogs();
+      if (data._sessionInvalidated) {
+        showNotification(
+          "info",
+          `${user.name}'s account has been ${
+            updatedSuspended ? "suspended" : "unsuspended"
+          }. Their active sessions have been cleared — they will be signed out on their next request.`
+        );
+      }
     } catch (e: any) {
       alert(e.message || "Failed to update account status.");
     }
@@ -216,10 +230,14 @@ export default function AdminUsersPage() {
         throw new Error(data.error || "Role modification failed.");
       }
       const data = await res.json();
-      
-      // Update state
       setUsers(users.map((u) => (u._id === user._id ? data : u)));
       fetchLogs();
+      if (data._sessionInvalidated) {
+        showNotification(
+          "info",
+          `${user.name}'s role changed to "${updatedRole}". Their active sessions have been cleared — they will be signed out and must log back in to get the new role.`
+        );
+      }
     } catch (e: any) {
       alert(e.message || "Failed to toggle role.");
     }
@@ -250,6 +268,26 @@ export default function AdminUsersPage() {
   return (
     <div className="space-y-8 pb-20 text-foreground">
       
+      {/* ── Notification Banner ── */}
+      {notification && (
+        <div
+          className={`flex items-start gap-3 px-5 py-4 rounded-2xl border text-sm font-medium shadow-lg ${
+            notification.type === "info"
+              ? "bg-[#0e1f17] border-[#2d4c38] text-emerald-300"
+              : "bg-[#1a1200] border-[#b07e3a]/40 text-[#b07e3a]"
+          }`}
+        >
+          <ShieldAlert className="h-4 w-4 flex-shrink-0 mt-0.5" />
+          <span className="flex-1 leading-relaxed">{notification.message}</span>
+          <button
+            onClick={() => setNotification(null)}
+            className="flex-shrink-0 p-0.5 opacity-60 hover:opacity-100 transition-opacity bg-transparent border-0 cursor-pointer"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* ── Page Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -358,7 +396,7 @@ export default function AdminUsersPage() {
         /* ── DIRECTORY VIEW ── */
         <div className="bg-card border border-border rounded-2xl overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs divide-y divide-[#1a241e]">
+            <table className="w-full min-w-[900px] text-left text-xs divide-y divide-[#1a241e]">
               <thead>
                 <tr className="text-muted-foreground font-bold uppercase tracking-wider bg-card">
                   <th className="p-4 sm:p-5">Name & ID</th>
@@ -430,13 +468,14 @@ export default function AdminUsersPage() {
                           <div className="inline-flex gap-2">
                             <a
                               href={`/admin/users/edit/${u._id}`}
-                              className="h-8 px-3 rounded-lg border border-[#b07e3a]/30 bg-[#b07e3a]/5 text-[#b07e3a] hover:bg-[#b07e3a] hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1"
+                              className="h-8 px-2 sm:px-3 rounded-lg border border-[#b07e3a]/30 bg-[#b07e3a]/5 text-[#b07e3a] hover:bg-[#b07e3a] hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1 whitespace-nowrap flex-shrink-0"
                             >
-                              <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                              <Pencil className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Edit Profile</span>
                             </a>
                             <button
                               onClick={() => handleToggleSuspend(u)}
-                              className={`h-8 px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer ${
+                              className={`h-8 px-2 sm:px-3 rounded-lg border text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1 cursor-pointer whitespace-nowrap flex-shrink-0 ${
                                 u.isSuspended
                                   ? "border-emerald-500/30 bg-emerald-500/5 text-emerald-400 hover:bg-emerald-500/10"
                                   : "border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10"
@@ -444,17 +483,19 @@ export default function AdminUsersPage() {
                             >
                               {u.isSuspended ? (
                                 <>
-                                  <UserCheck className="h-3.5 w-3.5" /> Unsuspend
+                                  <UserCheck className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Unsuspend</span>
                                 </>
                               ) : (
                                 <>
-                                  <UserX className="h-3.5 w-3.5" /> Suspend
+                                  <UserX className="h-3.5 w-3.5" />
+                                  <span className="hidden sm:inline">Suspend</span>
                                 </>
                               )}
                             </button>
                             <button
                               onClick={() => handleDeleteUser(u._id)}
-                              className="h-8 w-8 rounded-lg border border-red-500/30 hover:bg-red-500/5 text-red-400 hover:text-red-300 flex items-center justify-center transition-all cursor-pointer"
+                              className="h-8 w-8 rounded-lg border border-red-500/30 hover:bg-red-500/5 text-red-400 hover:text-red-300 flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
                               title="Expunge Account"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -487,7 +528,7 @@ export default function AdminUsersPage() {
                 No tracking audits recorded yet.
               </div>
             ) : (
-              logs.map((log) => {
+              logs.slice((logPage - 1) * logsPerPage, logPage * logsPerPage).map((log) => {
                 let badgeClass = "bg-white/[0.04] text-[#a3b2a9] border border-[#1a241e]";
                 if (log.action === "signup") badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25";
                 if (log.action === "suspend") badgeClass = "bg-red-500/10 text-red-400 border border-red-500/25";
@@ -532,6 +573,29 @@ export default function AdminUsersPage() {
               })
             )}
           </div>
+
+          {/* Pagination Controls */}
+          {logs.length > 0 && Math.ceil(logs.length / logsPerPage) > 1 && (
+            <div className="flex items-center justify-between pt-6 mt-6 border-t border-[#1a241e]">
+              <button
+                disabled={logPage === 1}
+                onClick={() => setLogPage((prev) => Math.max(prev - 1, 1))}
+                className="h-9 px-4 rounded-xl border border-border bg-[#0c100e] text-muted-foreground hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer select-none"
+              >
+                Previous
+              </button>
+              <span className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
+                Page {logPage} of {Math.ceil(logs.length / logsPerPage)}
+              </span>
+              <button
+                disabled={logPage === Math.ceil(logs.length / logsPerPage)}
+                onClick={() => setLogPage((prev) => Math.min(prev + 1, Math.ceil(logs.length / logsPerPage)))}
+                className="h-9 px-4 rounded-xl border border-border bg-[#0c100e] text-muted-foreground hover:text-white text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-40 cursor-pointer select-none"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         /* ── GDPR DATA EXPORT REQUESTS VIEW ── */

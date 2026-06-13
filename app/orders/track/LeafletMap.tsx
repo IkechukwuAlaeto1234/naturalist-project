@@ -48,10 +48,10 @@ export default function LeafletMap({ waypoints, currentStep, totalSteps }: Leafl
 
       mapRef.current = map;
 
-      // Tile layer — CartoDB Voyager (clean, no heavy labels)
+      // Tile layer — OpenStreetMap Standard (rich detail, recognizable real map)
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-        { subdomains: "abcd", maxZoom: 19 }
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { maxZoom: 19 }
       ).addTo(map);
 
       // Small attribution
@@ -132,6 +132,11 @@ export default function LeafletMap({ waypoints, currentStep, totalSteps }: Leafl
       // Fit map to route bounds with padding
       map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
 
+      // Force size recalculation to fix standard Leaflet container sizing bugs
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 200);
+
       // Animate marker oscillation along route segment (smooth back-and-forth within active segment)
       let tick = 0;
       animRef.current = setInterval(() => {
@@ -183,7 +188,7 @@ export default function LeafletMap({ waypoints, currentStep, totalSteps }: Leafl
       <div
         ref={containerRef}
         className="w-full rounded-xl overflow-hidden border border-[#e2dacd]"
-        style={{ height: 280 }}
+        style={{ height: 300 }}
       />
     </>
   );

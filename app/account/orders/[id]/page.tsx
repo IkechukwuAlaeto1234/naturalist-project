@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   ArrowLeft, Package, Loader2, MapPin, CreditCard, Download,
-  CheckCircle, Clock, Truck, Home, XCircle, ChevronRight,
+  CheckCircle, Truck, Home, XCircle, ChevronRight,
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -53,7 +54,7 @@ const STEPS = [
 const STEP_ORDER = ["pending", "processing", "shipped", "delivered"] as const;
 
 function stepIndex(status: string) {
-  const i = STEP_ORDER.indexOf(status as any);
+  const i = STEP_ORDER.indexOf(status as typeof STEP_ORDER[number]);
   return i === -1 ? 0 : i;
 }
 
@@ -80,13 +81,13 @@ function StatusPill({ status }: { status: string }) {
 export default function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router  = useRouter();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [order,   setOrder]   = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState("");
 
   useEffect(() => {
-    document.title = "Track Order | Naturalist";
+    setTimeout(() => { document.title = "Track Order | Naturalist"; }, 150);
   }, []);
 
   useEffect(() => {
@@ -95,20 +96,23 @@ export default function OrderDetailPage() {
 
   const fetchOrder = useCallback(async () => {
     if (!id || status !== "authenticated") return;
-    setLoading(true);
+    Promise.resolve().then(() => setLoading(true));
     try {
       const res = await fetch(`/api/orders/${id}`);
       if (!res.ok) throw new Error("Order not found");
       const data = await res.json();
       setOrder(data);
-    } catch (e: any) {
-      setError(e.message || "Failed to load order.");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load order.");
     } finally {
       setLoading(false);
     }
   }, [id, status]);
 
-  useEffect(() => { fetchOrder(); }, [fetchOrder]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchOrder();
+  }, [fetchOrder]);
 
   /* ── Loading / error states ── */
   if (loading || status === "loading") {
@@ -124,9 +128,9 @@ export default function OrderDetailPage() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-center px-4">
         <XCircle className="h-10 w-10 text-destructive/50" />
         <p className="font-serif text-lg font-bold">{error || "Order not found"}</p>
-        <a href="/account" className="text-xs font-semibold text-[#b07e3a] hover:underline">
+        <Link href="/account" className="text-xs font-semibold text-[#b07e3a] hover:underline">
           ← Back to Account
-        </a>
+        </Link>
       </div>
     );
   }
@@ -149,13 +153,13 @@ export default function OrderDetailPage() {
 
         {/* ── Back + heading ── */}
         <div className="flex items-center justify-center gap-3 text-center flex-wrap">
-          <a
+          <Link
             href="/account"
             className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Orders
-          </a>
+          </Link>
           <ChevronRight className="h-3 w-3 text-muted-foreground/40" />
           <span className="text-xs font-bold uppercase tracking-wider text-foreground">
             Track Order
@@ -174,14 +178,24 @@ export default function OrderDetailPage() {
               {reference}
             </span>
           </div>
-          {/* PDF download — placeholder */}
-          <button
-            onClick={() => alert("PDF download coming soon!")}
-            className="inline-flex items-center gap-2 h-9 px-5 rounded-full border border-[#e2dacd] dark:border-white/10 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all self-center"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download PDF
-          </button>
+          <div className="flex items-center gap-3 mt-1">
+            {/* Live Map Tracking Link */}
+            <Link
+              href={`/orders/track?id=${order.orderNumber || order._id}`}
+              className="inline-flex items-center gap-2 h-9 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md select-none cursor-pointer"
+            >
+              <Truck className="h-3.5 w-3.5" />
+              Live Map Tracking
+            </Link>
+            {/* PDF download — placeholder */}
+            <button
+              onClick={() => alert("PDF download coming soon!")}
+              className="inline-flex items-center gap-2 h-9 px-5 rounded-full border border-[#e2dacd] dark:border-white/10 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all self-center"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Download PDF
+            </button>
+          </div>
         </div>
 
         {/* ── Order tracking ── */}
@@ -353,9 +367,9 @@ export default function OrderDetailPage() {
         {/* ── Help note ── */}
         <p className="text-center text-xs text-muted-foreground pb-4">
           Need help with this order?{" "}
-          <a href="/contact" className="text-[#b07e3a] hover:text-[#c89348] font-semibold transition-colors">
+          <Link href="/contact" className="text-[#b07e3a] hover:text-[#c89348] font-semibold transition-colors">
             Contact Support →
-          </a>
+          </Link>
         </p>
 
       </div>

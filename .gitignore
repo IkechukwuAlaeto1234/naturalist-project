@@ -45,3 +45,10 @@ mongodb.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# credentials
+client_secret_*.json
+
+# media recordings
+*.mp4
+*.png

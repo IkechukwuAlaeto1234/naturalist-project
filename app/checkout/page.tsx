@@ -1,13 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
-
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "../../context/CartContext";
-import { ShoppingBag, ArrowLeft, Loader2, ShieldCheck, CreditCard, Lock, ChevronDown, Search } from "lucide-react";
+import { useCurrency } from "@/context/CurrencyContext";
+import { ShoppingBag, ArrowLeft, Loader2, ShieldCheck, CreditCard, Lock, MapPin } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { getAllCountries, getStatesOfCountry } from "@/lib/geo";
+import { CountryFlag } from "@/components/ui/CountryFlag";
+import CustomDropdown from "@/components/ui/CustomDropdown";
 
 /* ─── Phone Country Data ─── */
 const PHONE_COUNTRIES = [
@@ -34,16 +36,12 @@ const PHONE_COUNTRIES = [
   { name: "Spain",          code: "ES",  dial: "+34",  format: "XXX XXX XXX",    max: 9  },
   { name: "Italy",          code: "IT",  dial: "+39",  format: "XXX XXX XXXX",   max: 10 },
   { name: "Portugal",       code: "PT",  dial: "+351", format: "XXX XXX XXX",    max: 9  },
-  { name: "Mexico",         code: "MX",  dial: "+52",  format: "XX XXXX XXXX",   max: 10 },
+  { name: "Mexico",         code: "MX",  dial: "+52",  format: "XX XXXXX XXXX",  max: 10 },
   { name: "Argentina",      code: "AR",  dial: "+54",  format: "XXX XXX XXXX",   max: 10 },
 ];
 type PhoneCountry = (typeof PHONE_COUNTRIES)[number];
 
-const inputCls = "px-4 py-2.5 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] focus:border-transparent transition-all placeholder:text-muted-foreground/40";
-const dropdownTriggerCls = "flex items-center justify-between px-4 py-2.5 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] transition-all w-full text-left cursor-pointer";
-const dropdownPanelCls = "absolute top-[calc(100%+6px)] left-0 right-0 bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl z-[80] overflow-hidden animate-toast-pop";
-const searchInputCls = "w-full px-3 py-1.5 text-xs rounded-full border border-[#e2dacd] dark:border-white/10 bg-muted/20 dark:bg-white/5 focus:outline-none focus:ring-1 focus:ring-[#b07e3a] placeholder:text-muted-foreground/50";
-const optionCls = (active: boolean) => `w-full px-4 py-2 text-left text-xs font-semibold hover:bg-[#f4efe6] dark:hover:bg-[#1e2621] transition-colors cursor-pointer ${active ? "text-[#b07e3a] bg-[#f4efe6]/40 dark:bg-[#1e2621]/40" : "text-foreground"}`;
+const inputCls = "px-4 py-2.5 text-sm rounded-xl border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] focus:border-transparent transition-all placeholder:text-muted-foreground/40";
 
 function applyPhoneFormat(digits: string, format: string): string {
   let result = "";
@@ -54,55 +52,634 @@ function applyPhoneFormat(digits: string, format: string): string {
   return result;
 }
 
-export default function CheckoutPage() {
+async function resolvePostalCode(countryCode: string, stateName: string, cityName: string): Promise<string | null> {
+  const parts = [];
+  if (cityName) parts.push(cityName);
+  if (stateName) parts.push(stateName);
+  if (countryCode) parts.push(countryCode);
+  
+  if (parts.length > 0) {
+    try {
+      const query = parts.join(", ");
+      const res = await fetch(`/api/geo?address=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.postal) {
+          return data.postal;
+        }
+      }
+    } catch (err) {
+      console.error("Failed to query API geocoding:", err);
+    }
+  }
+  return "";
+}
+
+function CheckoutPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
   const { data: session, status } = useSession();
   const { cartItems, cartSubtotal, loading: cartLoading } = useCart();
+  const { formatPrice, currency } = useCurrency();
+  const [isValidToken, setIsValidToken] = useState<boolean | null>(null);
 
-  const [processing, setProcessing]       = useState(false);
-  const [isCountryOpen, setIsCountryOpen] = useState(false);
-  const [countryQuery, setCountryQuery]   = useState("");
-  const [isStateOpen, setIsStateOpen]     = useState(false);
-  const [stateQuery, setStateQuery]       = useState("");
-  const [phoneCountry, setPhoneCountry]   = useState<PhoneCountry>(PHONE_COUNTRIES[3]); // Nigeria default
-  const [localPhone, setLocalPhone]       = useState("");
-  const [isPhoneOpen, setIsPhoneOpen]     = useState(false);
-  const [phoneQuery, setPhoneQuery]       = useState("");
+  // Loading and database lists
+  const [countriesList, setCountriesList] = useState<{ name: string; isoCode: string; phonecode: string }[]>([]);
+  const [statesList, setStatesList] = useState<{ name: string; isoCode: string }[]>([]);
+  const [citiesList, setCitiesList] = useState<{ name: string }[]>([]);
+  const [loadingCountries, setLoadingCountries] = useState(false);
+  const [loadingStates, setLoadingStates] = useState(false);
+  const [loadingCities, setLoadingCities] = useState(false);
 
-  const phoneRef   = useRef<HTMLDivElement>(null);
-  const countryRef = useRef<HTMLDivElement>(null);
-  const stateRef   = useRef<HTMLDivElement>(null);
+  // Geolocation and selections
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isDetectingGPS, setIsDetectingGPS] = useState(false);
+  const [detectedData, setDetectedData] = useState<any>(null);
+  const [selectedStateCode, setSelectedStateCode] = useState("");
+  const [loadingZip, setLoadingZip] = useState(false);
 
+  // GPS Permission states
+  const [gpsPermissionStatus, setGpsPermissionStatus] = useState<PermissionState | "prompt">("prompt");
+  const [showGPSModal, setShowGPSModal] = useState(false);
+
+  // Check GPS permission status on mount
+  useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.permissions) {
+      navigator.permissions.query({ name: "geolocation" }).then((permissionStatus) => {
+        setGpsPermissionStatus(permissionStatus.state);
+        permissionStatus.onchange = () => {
+          setGpsPermissionStatus(permissionStatus.state);
+        };
+      }).catch((err) => {
+        console.warn("Permissions API query failed:", err);
+      });
+    }
+  }, []);
+
+  // Address Autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<{ description: string; place_id: string }[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Close suggestions on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData(prev => ({ ...prev, address: val }));
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.trim().length < 4) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setLoadingSuggestions(true);
+      try {
+        const res = await fetch(`/api/geo?autocomplete=true&input=${encodeURIComponent(val)}&countryCode=${formData.countryCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAddressSuggestions(data);
+          setShowSuggestions(data.length > 0);
+        }
+      } catch (err) {
+        console.error("Autocomplete fetch error:", err);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 400);
+  };
+
+  const handleSelectSuggestion = async (placeId: string) => {
+    setLoadingZip(true);
+    setLoadingStates(true);
+    setLoadingCities(true);
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+
+    try {
+      const res = await fetch(`/api/geo?placeId=${placeId}`);
+      if (res.ok) {
+        const data = await res.json();
+
+        let targetCountry = data.country || formData.country;
+        let targetCountryCode = data.countryCode || formData.countryCode;
+
+        if (data.countryCode) {
+          const matchCountry = countriesList.find(c => c.isoCode.toLowerCase() === data.countryCode.toLowerCase());
+          if (matchCountry) {
+            targetCountry = matchCountry.name;
+            targetCountryCode = matchCountry.isoCode;
+          }
+        }
+
+        let resolvedStateCode = "";
+        if (data.state && targetCountryCode) {
+          try {
+            const statesRes = await fetch(`/api/geo?countryCode=${targetCountryCode}`);
+            if (statesRes.ok) {
+              const states = await statesRes.json();
+              setStatesList(states);
+
+              const cleanRegion = (data.state || "").toLowerCase()
+                .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+                .trim();
+
+              const matchState = states.find((s: any) => {
+                const cleanDbState = s.name.toLowerCase()
+                  .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+                  .trim();
+                return cleanDbState === cleanRegion || s.isoCode.toLowerCase() === cleanRegion;
+              });
+
+              if (matchState) {
+                resolvedStateCode = matchState.isoCode;
+                setSelectedStateCode(matchState.isoCode);
+              }
+            }
+          } catch (e) {
+            console.error("Failed to fetch states during autocomplete resolution:", e);
+          }
+        }
+
+        setDetectedData({
+          country: targetCountryCode,
+          region: data.state || "",
+          city: data.city || "",
+        });
+
+        setFormData(prev => ({
+          ...prev,
+          address: data.streetAddress || prev.address,
+          country: targetCountry,
+          countryCode: targetCountryCode,
+          state: data.state || prev.state,
+          city: data.city || prev.city,
+          zip: data.zip || ""
+        }));
+
+        if (targetCountryCode && resolvedStateCode) {
+          try {
+            const citiesRes = await fetch(`/api/geo?countryCode=${targetCountryCode}&stateCode=${resolvedStateCode}`);
+            if (citiesRes.ok) {
+              const cities = await citiesRes.json();
+              setCitiesList(cities);
+            }
+          } catch (e) {
+            console.error("Failed to fetch cities during autocomplete resolution:", e);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch place details:", err);
+    } finally {
+      setLoadingZip(false);
+      setLoadingStates(false);
+      setLoadingCities(false);
+    }
+  };
+
+  const handleDetectGPSLocation = () => {
+    if (gpsPermissionStatus === "denied") {
+      alert("Location access is denied. Please enable location permissions in your browser settings to use this feature.");
+      return;
+    }
+    if (gpsPermissionStatus === "granted") {
+      triggerActualGPSLocation(false);
+    } else {
+      setShowGPSModal(true);
+    }
+  };
+
+  const triggerActualGPSLocation = (silent = false) => {
+    if (!navigator.geolocation) {
+      if (!silent) alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setIsDetectingGPS(true);
+
+    const retrievePosition = (options: PositionOptions) => {
+      return new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+    };
+
+    // Try high accuracy first (20 seconds timeout). If that fails/times out, try low accuracy (15 seconds timeout).
+    retrievePosition({ enableHighAccuracy: true, timeout: 20000, maximumAge: 0 })
+      .catch((err) => {
+        console.warn("High accuracy geolocation failed or timed out, trying low accuracy...", err);
+        return retrievePosition({ enableHighAccuracy: false, timeout: 15000, maximumAge: 30000 });
+      })
+      .then(async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await fetch(`/api/geo?lat=${latitude}&lng=${longitude}`);
+          if (res.ok) {
+            const data = await res.json();
+            
+            let targetCountry = data.country || formData.country;
+            let targetCountryCode = data.countryCode || formData.countryCode;
+            
+            if (data.countryCode) {
+              const matchCountry = countriesList.find(
+                c => c.isoCode.toLowerCase() === data.countryCode.toLowerCase()
+              );
+              if (matchCountry) {
+                targetCountry = matchCountry.name;
+                targetCountryCode = matchCountry.isoCode;
+              }
+            }
+
+            setDetectedData({
+              country: targetCountryCode,
+              region: data.state || "",
+              city: data.city || "",
+            });
+
+            setFormData(prev => ({
+              ...prev,
+              address: data.streetAddress || prev.address,
+              country: targetCountry,
+              countryCode: targetCountryCode,
+              state: data.state || prev.state,
+              city: data.city || prev.city,
+              zip: data.zip || "",
+            }));
+
+            // Sync phone country format
+            const matchPhone = PHONE_COUNTRIES.find(
+              p => p.code.toLowerCase() === targetCountryCode.toLowerCase()
+            );
+            if (matchPhone) {
+              setPhoneCountry(matchPhone);
+            }
+
+            if (targetCountryCode && data.state) {
+              const statesRes = await fetch(`/api/geo?countryCode=${targetCountryCode}`);
+              if (statesRes.ok) {
+                const states = await statesRes.json();
+                setStatesList(states);
+                
+                const cleanRegion = (data.state || "").toLowerCase()
+                  .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+                  .trim();
+                const matchState = states.find((s: any) => {
+                  const cleanDbState = s.name.toLowerCase()
+                    .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+                    .trim();
+                  return cleanDbState === cleanRegion || s.isoCode.toLowerCase() === cleanRegion;
+                });
+                
+                if (matchState) {
+                  setSelectedStateCode(matchState.isoCode);
+                  const citiesRes = await fetch(`/api/geo?countryCode=${targetCountryCode}&stateCode=${matchState.isoCode}`);
+                  if (citiesRes.ok) {
+                    const cities = await citiesRes.json();
+                    setCitiesList(cities);
+                  }
+                }
+              }
+            }
+          } else {
+            if (!silent) alert("Unable to resolve address from coordinates.");
+          }
+        } catch (err: any) {
+          console.warn("GPS Reverse Geocoding failed:", err.message || err);
+          if (!silent) alert("Failed to resolve location details.");
+        } finally {
+          setIsDetectingGPS(false);
+        }
+      })
+      .catch((error) => {
+        console.warn("Geolocation error:", error.message || error.code || error);
+        if (!silent) {
+          let errorMsg = "Unable to retrieve your location.";
+          if (error.code === error.PERMISSION_DENIED) {
+            errorMsg = "Location access was denied. Please check your browser permission settings.";
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            errorMsg = "Location information is unavailable.";
+          } else if (error.code === error.TIMEOUT) {
+            errorMsg = "The request to get your location timed out.";
+          }
+          alert(errorMsg);
+        }
+        setIsDetectingGPS(false);
+      });
+  };
+
+  // Phone code
+  const [phoneCountry, setPhoneCountry] = useState<PhoneCountry>(PHONE_COUNTRIES[3]); // Nigeria default
+  const [localPhone, setLocalPhone] = useState("");
+
+  // Form input data
   const [formData, setFormData] = useState({
     name: "", email: "", address: "", city: "",
     state: "", zip: "", country: "Nigeria", countryCode: "NG",
-    phone: "", cardNum: "", cardExpiry: "", cardCvc: "",
+    phone: "",
   });
 
-  const allCountries     = useMemo(() => getAllCountries(), []);
-  const statesForCountry = useMemo(() => getStatesOfCountry(formData.countryCode), [formData.countryCode]);
-
-  const filteredCountries = useMemo(() =>
-    allCountries.filter(c => c.name.toLowerCase().includes(countryQuery.toLowerCase())),
-    [allCountries, countryQuery]
-  );
-  const filteredStates = useMemo(() =>
-    statesForCountry.filter(s => s.name.toLowerCase().includes(stateQuery.toLowerCase())),
-    [statesForCountry, stateQuery]
-  );
-  const filteredPhones = useMemo(() =>
-    PHONE_COUNTRIES.filter(c =>
-      c.name.toLowerCase().includes(phoneQuery.toLowerCase()) || c.dial.includes(phoneQuery)
-    ),
-    [phoneQuery]
-  );
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.replace("/login?callbackUrl=%2Fcheckout");
+    // If there is cached shipping info from a previous session, restore it
+    const token = sessionStorage.getItem("naturalist_checkout_token");
+    if (token) {
+      const cached = sessionStorage.getItem(`naturalist_shipping_${token}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setFormData(prev => ({
+            ...prev,
+            ...parsed
+          }));
+          // Restoring local phone formatting helper
+          if (parsed.phone) {
+            const matchDial = PHONE_COUNTRIES.find(c => parsed.phone.startsWith(c.dial)) || 
+                             countriesList.find(c => parsed.phone.startsWith(c.phonecode));
+            const dialStr = matchDial ? ((matchDial as any).dial || (matchDial as any).phonecode) : "";
+            if (dialStr) {
+              const localPart = parsed.phone.replace(dialStr, "").trim();
+              setLocalPhone(localPart);
+              if (matchDial) {
+                setPhoneCountry(matchDial as any);
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to parse cached shipping address:", e);
+        }
+      }
     }
-  }, [status, router]);
+  }, [countriesList]);
 
+  // 1. Fetch all countries from database API on mount
+  useEffect(() => {
+    const fetchCountries = async () => {
+      setLoadingCountries(true);
+      try {
+        const res = await fetch("/api/geo");
+        if (res.ok) {
+          const data = await res.json();
+          setCountriesList(data);
+        }
+      } catch (err) {
+        console.error("Error fetching countries:", err);
+      } finally {
+        setLoadingCountries(false);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  // 2. Geolocation check once countries are loaded
+  useEffect(() => {
+    if (countriesList.length === 0) return;
+
+    const autoDetectLocation = async () => {
+      // Check if geolocation permission is already granted
+      if (typeof navigator !== "undefined" && navigator.geolocation) {
+        try {
+          const permission = await navigator.permissions.query({ name: "geolocation" });
+          if (permission.state === "granted") {
+            triggerActualGPSLocation(true);
+            return;
+          }
+        } catch (e) {
+          console.warn("Silent GPS check failed, falling back to IP:", e);
+        }
+      }
+
+      setIsDetectingLocation(true);
+      try {
+        const res = await fetch("/api/geo?detect=true");
+        if (!res.ok) throw new Error("Location detection failed");
+        const data = await res.json();
+
+        // If we succeeded in resolving country details, pre-fill country only
+        if (data && data.country) {
+          const matchCountry = countriesList.find(
+            c => c.isoCode.toLowerCase() === data.country.toLowerCase()
+          );
+
+          if (matchCountry) {
+            // Set detectedData with country only (no region/city for IP geolocations)
+            setDetectedData({
+              country: matchCountry.isoCode,
+            });
+
+            setFormData(prev => ({
+              ...prev,
+              country: matchCountry.name,
+              countryCode: matchCountry.isoCode,
+              zip: "",
+              state: "",
+              city: "",
+            }));
+
+            // Set phone country matching detected country
+            const matchPhone = PHONE_COUNTRIES.find(
+              p => p.code.toLowerCase() === data.country.toLowerCase()
+            );
+            if (matchPhone) {
+              setPhoneCountry(matchPhone);
+            }
+          }
+        }
+      } catch (err: any) {
+        console.warn("Auto detect location error:", err.message || err);
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    autoDetectLocation();
+  }, [countriesList, gpsPermissionStatus]);
+
+  // 3. Fetch states list when countryCode changes
+  useEffect(() => {
+    if (!formData.countryCode) {
+      setStatesList([]);
+      setSelectedStateCode("");
+      return;
+    }
+
+    const fetchStates = async () => {
+      setLoadingStates(true);
+      try {
+        const res = await fetch(`/api/geo?countryCode=${formData.countryCode}`);
+        if (res.ok) {
+          const data = await res.json();
+          setStatesList(data);
+
+          // Auto-match region if detected data matches current country selection
+          if (detectedData && detectedData.country === formData.countryCode && detectedData.region) {
+            const cleanDetectedRegion = detectedData.region.toLowerCase()
+              .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+              .trim();
+
+            const matchState = data.find((s: any) => {
+              const cleanDbState = s.name.toLowerCase()
+                .replace(/\b(state|province|territory|region|governorate|department|prefecture)\b/g, "")
+                .trim();
+              
+              return cleanDbState === cleanDetectedRegion ||
+                     s.isoCode.toLowerCase() === cleanDetectedRegion ||
+                     cleanDbState.includes(cleanDetectedRegion) ||
+                     cleanDetectedRegion.includes(cleanDbState);
+            });
+
+            if (matchState) {
+              setSelectedStateCode(matchState.isoCode);
+              if (!formData.zip) {
+                resolvePostalCode(formData.countryCode, matchState.name, "").then(zip => {
+                  setFormData(prev => ({
+                    ...prev,
+                    state: matchState.name,
+                    zip: zip || prev.zip
+                  }));
+                });
+              } else {
+                setFormData(prev => ({
+                  ...prev,
+                  state: matchState.name
+                }));
+              }
+              return;
+            }
+          }
+
+          // Reset selection only if states exist in the database
+          if (data.length > 0) {
+            setSelectedStateCode("");
+            setFormData(prev => ({ ...prev, state: "" }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching states:", err);
+      } finally {
+        setLoadingStates(false);
+      }
+    };
+    fetchStates();
+  }, [formData.countryCode, detectedData]);
+
+  // 4. Fetch cities list when selectedStateCode changes
+  useEffect(() => {
+    if (!formData.countryCode || !selectedStateCode) {
+      setCitiesList([]);
+      return;
+    }
+
+    const fetchCities = async () => {
+      setLoadingCities(true);
+      try {
+        const res = await fetch(
+          `/api/geo?countryCode=${formData.countryCode}&stateCode=${selectedStateCode}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setCitiesList(data);
+
+          // Auto-match city name if matches current country selection
+          if (detectedData && detectedData.country === formData.countryCode && detectedData.city) {
+            const cleanDetectedCity = detectedData.city.toLowerCase().replace(/\s*\(.*\)\s*/g, "").trim();
+            const matchCity = data.find((c: any) => {
+              const cleanDbCity = c.name.toLowerCase().replace(/\s*\(.*\)\s*/g, "").trim();
+              return cleanDbCity === cleanDetectedCity ||
+                     cleanDbCity.includes(cleanDetectedCity) ||
+                     cleanDetectedCity.includes(cleanDbCity);
+            });
+            if (matchCity) {
+              const stateName = statesList.find(s => s.isoCode === selectedStateCode)?.name || "";
+              if (!formData.zip) {
+                resolvePostalCode(formData.countryCode, stateName, matchCity.name).then(zip => {
+                  setFormData(prev => ({
+                    ...prev,
+                    city: matchCity.name,
+                    zip: zip || prev.zip
+                  }));
+                });
+              } else {
+                setFormData(prev => ({
+                  ...prev,
+                  city: matchCity.name
+                }));
+              }
+              return;
+            }
+          }
+
+          // Reset selection only if cities exist in the database
+          if (data.length > 0) {
+            setFormData(prev => ({ ...prev, city: "" }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching cities:", err);
+      } finally {
+        setLoadingCities(false);
+      }
+    };
+    fetchCities();
+  }, [formData.countryCode, selectedStateCode, detectedData]);
+
+  // 5. Synchronize Phone Country dial code with selected shipping country
+  useEffect(() => {
+    if (countriesList.length === 0) return;
+    const match = PHONE_COUNTRIES.find(c => c.code === formData.countryCode);
+    if (match) {
+      setPhoneCountry(match);
+    } else {
+      const cDetails = countriesList.find(c => c.isoCode === formData.countryCode);
+      if (cDetails) {
+        setPhoneCountry({
+          name: cDetails.name,
+          code: cDetails.isoCode,
+          dial: cDetails.phonecode,
+          format: "XXXXXXXXXX",
+          max: 12
+        });
+      }
+    }
+    setLocalPhone("");
+    setFormData(prev => ({ ...prev, phone: "" }));
+  }, [formData.countryCode, countriesList]);
+
+  // 6. Navigation block check for auth and token session
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      router.replace("/login?callbackUrl=" + encodeURIComponent(`/checkout?token=${token || ""}`));
+      return;
+    }
+
+    const sessionToken = sessionStorage.getItem("naturalist_checkout_token");
+    if (!token || token !== sessionToken) {
+      alert("Invalid checkout session. Redirecting to cart.");
+      router.replace("/cart");
+      setIsValidToken(false);
+      return;
+    }
+    setIsValidToken(true);
+  }, [token, status, router]);
+
+  // 7. Title and session pre-fills
   useEffect(() => {
     const t = setTimeout(() => { document.title = "Checkout | Naturalist"; }, 120);
     const sessionTimer = session?.user
@@ -116,27 +693,60 @@ export default function CheckoutPage() {
     };
   }, [session]);
 
-  useEffect(() => {
-    const countryTimer = setTimeout(() => {
-      const match = PHONE_COUNTRIES.find(c => c.name === formData.country);
-      if (match) { setPhoneCountry(match); setLocalPhone(""); setFormData(prev => ({ ...prev, phone: "" })); }
-    }, 0);
-    return () => clearTimeout(countryTimer);
-  }, [formData.country]);
+  // Formatting options for CustomDropdown components
+  const countryOptions = useMemo(() =>
+    countriesList.map(c => ({
+      value: c.isoCode,
+      label: c.name,
+      countryCode: c.isoCode,
+    })),
+    [countriesList]
+  );
 
-  // Click-outside handlers
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!phoneRef.current?.contains(e.target as Node))   setIsPhoneOpen(false);
-      if (!countryRef.current?.contains(e.target as Node)) setIsCountryOpen(false);
-      if (!stateRef.current?.contains(e.target as Node))   setIsStateOpen(false);
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const stateOptions = useMemo(() =>
+    statesList.map(s => ({
+      value: s.isoCode,
+      label: s.name,
+    })),
+    [statesList]
+  );
 
-  // ── ALL HOOKS ABOVE ──
-  if (cartLoading || status === "loading") {
+  const cityOptions = useMemo(() =>
+    citiesList.map(c => ({
+      value: c.name,
+      label: c.name,
+    })),
+    [citiesList]
+  );
+
+  const phoneCountryOptions = useMemo(() => {
+    // Collect standard phone countries
+    const standardCodes = new Set(PHONE_COUNTRIES.map(p => p.code));
+    const list = PHONE_COUNTRIES.map(c => ({
+      value: c.code,
+      label: c.name,
+      buttonLabel: c.code, // Render only 2-letter code on selected button
+      countryCode: c.code,
+      subLabel: c.dial,
+    }));
+
+    // If active country selection is not in standard list, dynamically append it
+    if (formData.countryCode && !standardCodes.has(formData.countryCode)) {
+      const activeGeo = countriesList.find(c => c.isoCode === formData.countryCode);
+      if (activeGeo) {
+        list.push({
+          value: activeGeo.isoCode,
+          label: activeGeo.name,
+          buttonLabel: activeGeo.isoCode, // Render only 2-letter code
+          countryCode: activeGeo.isoCode,
+          subLabel: activeGeo.phonecode,
+        });
+      }
+    }
+    return list;
+  }, [formData.countryCode, countriesList]);
+
+  if (cartLoading || status === "loading" || isValidToken === null) {
     return (
       <div className="min-h-screen bg-white dark:bg-[#0f1411] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#2d4c38]" />
@@ -153,9 +763,9 @@ export default function CheckoutPage() {
           <p className="text-xs text-muted-foreground leading-relaxed">
             Please add products to your cart before entering checkout.
           </p>
-          <a href="/shop" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md">
+          <Link href="/shop" className="inline-flex items-center justify-center h-10 px-5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md">
             Go to Shop
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -164,18 +774,6 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCardNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
-    setFormData(prev => ({ ...prev, cardNum: raw.match(/.{1,4}/g)?.join(" ") ?? raw }));
-  };
-
-  const handleExpiry = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, 4);
-    const fmt = raw.length >= 3 ? raw.slice(0, 2) + "/" + raw.slice(2)
-              : raw.length === 2 && !e.target.value.endsWith("/") ? raw + "/" : raw;
-    setFormData(prev => ({ ...prev, cardExpiry: fmt }));
   };
 
   const handleLocalPhone = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,71 +787,73 @@ export default function CheckoutPage() {
     setFormData(prev => ({ ...prev, phone: `${phoneCountry.dial} ${fmt}` }));
   };
 
-  const handleCompleteOrder = async (e: React.FormEvent) => {
+  const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.address || !formData.city || !formData.state || !formData.zip || !formData.phone) {
-      alert("Please fill in all shipping details."); return;
+      alert("Please fill in all shipping details.");
+      return;
     }
-    if (!formData.cardNum || !formData.cardExpiry || !formData.cardCvc) {
-      alert("Please enter card credentials."); return;
+
+    if (!token) {
+      alert("Checkout session has expired. Redirecting to cart.");
+      router.push("/cart");
+      return;
     }
-    setProcessing(true);
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cartItems.map(item => ({
-            product: item.isBundle ? undefined : item.productId,
-            bundle:  item.isBundle ? item.productId : undefined,
-            name: item.name, price: item.price, quantity: item.quantity, image: item.image,
-          })),
-          totalAmount: finalTotal,
-          shippingAddress: {
-            email: formData.email, name: formData.name, address: formData.address,
-            city: formData.city, state: formData.state, zipCode: formData.zip,
-            country: formData.country, phone: formData.phone,
-          },
-        }),
-      });
-      if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to submit order."); }
-      const data = await res.json();
-      setProcessing(false);
-      router.push(`/order-confirmation?id=${data.orderId}&name=${encodeURIComponent(formData.name)}`);
-      const orderReference = data.orderNumber || data.orderId;
-      router.push(`/order-confirmation?id=${data.orderId}&reference=${encodeURIComponent(orderReference)}&name=${encodeURIComponent(formData.name)}`);
-    } catch (err) {
-      setProcessing(false);
-      const message = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
-      alert(message);
-    }
+
+    // Save form details to sessionStorage under the existing token
+    sessionStorage.setItem(`naturalist_shipping_${token}`, JSON.stringify(formData));
+
+    // Redirect to the payment step
+    router.push(`/checkout/payment?token=${token}`);
   };
 
-  const finalTotal = cartSubtotal + (cartSubtotal >= 75 ? 0 : 9);
+  const shippingThreshold = formData.countryCode === "US" ? 75 : 120;
+  const finalTotal = cartSubtotal + (cartSubtotal >= shippingThreshold ? 0 : 9);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1411] transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 pb-32">
       <div className="mx-auto max-w-7xl">
 
         <div className="mb-10">
-          <a href="/cart" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group">
+          <Link href="/cart" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors group">
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Back to Cart
-          </a>
+          </Link>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
             Secure Checkout
           </h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-
-          <form onSubmit={handleCompleteOrder} className="lg:col-span-8 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <form onSubmit={handleProceedToPayment} className="lg:col-span-8 space-y-6">
 
             {/* ── STEP 1: Delivery Address ── */}
             <div className="bg-white dark:bg-[#151c18]/30 rounded-3xl border border-[#e2dacd] dark:border-white/[0.08] p-6 sm:p-8 flex flex-col gap-5">
-              <h2 className="font-serif text-xl font-bold text-foreground pb-3 border-b border-[#e2dacd]/40 dark:border-white/[0.05]">
-                1. Delivery Address
-              </h2>
+              <div className="flex items-center justify-between pb-3 border-b border-[#e2dacd]/40 dark:border-white/[0.05]">
+                <h2 className="font-serif text-xl font-bold text-foreground">
+                  1. Delivery Address
+                </h2>
+                {gpsPermissionStatus !== "denied" && (
+                  <button
+                    type="button"
+                    onClick={handleDetectGPSLocation}
+                    disabled={isDetectingGPS}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-full border border-[#e2dacd] dark:border-white/10 hover:border-[#b07e3a] dark:hover:border-[#b07e3a] text-muted-foreground hover:text-foreground bg-transparent transition-all duration-300"
+                  >
+                    {isDetectingGPS ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin text-[#b07e3a]" />
+                        Locating...
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="h-3 w-3 text-[#2d4c38] dark:text-[#f4f6f4]" />
+                        Use GPS Location
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
@@ -266,193 +866,273 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col gap-1.5 relative" ref={suggestionsRef}>
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Street Address</label>
-                <input type="text" name="address" value={formData.address} onChange={handleInputChange} required placeholder="123 Botanical Street" className={inputCls} />
-              </div>
-
-              {/* Country dropdown */}
-              <div className="flex flex-col gap-1.5 relative" ref={countryRef}>
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Country</label>
-                <button type="button" onClick={() => { setIsCountryOpen(v => !v); setCountryQuery(""); }} className={dropdownTriggerCls}>
-                  <span>{formData.country}</span>
-                  <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isCountryOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isCountryOpen && (
-                  <div className={dropdownPanelCls}>
-                    <div className="p-2.5 border-b border-[#e2dacd]/60 dark:border-white/[0.06] flex items-center gap-2 px-3">
-                      <Search className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
-                      <input type="text" value={countryQuery} onChange={e => setCountryQuery(e.target.value)} placeholder="Search country…" autoFocus className={searchInputCls} />
-                    </div>
-                    <div className="max-h-52 overflow-y-auto">
-                      {filteredCountries.length === 0
-                        ? <p className="px-4 py-4 text-xs text-muted-foreground text-center">No results</p>
-                        : filteredCountries.map(c => (
-                          <button key={c.isoCode} type="button"
-                            onClick={() => { setFormData(prev => ({ ...prev, country: c.name, countryCode: c.isoCode, state: "" })); setIsCountryOpen(false); setCountryQuery(""); }}
-                            className={optionCls(formData.countryCode === c.isoCode)}>
-                            {c.name}
-                          </button>
-                        ))
+                <div className="relative w-full">
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleAddressChange}
+                    onFocus={() => {
+                      if (addressSuggestions.length > 0) {
+                        setShowSuggestions(true);
                       }
+                    }}
+                    required
+                    placeholder="123 Botanical Street"
+                    className={`${inputCls} w-full pr-10`}
+                    autoComplete="off"
+                  />
+                  {loadingSuggestions && (
+                    <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                      <Loader2 className="h-4 w-4 animate-spin text-[#b07e3a]" />
                     </div>
+                  )}
+                </div>
+
+                {/* Autocomplete Suggestions Menu */}
+                {showSuggestions && addressSuggestions.length > 0 && (
+                  <div className="absolute top-[calc(100%+6px)] left-0 w-full z-[999] bg-white dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-2xl shadow-2xl p-1.5 flex flex-col space-y-0.5 max-h-60 overflow-y-auto custom-thin-scroll animate-menu-pop">
+                    {addressSuggestions.map((suggestion, idx) => (
+                      <button
+                        key={`${suggestion.place_id}-${idx}`}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(suggestion.place_id)}
+                        className="w-full text-left h-10 px-3.5 rounded-xl text-xs font-semibold text-foreground hover:bg-muted dark:hover:bg-[#1a241e] bg-transparent transition-all truncate cursor-pointer"
+                      >
+                        {suggestion.description}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
+              {/* Country dropdown using centralized CustomDropdown */}
+              <div className="flex flex-col gap-1.5 relative">
+                {loadingCountries || isDetectingLocation ? (
+                  <div className="flex items-center justify-between px-4 h-12 rounded-xl border border-[#e2dacd] dark:border-white/10 bg-[#faf8f4] dark:bg-[#151c18] opacity-65">
+                    <span className="text-xs text-muted-foreground">Detecting country...</span>
+                    <Loader2 className="h-4 w-4 animate-spin text-[#b07e3a]" />
+                  </div>
+                ) : (
+                  <CustomDropdown
+                    options={countryOptions}
+                    value={formData.countryCode}
+                    onChange={async (code) => {
+                      const match = countriesList.find(c => c.isoCode === code);
+                      if (match) {
+                        setFormData(prev => ({
+                          ...prev,
+                          country: match.name,
+                          countryCode: code,
+                          state: "",
+                          city: "",
+                          zip: "",
+                        }));
+                        setSelectedStateCode("");
+                      }
+                    }}
+                    label="Country"
+                    placeholder="Select shipping country"
+                    searchable={true}
+                    searchPlaceholder="Search country..."
+                  />
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* State selection - dropdown if list exists, else text fallback */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">City</label>
-                  <input type="text" name="city" value={formData.city} onChange={handleInputChange} required placeholder="Lagos" className={inputCls} />
+                  {loadingStates || isDetectingLocation ? (
+                    <>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">State / Province</label>
+                      <div className="flex items-center justify-between px-4 h-12 rounded-xl border border-[#e2dacd] dark:border-white/10 bg-[#faf8f4] dark:bg-[#151c18] opacity-65">
+                        <span className="text-[11px] text-muted-foreground">Detecting state...</span>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-[#b07e3a]" />
+                      </div>
+                    </>
+                  ) : statesList.length > 0 ? (
+                    <CustomDropdown
+                      options={stateOptions}
+                      value={selectedStateCode}
+                      onChange={async (code) => {
+                        const match = statesList.find(s => s.isoCode === code);
+                        if (match) {
+                          setLoadingZip(true);
+                          setSelectedStateCode(code);
+                          const zip = await resolvePostalCode(formData.countryCode, match.name, "");
+                          setFormData(prev => ({
+                            ...prev,
+                            state: match.name,
+                            city: "",
+                            zip: zip || "",
+                          }));
+                          setLoadingZip(false);
+                        }
+                      }}
+                      label="State / Province"
+                      placeholder="Select state"
+                      searchable={true}
+                      searchPlaceholder="Search state..."
+                    />
+                  ) : (
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">State / Province</label>
+                      <input 
+                        type="text" 
+                        name="state" 
+                        value={formData.state} 
+                        onChange={handleInputChange} 
+                        onBlur={async () => {
+                          if (formData.state) {
+                            setLoadingZip(true);
+                            const zip = await resolvePostalCode(formData.countryCode, formData.state, formData.city);
+                            setFormData(prev => ({ ...prev, zip: zip || prev.zip }));
+                            setLoadingZip(false);
+                          }
+                        }}
+                        required 
+                        placeholder="State / Province" 
+                        className={inputCls} 
+                      />
+                    </div>
+                  )}
                 </div>
 
-                {/* State — searchable dropdown if states exist, else free text */}
-                <div className="flex flex-col gap-1.5 relative" ref={stateRef}>
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">State / Province</label>
-                  {statesForCountry.length > 0 ? (
+                {/* City selection - dropdown if list exists, else text fallback */}
+                <div className="flex flex-col gap-1.5">
+                  {loadingCities || isDetectingLocation ? (
                     <>
-                      <button type="button" onClick={() => { setIsStateOpen(v => !v); setStateQuery(""); }} className={dropdownTriggerCls}>
-                        <span className={formData.state ? "text-foreground" : "text-muted-foreground/50"}>
-                          {formData.state || "Select…"}
-                        </span>
-                        <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${isStateOpen ? "rotate-180" : ""}`} />
-                      </button>
-                      {isStateOpen && (
-                        <div className={dropdownPanelCls}>
-                          <div className="p-2.5 border-b border-[#e2dacd]/60 dark:border-white/[0.06] flex items-center gap-2 px-3">
-                            <Search className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
-                            <input type="text" value={stateQuery} onChange={e => setStateQuery(e.target.value)} placeholder="Search state…" autoFocus className={searchInputCls} />
-                          </div>
-                          <div className="max-h-52 overflow-y-auto">
-                            {filteredStates.length === 0
-                              ? <p className="px-4 py-4 text-xs text-muted-foreground text-center">No results</p>
-                              : filteredStates.map(s => (
-                                <button key={s.isoCode} type="button"
-                                  onClick={() => { setFormData(prev => ({ ...prev, state: s.name })); setIsStateOpen(false); setStateQuery(""); }}
-                                  className={optionCls(formData.state === s.name)}>
-                                  {s.name}
-                                </button>
-                              ))
-                            }
-                          </div>
-                        </div>
-                      )}
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">City</label>
+                      <div className="flex items-center justify-between px-4 h-12 rounded-xl border border-[#e2dacd] dark:border-white/10 bg-[#faf8f4] dark:bg-[#151c18] opacity-65">
+                        <span className="text-[11px] text-muted-foreground">Detecting city...</span>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-[#b07e3a]" />
+                      </div>
                     </>
+                  ) : statesList.length > 0 ? (
+                    <CustomDropdown
+                      options={cityOptions}
+                      value={formData.city}
+                      onChange={async (val) => {
+                        setLoadingZip(true);
+                        const stateName = statesList.find(s => s.isoCode === selectedStateCode)?.name || "";
+                        const zip = await resolvePostalCode(formData.countryCode, stateName, val);
+                        setFormData(prev => ({
+                          ...prev,
+                          city: val,
+                          zip: zip !== null ? zip : prev.zip
+                        }));
+                        setLoadingZip(false);
+                      }}
+                      label="City"
+                      placeholder={selectedStateCode ? "Select city" : "Select state first"}
+                      disabled={!selectedStateCode}
+                      searchable={true}
+                      searchPlaceholder="Search city..."
+                    />
                   ) : (
-                    <input type="text" name="state" value={formData.state} onChange={handleInputChange} required placeholder="State / Province" className={inputCls} />
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">City</label>
+                      <input 
+                        type="text" 
+                        name="city" 
+                        value={formData.city} 
+                        onChange={handleInputChange} 
+                        onBlur={async () => {
+                          if (formData.city) {
+                            setLoadingZip(true);
+                            const zip = await resolvePostalCode(formData.countryCode, formData.state, formData.city);
+                            setFormData(prev => ({ ...prev, zip: zip || prev.zip }));
+                            setLoadingZip(false);
+                          }
+                        }}
+                        required 
+                        placeholder="City name" 
+                        className={inputCls} 
+                      />
+                    </div>
                   )}
                 </div>
 
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">ZIP / Postal Code</label>
-                  <input type="text" name="zip" value={formData.zip} onChange={handleInputChange} required placeholder="100001" className={inputCls} />
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      name="zip"
+                      value={formData.zip}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="100001"
+                      className={`${inputCls} w-full pr-10`}
+                    />
+                    {(loadingStates || loadingCities || isDetectingLocation || loadingZip) && (
+                      <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
+                        <Loader2 className="h-4 w-4 animate-spin text-[#b07e3a]" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Phone — dial code picker + number input */}
+              {/* Phone number field utilizing dial dropdown selection */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex justify-between items-center w-full">
                   <span>Phone Number</span>
                   <span className="text-[9px] text-[#b07e3a] font-bold uppercase tracking-wider">Exclude leading 0</span>
                 </label>
-                <div className="relative" ref={phoneRef}>
-                  <div className="flex items-center rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] focus-within:ring-2 focus-within:ring-[#b07e3a] transition-all overflow-hidden">
-                    <button type="button" onClick={() => { setIsPhoneOpen(v => !v); setPhoneQuery(""); }}
-                      className="flex items-center gap-1 pl-3.5 pr-2.5 py-2.5 border-r border-[#e2dacd] dark:border-white/10 hover:bg-muted/30 transition-colors flex-shrink-0 select-none text-[11px] font-bold uppercase tracking-wider text-foreground/80 cursor-pointer">
-                      <span>{phoneCountry.code}</span>
-                      <span className="text-muted-foreground/80 tabular-nums">{phoneCountry.dial}</span>
-                      <ChevronDown className={`h-3 w-3 text-muted-foreground/60 transition-transform duration-150 ${isPhoneOpen ? "rotate-180" : ""}`} />
-                    </button>
+                
+                <div className="flex gap-2.5 items-end">
+                  <div className="w-44 flex-shrink-0">
+                    <CustomDropdown
+                      options={phoneCountryOptions}
+                      value={phoneCountry.code}
+                      onChange={(code) => {
+                        const match = PHONE_COUNTRIES.find(c => c.code === code) ||
+                          (countriesList.find(c => c.isoCode === code) && {
+                            name: countriesList.find(c => c.isoCode === code)!.name,
+                            code: code,
+                            dial: countriesList.find(c => c.isoCode === code)!.phonecode,
+                            format: "XXXXXXXXXX",
+                            max: 12
+                          });
+                        if (match) {
+                          setPhoneCountry(match);
+                          setLocalPhone("");
+                          setFormData(prev => ({ ...prev, phone: "" }));
+                        }
+                      }}
+                      placeholder="Dial Code"
+                      searchable={true}
+                      searchPlaceholder="Search code..."
+                    />
+                  </div>
+                  <div className="flex-1">
                     <input type="tel" value={localPhone} onChange={handleLocalPhone} required inputMode="tel" autoComplete="tel-national"
                       placeholder={phoneCountry.format.replace(/X/g, "0")}
-                      className="flex-1 px-3 py-2.5 text-sm bg-transparent text-foreground focus:outline-none placeholder:text-muted-foreground/40" />
+                      className="w-full px-4 py-2.5 text-sm rounded-xl border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] focus:border-transparent transition-all placeholder:text-muted-foreground/40" />
                   </div>
-                  <p className="text-[9px] text-muted-foreground/75 mt-1 select-none pl-3">
-                    * Please omit the leading zero of your phone number (e.g. enter 8031234567).
-                  </p>
-
-                  {isPhoneOpen && (
-                    <div className={dropdownPanelCls}>
-                      <div className="p-2.5 border-b border-[#e2dacd]/60 dark:border-white/[0.06] flex items-center gap-2 px-3">
-                        <Search className="h-3.5 w-3.5 text-muted-foreground/50 flex-shrink-0" />
-                        <input type="text" value={phoneQuery} onChange={e => setPhoneQuery(e.target.value)} placeholder="Search country or code…" autoFocus className={searchInputCls} />
-                      </div>
-                      <div className="max-h-52 overflow-y-auto">
-                        {filteredPhones.length === 0
-                          ? <p className="px-4 py-4 text-xs text-muted-foreground text-center">No results</p>
-                          : filteredPhones.map(c => (
-                            <button key={c.code} type="button"
-                              onClick={() => { setPhoneCountry(c); setLocalPhone(""); setFormData(prev => ({ ...prev, phone: "" })); setIsPhoneOpen(false); setPhoneQuery(""); }}
-                              className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 text-xs font-semibold hover:bg-[#f4efe6] dark:hover:bg-[#1e2621] transition-colors ${phoneCountry.code === c.code ? "text-[#b07e3a] bg-[#f4efe6]/50" : "text-foreground"}`}>
-                              <span className="flex-1 text-left">{c.name}</span>
-                              <span className="tabular-nums text-muted-foreground text-[11px]">{c.dial}</span>
-                            </button>
-                          ))
-                        }
-                      </div>
-                    </div>
-                  )}
                 </div>
+                <p className="text-[9px] text-muted-foreground/75 mt-0.5 select-none pl-1">
+                  * Please omit the leading zero of your phone number (e.g. enter 8031234567).
+                </p>
               </div>
             </div>
 
-            {/* ── STEP 2: Payment ── */}
-            <div className="bg-white dark:bg-[#151c18]/30 rounded-3xl border border-[#e2dacd] dark:border-white/[0.08] p-6 sm:p-8 flex flex-col gap-5">
-              <div className="flex items-center justify-between pb-3 border-b border-[#e2dacd]/40 dark:border-white/[0.05]">
-                <h2 className="font-serif text-xl font-bold text-foreground">2. Sandbox Payment</h2>
-                <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#b07e3a]">
-                  <Lock className="h-3.5 w-3.5" />Encrypted
-                </span>
-              </div>
-
-              <div className="p-4 bg-[#f4efe6] dark:bg-[#1e2621]/30 border border-[#b07e3a]/30 rounded-2xl flex gap-3.5 items-start">
-                <CreditCard className="h-5 w-5 text-[#b07e3a] flex-shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-xs font-bold text-foreground">Sandbox Mode Active</h4>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                    Enter any fake card credentials to trigger the checkout flow.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Credit Card Number</label>
-                <div className="relative">
-                  <input type="text" name="cardNum" value={formData.cardNum} onChange={handleCardNumber} required
-                    placeholder="4242 4242 4242 4242" maxLength={19} inputMode="numeric" autoComplete="cc-number"
-                    className={`w-full pl-11 pr-4 py-2.5 text-sm rounded-full border border-[#e2dacd] dark:border-white/10 bg-white dark:bg-[#0f1411] text-foreground focus:outline-none focus:ring-2 focus:ring-[#b07e3a] focus:border-transparent transition-all placeholder:text-muted-foreground/40`} />
-                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Expiration</label>
-                  <input type="text" name="cardExpiry" value={formData.cardExpiry} onChange={handleExpiry} required
-                    placeholder="MM / YY" maxLength={5} inputMode="numeric" autoComplete="cc-exp"
-                    className={`${inputCls} text-center tracking-widest`} />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">CVC</label>
-                  <input type="text" name="cardCvc" value={formData.cardCvc} onChange={handleInputChange} required
-                    placeholder="123" maxLength={3} inputMode="numeric" autoComplete="cc-csc"
-                    className={`${inputCls} text-center`} />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit */}
+            {/* Proceed to Payment Button */}
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-2">
               <span className="flex items-center gap-2 text-xs text-muted-foreground">
                 <ShieldCheck className="h-4 w-4 text-[#2d4c38]" />
                 Secure checkout guaranteed by Naturalist
               </span>
-              <button type="submit" disabled={processing}
-                className="w-full sm:w-auto flex h-12 min-w-[200px] items-center justify-center gap-2.5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 shadow-md cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed">
-                {processing ? <><Loader2 className="h-4 w-4 animate-spin" />Processing...</> : "Pay & Place Order"}
+              <button
+                type="submit"
+                className="w-full sm:w-auto flex h-12 min-w-[200px] items-center justify-center gap-2.5 rounded-xl bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 shadow-md cursor-pointer"
+              >
+                Proceed to Payment
               </button>
             </div>
-
           </form>
 
           {/* ── Right: Cart Summary ── */}
@@ -467,31 +1147,88 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-grow min-w-0">
                       <h4 className="text-xs font-bold text-foreground leading-normal truncate">{item.name}</h4>
-                      <p className="text-[10px] text-muted-foreground mt-0.5">Qty {item.quantity} × ${item.price.toFixed(2)}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Qty {item.quantity} × {formatPrice(item.price)}</p>
                     </div>
                     <span className="text-xs font-semibold text-[#2d4c38] dark:text-[#f4f6f4] font-serif shrink-0">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatPrice(item.price * item.quantity)}
                     </span>
                   </div>
                 ))}
               </div>
               <div className="border-t border-[#e2dacd]/60 dark:border-white/[0.05] pt-4 space-y-3 text-xs">
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Subtotal</span><span className="font-semibold text-foreground">${cartSubtotal.toFixed(2)}</span>
+                  <span>Subtotal</span><span className="font-semibold text-foreground">{formatPrice(cartSubtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between text-muted-foreground">
-                  <span>Shipping</span><span className="font-semibold text-foreground">{cartSubtotal >= 75 ? "Free" : "$9.00"}</span>
+                  <span>Shipping</span><span className="font-semibold text-foreground">{cartSubtotal >= shippingThreshold ? "Free" : formatPrice(9)}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm font-bold text-foreground pt-1 border-t border-[#e2dacd]/40 dark:border-white/[0.03]">
                   <span>Total</span>
-                  <span className="text-base font-bold text-[#2d4c38] dark:text-white font-serif">${finalTotal.toFixed(2)}</span>
+                  <span className="text-base font-bold text-[#2d4c38] dark:text-white font-serif">{formatPrice(finalTotal)}</span>
                 </div>
+                {currency !== "USD" && (
+                  <p className="text-[10px] text-muted-foreground/60 leading-relaxed pt-1">
+                    * Prices shown in {currency} for reference. Payment is processed in USD.
+                  </p>
+                )}
               </div>
             </div>
           </div>
 
         </div>
       </div>
+
+      {/* Geolocation Pre-Permission priming modal */}
+      {showGPSModal && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/45 dark:bg-black/60 backdrop-blur-sm transition-opacity duration-300">
+          <div className="bg-[#faf8f4] dark:bg-[#151c18] border border-[#e2dacd] dark:border-white/10 rounded-[32px] p-6 sm:p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center gap-6 animate-scale-up">
+            <div className="h-16 w-16 rounded-full bg-[#2d4c38]/10 dark:bg-white/5 flex items-center justify-center animate-pulse">
+              <MapPin className="h-8 w-8 text-[#2d4c38] dark:text-[#b07e3a]" />
+            </div>
+            
+            <div className="flex flex-col gap-2">
+              <h3 className="font-serif text-lg font-bold text-foreground">
+                Enable Precise Shipping
+              </h3>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Naturalist needs your device's location to automatically find your street address, city, state, and ZIP code to ensure accurate delivery.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGPSModal(false);
+                  triggerActualGPSLocation();
+                }}
+                className="flex-grow h-11 rounded-xl bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md cursor-pointer"
+              >
+                Allow Access
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowGPSModal(false)}
+                className="flex-grow h-11 rounded-xl border border-[#e2dacd] dark:border-white/10 hover:bg-muted dark:hover:bg-[#1a241e] text-xs font-bold uppercase tracking-wider text-muted-foreground transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-white dark:bg-[#0f1411] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#2d4c38]" />
+      </div>
+    }>
+      <CheckoutPageContent />
+    </React.Suspense>
   );
 }

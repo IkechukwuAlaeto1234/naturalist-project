@@ -42,6 +42,7 @@ export interface IOrder extends Document {
   paymentMethod: string;
   stripeSessionId?: string;
   totalAmount: number;
+  currency: string;
   // Tracking fields
   trackingNumber?: string;
   carrier?: string;
@@ -138,6 +139,11 @@ const OrderSchema = new Schema<IOrder>(
       type: Number,
       required: true,
       min: [0, "Total amount cannot be negative"],
+    },
+    currency: {
+      type: String,
+      required: true,
+      default: "USD",
     },
     // ── Tracking fields ───────────────────────────────────────────
     trackingNumber:   { type: String },

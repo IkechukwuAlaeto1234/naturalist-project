@@ -197,7 +197,9 @@ function drawCornerDecoration(doc: any, corner: "tl" | "tr" | "bl" | "br") {
 //   ─────── (bottom of page) ──
 //   Bottom rule + URL
 function buildCoverPage(doc: any, opts: GenerateLegalPDFOptions) {
-  const siteUrl = opts.siteUrl || "naturalist.com";
+  const siteUrl = opts.siteUrl ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    (typeof window !== "undefined" ? window.location.host : "naturalist.com");
 
   // ── Full cream background ─────────────────────────────────────────────────
   doc.setFillColor(CREAM[0], CREAM[1], CREAM[2]);
@@ -416,7 +418,7 @@ function drawClosingBlock(
 ) {
   const cx         = PAGE_W / 2;
   const contactUrl = opts.contactUrl || `${opts.siteUrl}/p/contact`;
-  const email      = opts.contactEmail || "hello@naturalist.com";
+  const email      = opts.contactEmail || process.env.EMAIL_FROM || "hello@naturalist.com";
 
   if (y + 55 > BODY_BOT) {
     doc.addPage();
@@ -484,6 +486,7 @@ export async function generateLegalPDF(opts: GenerateLegalPDFOptions): Promise<v
   const { jsPDF } = await import("jspdf");
 
   const siteUrl = opts.siteUrl ||
+    process.env.NEXT_PUBLIC_APP_URL ||
     (typeof window !== "undefined"
       ? window.location.origin
       : "https://naturalist.com");

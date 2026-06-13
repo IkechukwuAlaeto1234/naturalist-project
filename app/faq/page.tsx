@@ -3,6 +3,8 @@
 import React from "react";
 import { ArrowRight } from "lucide-react";
 
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "naturalistbotanicals@gmail.com";
+
 const faqs = [
   {
     category: "Products & Ingredients",
@@ -40,7 +42,7 @@ const faqs = [
       },
       {
         q: "Can I change or cancel my order after placing it?",
-        a: "Orders can be modified or cancelled within 2 hours of placement. After that window, fulfilment has usually begun. Contact us immediately at hello@naturalist.com and we will do our best to assist.",
+        a: `Orders can be modified or cancelled within 2 hours of placement. After that window, fulfilment has usually begun. Contact us immediately at ${CONTACT_EMAIL} and we will do our best to assist.`,
       },
       {
         q: "Do you ship internationally?",

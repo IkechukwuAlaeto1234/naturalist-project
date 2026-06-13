@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
+import { useCurrency } from "../../context/CurrencyContext";
 import { ShoppingBag, Trash2, Plus, Minus, ArrowRight, ArrowLeft, ShieldCheck, Truck, RotateCcw, Lock, Loader2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 
@@ -16,25 +18,34 @@ export default function CartPage() {
     removeFromCart,
     cartSubtotal,
   } = useCart();
+  const { formatPrice, currency, country } = useCurrency();
   const [mounted, setMounted] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   const { data: session, status } = useSession();
+
+  const openAuthModal = () => {
+    setCountdown(5);
+    setShowAuthModal(true);
+  };
+
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+    setCountdown(5);
+  };
+
+  const shippingThreshold = country.code === "US" ? 75 : 120;
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (showAuthModal) {
-      setCountdown(5);
       timer = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
             clearInterval(timer);
-            if (typeof window !== "undefined") {
-              window.dispatchEvent(new Event("naturalist:navigation-start"));
-            }
-            router.push("/register?callbackUrl=%2Fcheckout");
             return 0;
           }
           return prev - 1;
@@ -44,7 +55,16 @@ export default function CartPage() {
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [showAuthModal, router]);
+  }, [showAuthModal]);
+
+  useEffect(() => {
+    if (showAuthModal && countdown === 0) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("naturalist:navigation-start"));
+      }
+      router.push("/register?callbackUrl=%2Fcheckout");
+    }
+  }, [countdown, showAuthModal, router]);
 
   useEffect(() => {
     const mountedTimer = setTimeout(() => setMounted(true), 0);
@@ -75,21 +95,19 @@ export default function CartPage() {
     }
   };
 
-  const finalTotal = cartSubtotal;
-
   return (
     <div className="min-h-screen bg-white dark:bg-[#0f1411] transition-colors duration-300 py-12 px-4 sm:px-6 lg:px-8 pb-32">
       <div className="mx-auto max-w-5xl">
         
         {/* Breadcrumb / Title */}
         <div className="mb-10">
-          <a
+          <Link
             href="/shop"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors mb-3 group"
           >
             <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform" />
             Continue Shopping
-          </a>
+          </Link>
           <div className="text-center">
             <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black text-[#141f19] dark:text-[#f4f6f4] tracking-tight leading-none mt-2">
               Your Cart
@@ -112,12 +130,12 @@ export default function CartPage() {
                 Nourish your skin. Add botanical cleansers, restorative tonics, and sets to your daily ritual.
               </p>
             </div>
-            <a
+            <Link
               href="/shop"
               className="mt-2 inline-flex items-center justify-center h-11 px-6 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-wider text-white transition-all shadow-md select-none cursor-pointer"
             >
               Start Shopping
-            </a>
+            </Link>
           </div>
         ) : (
           /* Main Layout */
@@ -156,7 +174,7 @@ export default function CartPage() {
                       
                       {/* Price (Desktop) */}
                       <span className="hidden sm:inline text-lg font-bold text-[#2d4c38] dark:text-[#f4f6f4] font-serif leading-none shrink-0">
-                        ${item.price.toFixed(2)}
+                        {formatPrice(item.price)}
                       </span>
                     </div>
 
@@ -186,10 +204,10 @@ export default function CartPage() {
                       {/* Pricing / Remove row */}
                       <div className="flex items-center gap-4">
                         <span className="text-base font-bold text-[#2d4c38] dark:text-[#f4f6f4] font-serif sm:hidden">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {formatPrice(item.price * item.quantity)}
                         </span>
                         <span className="hidden sm:inline text-base font-bold text-[#b07e3a] font-serif">
-                          Subtotal: ${(item.price * item.quantity).toFixed(2)}
+                          Subtotal: {formatPrice(item.price * item.quantity)}
                         </span>
                         <button
                           onClick={() => setItemToDelete(item.id)}
@@ -209,7 +227,7 @@ export default function CartPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
                 {[
                   { icon: ShieldCheck, title: "100% Organic Recipes", desc: "Eco-certified clean botanical skincare" },
-                  { icon: Truck, title: "Carbon Neutral Delivery", desc: "Free standard shipping over $75" },
+                  { icon: Truck, title: "Carbon Neutral Delivery", desc: `Free standard shipping over ${formatPrice(shippingThreshold)}` },
                   { icon: RotateCcw, title: "30-Day Ritual Return", desc: "No-questions exchange and full refunds" },
                 ].map(({ icon: Icon, title, desc }) => (
                   <div key={title} className="flex gap-3 p-4 rounded-2xl border border-[#e2dacd]/70 dark:border-white/[0.06] bg-white/50 dark:bg-[#151c18]/10 items-start">
@@ -235,13 +253,13 @@ export default function CartPage() {
                 <div className="space-y-3.5 text-sm border-b border-[#e2dacd]/60 dark:border-white/[0.05] pb-5">
                   <div className="flex justify-between items-center text-muted-foreground">
                     <span>Ritual Subtotal</span>
-                    <span className="font-semibold text-foreground">${cartSubtotal.toFixed(2)}</span>
+                    <span className="font-semibold text-foreground">{formatPrice(cartSubtotal)}</span>
                   </div>
 
                   <div className="flex justify-between items-center text-muted-foreground">
                     <span>Shipping</span>
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#b07e3a]">
-                      {cartSubtotal >= 75 ? "Free Shipping" : "$9.00"}
+                      {cartSubtotal >= shippingThreshold ? "Free Shipping" : formatPrice(9)}
                     </span>
                   </div>
 
@@ -255,7 +273,7 @@ export default function CartPage() {
                 <div className="flex items-center justify-between text-base font-semibold pt-1">
                   <span className="text-foreground">Total Ritual Price</span>
                   <span className="text-xl font-bold text-[#2d4c38] dark:text-white font-serif">
-                    ${(finalTotal + (cartSubtotal >= 75 ? 0 : 9)).toFixed(2)}
+                    {formatPrice(cartSubtotal + (cartSubtotal >= shippingThreshold ? 0 : 9))}
                   </span>
                 </div>
 
@@ -263,20 +281,41 @@ export default function CartPage() {
                 <button
                   onClick={() => {
                     if (status === "authenticated" && session?.user) {
-                      router.push("/checkout");
+                      setCheckingOut(true);
+                      setTimeout(() => {
+                        const token = "chk_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                        sessionStorage.setItem("naturalist_checkout_token", token);
+                        window.dispatchEvent(new Event("naturalist:navigation-start"));
+                        router.push(`/checkout?token=${token}`);
+                      }, 1000);
                     } else {
-                      setShowAuthModal(true);
+                      openAuthModal();
                     }
                   }}
-                  className="w-full flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.2)] cursor-pointer select-none shrink-0"
+                  disabled={checkingOut}
+                  className="w-full flex h-12 items-center justify-center gap-2.5 rounded-full bg-[#2d4c38] hover:bg-[#b07e3a] text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 shadow-[0_2px_12px_rgba(45,76,56,0.25)] hover:shadow-[0_2px_16px_rgba(176,126,58,0.2)] cursor-pointer select-none shrink-0 disabled:opacity-75 disabled:cursor-not-allowed"
                 >
-                  Proceed to Checkout
-                  <ArrowRight className="h-4 w-full max-w-[14px]" />
+                  {checkingOut ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+                      Proceeding...
+                    </>
+                  ) : (
+                    <>
+                      Proceed to Checkout
+                      <ArrowRight className="h-4 w-full max-w-[14px]" />
+                    </>
+                  )}
                 </button>
                 
                 <p className="text-[10px] text-center text-muted-foreground mt-1">
                   By clicking, you accept our standard Shipping & Return policies.
                 </p>
+                {currency !== "USD" && (
+                  <p className="text-[10px] text-center text-muted-foreground/60 mt-1">
+                    * Prices shown in {currency} for reference. Payment is processed in USD.
+                  </p>
+                )}
 
               </div>
             </div>
@@ -323,7 +362,7 @@ export default function CartPage() {
           {/* Backdrop overlay */}
           <div
             className="fixed inset-0 bg-[#0c120e]/60 dark:bg-black/80 backdrop-blur-sm transition-opacity duration-300 cursor-pointer"
-            onClick={() => setShowAuthModal(false)}
+            onClick={closeAuthModal}
           />
 
           {/* Modal Card Container */}
@@ -334,7 +373,7 @@ export default function CartPage() {
           >
             {/* Close Button */}
             <button
-              onClick={() => setShowAuthModal(false)}
+              onClick={closeAuthModal}
               className="absolute right-6 top-6 flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background hover:bg-muted text-muted-foreground transition-all cursor-pointer flex-shrink-0"
               aria-label="Close modal"
             >
@@ -383,7 +422,7 @@ export default function CartPage() {
                 Sign In Instead
               </button>
               <button
-                onClick={() => setShowAuthModal(false)}
+                onClick={closeAuthModal}
                 className="w-full flex h-10 items-center justify-center rounded-full border border-transparent hover:bg-muted/30 text-xs font-bold uppercase tracking-widest text-muted-foreground/65 hover:text-muted-foreground transition-all cursor-pointer"
               >
                 Stay on Cart

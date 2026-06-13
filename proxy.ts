@@ -139,10 +139,39 @@ export const proxy = auth((req) => {
 });
 
 export const config = {
-  // Let proxy intercept all page routes to enable seamless subdomain mapping and admin checks
+  // Surgical matcher — only intercept routes where the proxy or NextAuth
+  // actually needs to do real work (auth guards, subdomain rewrites, API auth).
+  //
+  // Everything NOT listed here (blog, shop, story, faq, contact, bundles,
+  // p/[slug], privacy-policy, terms, sustainability, sitemap, newsletter-*,
+  // search, etc.) is left completely alone so Next.js compiles and serves
+  // those pages without a blocking middleware round-trip.
   matcher: [
+    // ── Admin (page + API) — must be guarded ───────────────────────────────
     "/admin/:path*",
     "/api/admin/:path*",
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+
+    // ── Protected user pages — NextAuth authorized() callback gates these ──
+    "/account/:path*",
+    "/checkout/:path*",
+    "/orders/:path*",
+    "/order-confirmation/:path*",
+    "/cart",
+    "/user/:path*",
+
+    // ── Auth flows — needed so already-logged-in users get redirected away ─
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password/:path*",
+    "/verify-email",
+
+    // ── CDN subdomain rewrite ──────────────────────────────────────────────
+    "/cdn/:path*",
+
+    // ── All API routes except static Next.js internals ─────────────────────
+    // Auth APIs, geo, products, etc. need headers/tracing but NOT full page
+    // session checks — NextAuth handles session via the route handlers directly.
+    "/api/((?!_next).*)",
   ],
 };

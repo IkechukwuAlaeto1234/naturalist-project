@@ -281,7 +281,7 @@ export default function AdminNewsletterPage() {
             </div>
           ) : (
             <div className="overflow-x-auto pr-1">
-              <table className="w-full text-left text-xs divide-y divide-[#1a241e]">
+              <table className="w-full min-w-[800px] text-left text-xs divide-y divide-[#1a241e]">
                 <thead>
                   <tr className="text-[#a3b2a9] font-bold uppercase tracking-wider bg-[#0c100e]">
                     <th className="pb-3">Subscribed Email</th>
@@ -329,7 +329,7 @@ export default function AdminNewsletterPage() {
                               <button
                                 onClick={() => handleSendWelcome(s._id)}
                                 disabled={sendingWelcomeId === s._id}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#b07e3a]/30 hover:border-[#b07e3a] bg-[#b07e3a]/5 hover:bg-[#b07e3a]/15 text-[#b07e3a] hover:text-[#e4a853] text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#b07e3a]/30 hover:border-[#b07e3a] bg-[#b07e3a]/5 hover:bg-[#b07e3a]/15 text-[#b07e3a] hover:text-[#e4a853] text-[10px] font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer whitespace-nowrap"
                                 title="Send Welcome Email"
                               >
                                 {sendingWelcomeId === s._id ? (
@@ -337,7 +337,7 @@ export default function AdminNewsletterPage() {
                                 ) : (
                                   <Mail className="h-3 w-3" />
                                 )}
-                                <span>Send</span>
+                                <span className="hidden sm:inline">Send</span>
                               </button>
                             ) : (
                               <span className="text-[#5e6f64] italic text-[10px]">N/A</span>

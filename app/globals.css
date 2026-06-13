@@ -151,6 +151,7 @@
   --animate-scale-up: scale-up 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   --animate-modal-slide-in: modal-slide-in 0.48s cubic-bezier(0.175, 0.885, 0.32, 1.15) forwards;
   --animate-icon-pop: icon-pop-bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  --animate-menu-pop: menu-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes fade-in {
@@ -497,6 +498,34 @@ body {
   background-size: 200% 100%;
 }
 
+/* Hide scrollbar but keep scroll functionality — used for horizontal tab navs */
+.scrollbar-none {
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;                /* Chrome / Safari / Opera */
+}
+
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Announcement banner marquee — translate -50% because content is doubled */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+
 /* Material Symbols Rounded utility */
 .ms {
   font-family: 'Material Symbols Rounded';
@@ -538,6 +567,29 @@ body {
 }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(0,0,0,0.22);
+}
+
+/* Custom premium thin scrollbar for modals/dropdowns */
+.custom-thin-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(94, 111, 100, 0.35);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+.custom-thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 76, 56, 0.55);
+}
+.dark .custom-thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(163, 178, 169, 0.3);
+}
+.dark .custom-thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(163, 178, 169, 0.5);
 }
 
 /* ─── Admin Light-Theme Overrides ───────────────────────────────
@@ -595,3 +647,188 @@ body {
 .admin-content-area .bg-emerald-500 * {
   color: #ffffff !important;
 }
+
+/* ===================================
+   PREMIUM LUXURY ANIMATION UTILITIES
+   =================================== */
+
+/* Custom easing variables & animation variables */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-premium: all 0.8s var(--ease-out-expo);
+  --transition-premium-fast: all 0.4s var(--ease-out-expo);
+  --mouse-x: 50vw;
+  --mouse-y: 50vh;
+}
+
+/* Ambient Cursor Glow Follower */
+.ambient-glow-follower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(circle, rgba(45, 76, 56, 0.04) 0%, rgba(176, 126, 58, 0.02) 40%, transparent 70%);
+  transform: translate(calc(var(--mouse-x) - 250px), calc(var(--mouse-y) - 250px));
+  transition: transform 0.1s ease-out;
+  will-change: transform;
+}
+
+/* Luxury Word Reveal System */
+.word-reveal-container {
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: bottom;
+  line-height: 1.15;
+}
+
+.word-reveal-text {
+  display: inline-block;
+  transform: translateY(105%);
+  opacity: 0;
+  animation: word-rise 0.9s var(--ease-out-expo) forwards;
+}
+
+@keyframes word-rise {
+  0% {
+    transform: translateY(105%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Scroll Reveal Framework */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1.2s var(--ease-out-expo), transform 1.2s var(--ease-out-expo);
+  will-change: opacity, transform;
+}
+
+.reveal.reveal-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Scroll Stagger Delays */
+.reveal-delay-50  { transition-delay: 50ms; }
+.reveal-delay-100 { transition-delay: 100ms; }
+.reveal-delay-150 { transition-delay: 150ms; }
+.reveal-delay-200 { transition-delay: 200ms; }
+.reveal-delay-250 { transition-delay: 250ms; }
+.reveal-delay-300 { transition-delay: 300ms; }
+.reveal-delay-350 { transition-delay: 350ms; }
+.reveal-delay-400 { transition-delay: 400ms; }
+.reveal-delay-500 { transition-delay: 500ms; }
+
+/* SVG Leaf Line Drawing Keyframes */
+@keyframes leaf-draw {
+  from {
+    stroke-dashoffset: 600;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-in-grow {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-leaf-draw {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: leaf-draw 2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in-grow {
+  animation: fade-in-grow 1s var(--ease-out-expo) forwards;
+}
+
+/* Interactive Card Scale Tilt effects */
+.card-premium-hover {
+  transition: transform 0.6s var(--ease-out-expo), box-shadow 0.6s var(--ease-out-expo), border-color 0.6s var(--ease-out-expo);
+}
+.card-premium-hover:hover {
+  transform: translateY(-8px) scale(1.01) rotate(0.3deg);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+}
+.dark .card-premium-hover:hover {
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+}
+
+/* Premium Button Hover Shine Overlay */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  transition: 0.75s var(--ease-out-expo);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.btn-shimmer:hover::after {
+  left: 125%;
+  opacity: 1;
+}
+
+/* Lucide Icon slider inside buttons */
+.btn-icon-slide .btn-arrow {
+  transition: transform 0.3s var(--ease-out-expo);
+}
+.btn-icon-slide:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Conic Ring Brand Loader (Mask-based) */
+.brand-conic-loader {
+  width: 50px;
+  padding: 8px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--accent); /* Premium sand gold/bronze color */
+  --_m: 
+    conic-gradient(#0000 10%,#000),
+    linear-gradient(#000 0 0) content-box;
+  -webkit-mask: var(--_m);
+          mask: var(--_m);
+  -webkit-mask-composite: source-out;
+          mask-composite: subtract;
+  animation: l3-conic-rotate 1s infinite linear;
+}
+
+@keyframes l3-conic-rotate {
+  to {
+    transform: rotate(1turn);
+  }
+}
+

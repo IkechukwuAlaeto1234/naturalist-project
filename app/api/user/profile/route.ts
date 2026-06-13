@@ -3,6 +3,34 @@ import { connectToDatabase } from "@/lib/db";
 import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 
+const ipLocationCache = new Map<string, string>();
+
+async function getIpLocation(ip: string): Promise<string> {
+  if (!ip || ip === "::1" || ip === "127.0.0.1" || ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("::ffff:127.0.0.1")) {
+    return "Ibadan, Nigeria (Local)";
+  }
+  if (ipLocationCache.has(ip)) {
+    return ipLocationCache.get(ip)!;
+  }
+  try {
+    // Call free ip-api.com (no key needed, 45 requests per min max)
+    const res = await fetch(`http://ip-api.com/json/${ip}?fields=status,city,regionName,country`, {
+      signal: AbortSignal.timeout(1500) // Timeout after 1500ms to avoid blocking
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === "success") {
+        const loc = `${data.city}, ${data.regionName}, ${data.country}`;
+        ipLocationCache.set(ip, loc);
+        return loc;
+      }
+    }
+  } catch (e) {
+    console.error("Geocoding failed for IP:", ip, e);
+  }
+  return "Unknown Location";
+}
+
 /**
  * GET /api/user/profile
  * Retrieve profile details of logged-in user
@@ -30,7 +58,16 @@ export async function GET() {
     }
 
     console.log(`GET /api/user/profile - Success for user: ${user.email}`);
-    return NextResponse.json(user, { status: 200 });
+    
+    const userObj = user.toObject({ flattenMaps: true });
+    if (userObj.sessions && userObj.sessions.length > 0) {
+      userObj.sessions = await Promise.all(userObj.sessions.map(async (s: any) => {
+        const location = await getIpLocation(s.ipAddress);
+        return { ...s, location };
+      }));
+    }
+
+    return NextResponse.json(userObj, { status: 200 });
   } catch (error) {
     console.error("GET profile error:", error);
     return NextResponse.json({ error: "Failed to retrieve profile" }, { status: 500 });
@@ -70,7 +107,7 @@ export async function PUT(req: Request) {
     }
 
     if (image !== undefined) {
-      if (image !== "" && !image.startsWith("https://res.cloudinary.com/") && !image.startsWith("https://lh3.googleusercontent.com")) {
+      if (image !== "" && !image.startsWith("https://res.cloudinary.com/") && !image.startsWith("https://lh3.googleusercontent.com") && !image.startsWith("/cdn/")) {
         console.log(`PUT /api/user/profile - validation failed: invalid image URL ("${image}")`);
         return NextResponse.json({ error: "Invalid image URL" }, { status: 400 });
       }

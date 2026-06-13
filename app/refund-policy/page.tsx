@@ -7,32 +7,36 @@ import { useSession } from "next-auth/react";
 import LegalPageShell from "@/components/ui/LegalPageShell";
 import { generateLegalPDF } from "@/lib/generateLegalPDF";
 
-const DEFAULT_SECTIONS = [
-  {
-    heading: "1. 30-Day Satisfaction Guarantee",
-    body: "If you're not completely satisfied with any Naturalist product, return it within 30 days of delivery for a full refund — no questions asked. The product must be at least 50% unused.",
-  },
-  {
-    heading: "2. How to Initiate a Return",
-    body: "Log in to your account and navigate to 'My Orders'. Select the item you wish to return and follow the guided steps. A prepaid return label will be emailed to you within 24 hours.",
-  },
-  {
-    heading: "3. Refund Processing Time",
-    body: "Once we receive your return, refunds are processed within 3–5 business days. The funds typically appear on your statement within 5–10 business days depending on your bank or card issuer.",
-  },
-  {
-    heading: "4. Damaged or Incorrect Orders",
-    body: "If your order arrives damaged or incorrect, contact us at hello@naturalist.com within 7 days with a photo. We will dispatch a replacement at no cost within 2 business days.",
-  },
-  {
-    heading: "5. Non-Returnable Items",
-    body: "For hygiene reasons, opened products that are more than 50% used cannot be returned. Gift cards and downloadable content are also non-refundable.",
-  },
-  {
-    heading: "6. International Returns",
-    body: "International customers are responsible for return shipping costs unless the item is damaged or incorrect. Refunds are issued in the original currency of purchase.",
-  },
-];
+const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "naturalistbotanicals@gmail.com";
+
+function getDefaultSections() {
+  return [
+    {
+      heading: "1. 30-Day Satisfaction Guarantee",
+      body: "If you're not completely satisfied with any Naturalist product, return it within 30 days of delivery for a full refund — no questions asked. The product must be at least 50% unused.",
+    },
+    {
+      heading: "2. How to Initiate a Return",
+      body: "Log in to your account and navigate to 'My Orders'. Select the item you wish to return and follow the guided steps. A prepaid return label will be emailed to you within 24 hours.",
+    },
+    {
+      heading: "3. Refund Processing Time",
+      body: "Once we receive your return, refunds are processed within 3–5 business days. The funds typically appear on your statement within 5–10 business days depending on your bank or card issuer.",
+    },
+    {
+      heading: "4. Damaged or Incorrect Orders",
+      body: `If your order arrives damaged or incorrect, contact us at ${CONTACT_EMAIL} within 7 days with a photo. We will dispatch a replacement at no cost within 2 business days.`,
+    },
+    {
+      heading: "5. Non-Returnable Items",
+      body: "For hygiene reasons, opened products that are more than 50% used cannot be returned. Gift cards and downloadable content are also non-refundable.",
+    },
+    {
+      heading: "6. International Returns",
+      body: "International customers are responsible for return shipping costs unless the item is damaged or incorrect. Refunds are issued in the original currency of purchase.",
+    },
+  ];
+}
 
 export default function RefundPolicyPage() {
   const [mounted, setMounted] = useState(false);
@@ -70,7 +74,7 @@ export default function RefundPolicyPage() {
       eyebrow: "Legal",
       subtitle: content?.metadata?.subtitle || "Our return, exchange, and refund guarantees.",
       effectiveDate: e,
-      sections: content?.metadata?.sections || DEFAULT_SECTIONS,
+      sections: content?.metadata?.sections || getDefaultSections(),
       filename: `naturalist-refund-policy-${datePart || "latest"}.pdf`,
     });
   };
@@ -80,7 +84,7 @@ export default function RefundPolicyPage() {
   const titleText = content?.metadata?.title || "Refund Policy";
   const subtitleText = content?.metadata?.subtitle || "Our return, exchange, and refund guarantees.";
   const effectiveDateText = content?.metadata?.effectiveDate || "May 31, 2026";
-  const sectionsList = content?.metadata?.sections || DEFAULT_SECTIONS;
+  const sectionsList = content?.metadata?.sections || getDefaultSections();
 
   return (
     <>

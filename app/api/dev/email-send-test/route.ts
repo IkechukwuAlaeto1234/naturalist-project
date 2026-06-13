@@ -31,14 +31,16 @@ export async function POST(req: Request) {
     let textFallback = "";
 
     switch (template) {
-      case "UnsubscribeConfirmationEmail":
+      case "UnsubscribeConfirmationEmail": {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         element = React.createElement(UnsubscribeConfirmationEmail, {
           email: "ikechukwualaeto@gmail.com",
-          resubscribeUrl: "http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com",
+          resubscribeUrl: `${appUrl}/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com`,
         });
         subject = "You've been unsubscribed from Naturalist";
-        textFallback = "Hi,\n\nYou have been successfully unsubscribed from the Naturalist newsletter. Changed your mind? Re-subscribe at: http://localhost:3000/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com";
+        textFallback = `Hi,\n\nYou have been successfully unsubscribed from the Naturalist newsletter. Changed your mind? Re-subscribe at: ${appUrl}/api/newsletter/subscribe?email=ikechukwualaeto%40gmail.com`;
         break;
+      }
       case "OTPEmail":
         element = React.createElement(OTPEmail, {
           otp: "N4TGLO",

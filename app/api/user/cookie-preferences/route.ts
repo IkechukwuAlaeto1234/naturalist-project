@@ -20,6 +20,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Save preferences inside user settings
+    if (!user.settings) {
+      user.settings = new Map();
+    }
+    const existingCookies = user.settings.get("cookies") || {};
+    user.settings.set("cookies", {
+      ...existingCookies,
+      analytics,
+      marketing,
+      promotions,
+    });
+    user.markModified("settings");
+    await user.save();
+
+    // Sync promotions state with Newsletter subscription
+    const { Newsletter } = await import("@/models/Newsletter");
+    if (promotions) {
+      await Newsletter.findOneAndUpdate(
+        { email: user.email },
+        {
+          isActive: true,
+          subscribedAt: new Date(),
+          $unset: { unsubscribedAt: 1, unsubscribeReason: 1, unsubscribeFeedback: 1 }
+        },
+        { upsert: true, new: true }
+      );
+    } else {
+      await Newsletter.findOneAndUpdate(
+        { email: user.email },
+        {
+          isActive: false,
+          unsubscribedAt: new Date(),
+          unsubscribeReason: "Cookie preferences update"
+        }
+      );
+    }
+
     // Capture headers for logging the action
     const { headers } = await import("next/headers");
     const headersList = await headers();

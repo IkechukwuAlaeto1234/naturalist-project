@@ -46,6 +46,67 @@ export default function AdminNewProductPage() {
     document.title = "Create Skincare Product | Naturalist";
   }, []);
 
+  const isExternalUrl = (url: string) => {
+    if (!url) return false;
+    const cleaned = url.trim();
+    if (cleaned.includes("res.cloudinary.com") || cleaned.includes("/cdn/image/") || cleaned.startsWith("/")) {
+      return false;
+    }
+    const hasProtocol = cleaned.startsWith("http://") || cleaned.startsWith("https://");
+    const looksLikeDomain = /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/.test(cleaned) && !cleaned.includes("localhost");
+    return hasProtocol || looksLikeDomain;
+  };
+
+  const handleProxyUrl = async () => {
+    if (!formImage) return;
+
+    let url = formImage.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+
+    try {
+      setUploadingImage(true);
+      setError("");
+
+      const res = await fetch("/api/admin/content/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to proxy image URL.");
+
+      const proxiedUrl = proxyCloudinaryUrl(data.url);
+      setFormImage(proxiedUrl);
+      showToast("success", "Image Imported", "External image hosted securely on our CDN.");
+
+      // Log in CDN logs
+      let fileName = "proxied_product.jpg";
+      try {
+        fileName = `proxied_${new URL(url).pathname.split("/").pop() || "product"}.jpg`;
+      } catch {}
+
+      await fetch("/api/admin/cdn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: proxiedUrl,
+          publicId: data.publicId,
+          originalName: fileName,
+          sizeBytes: data.sizeBytes || 0,
+        }),
+      });
+
+    } catch (err: any) {
+      setError(err.message || "Failed to import external image URL.");
+      showToast("error", "Import Failed", err.message || "Could not proxy image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -281,6 +342,25 @@ export default function AdminNewProductPage() {
                   />
                 </label>
               </div>
+              {isExternalUrl(formImage) && (
+                <div className="mt-2 flex items-center justify-between p-3 bg-[#b07e3a]/10 border border-[#b07e3a]/20 rounded-xl text-[11px] animate-fade-in text-white/90">
+                  <span className="text-[#a3b2a9]">This is an external URL. Proxy to CDN for public safety?</span>
+                  <button
+                    type="button"
+                    onClick={handleProxyUrl}
+                    disabled={uploadingImage}
+                    className="px-3 py-1 bg-[#b07e3a] hover:bg-[#c28e47] text-xs font-bold text-[#141f19] uppercase tracking-wider rounded-lg transition-all active:scale-95 flex items-center gap-1 cursor-pointer border-0"
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Import...
+                      </>
+                    ) : (
+                      "Proxy Image"
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

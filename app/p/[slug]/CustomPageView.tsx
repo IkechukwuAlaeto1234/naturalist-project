@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 interface Section {
   type: "text" | "image" | "richtext" | "cta";
@@ -46,6 +46,15 @@ function renderMarkdown(text: string): React.ReactNode[] {
 export default function CustomPageView({ content }: { content: CustomPageContent }) {
   const { title, metadata } = content;
   const sections = metadata.sections || [];
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="flex flex-col w-full pb-32 min-h-screen" />;
+  }
 
   return (
     <div className="flex flex-col w-full pb-32">

@@ -153,6 +153,8 @@ export default function EditCustomPagePage() {
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [originalSlug, setOriginalSlug] = useState("");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [heroHeadline, setHeroHeadline] = useState("");
   const [heroSubtext, setHeroSubtext] = useState("");
   const [heroImage, setHeroImage] = useState("");
@@ -162,6 +164,7 @@ export default function EditCustomPagePage() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [showInNavbar, setShowInNavbar] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -181,7 +184,10 @@ export default function EditCustomPagePage() {
       .then((data) => {
         if (data) {
           setTitle(data.title || "");
-          setSlug(data.metadata?.slug || slugParam);
+          const currentSlug = data.metadata?.slug || slugParam;
+          setSlug(currentSlug);
+          setOriginalSlug(currentSlug);
+          setShowInNavbar(data.metadata?.showInNavbar || false);
           setHeroHeadline(data.metadata?.heroHeadline || "");
           setHeroSubtext(data.metadata?.heroSubtext || "");
           setHeroImage(data.metadata?.heroImage || "");
@@ -193,6 +199,28 @@ export default function EditCustomPagePage() {
       .catch(() => setError("Failed to fetch custom page data."))
       .finally(() => setLoading(false));
   }, [slugParam]);
+
+  // Handle title changes and auto-generate slug
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    if (!isSlugManuallyEdited) {
+      setSlug(
+        newTitle.toLowerCase().trim()
+          .replace(/[^a-z0-9\s-]/g, "")
+          .replace(/\s+/g, "-")
+          .replace(/-+/g, "-")
+      );
+    }
+  };
+
+  // Handle manual slug input
+  const handleSlugInputChange = (newSlug: string) => {
+    const formatted = newSlug.toLowerCase()
+      .replace(/[^a-z0-9-]/g, "")
+      .replace(/-+/g, "-");
+    setSlug(formatted);
+    setIsSlugManuallyEdited(true);
+  };
 
   const addSection = (type: Section["type"]) => {
     let defaultLabel = "Text Block";
@@ -229,6 +257,7 @@ export default function EditCustomPagePage() {
     if (!title || !slug) { setError("Title and URL slug are required."); return; }
     setSaving(true); setError("");
     try {
+      // 1. Save new page
       const res = await fetch("/api/admin/content", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -239,6 +268,7 @@ export default function EditCustomPagePage() {
           metadata: {
             isCustomPage: true,
             slug,
+            showInNavbar,
             heroHeadline,
             heroSubtext,
             heroImage,
@@ -248,9 +278,25 @@ export default function EditCustomPagePage() {
         }),
       });
       if (!res.ok) { const d = await res.json(); throw new Error(d.error || "Failed to save custom page"); }
+
+      // 2. Delete old page if slug has changed
+      if (originalSlug && slug !== originalSlug) {
+        const delRes = await fetch(`/api/admin/custom-pages?slug=${encodeURIComponent(originalSlug)}`, {
+          method: "DELETE",
+        });
+        if (!delRes.ok) {
+          const d = await delRes.json();
+          throw new Error(d.error || `Saved new page but failed to remove old page key '/p/${originalSlug}'`);
+        }
+      }
+
       if (typeof window !== "undefined") {
         sessionStorage.setItem("custom_page_save_success", "true");
-        window.location.reload();
+        if (slug !== originalSlug) {
+          router.push(`/admin/pages/edit-custom/${slug}`);
+        } else {
+          window.location.reload();
+        }
       } else {
         setSaved(true);
       }
@@ -300,15 +346,58 @@ export default function EditCustomPagePage() {
           <p className="text-[10px] font-bold uppercase tracking-wider text-[#b07e3a]">Page Identity</p>
           <div className="flex flex-col gap-2">
             <label className="text-xs font-bold text-[#a3b2a9] uppercase tracking-wider">Page Title *</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Returns & Exchanges" required className="bg-[#070908] border border-[#1a241e] rounded-xl px-4 py-3 text-sm text-white placeholder-[#4a5c50] focus:outline-none focus:border-[#b07e3a]/60 transition-colors" />
+            <input type="text" value={title} onChange={(e) => handleTitleChange(e.target.value)} placeholder="e.g. Returns & Exchanges" required className="bg-[#070908] border border-[#1a241e] rounded-xl px-4 py-3 text-sm text-white placeholder-[#4a5c50] focus:outline-none focus:border-[#b07e3a]/60 transition-colors" />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-[#a3b2a9] uppercase tracking-wider">URL Slug *</label>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-[#a3b2a9] uppercase tracking-wider">URL Slug *</label>
+              {isSlugManuallyEdited && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSlugManuallyEdited(false);
+                    setSlug(
+                      title.toLowerCase().trim()
+                        .replace(/[^a-z0-9\s-]/g, "")
+                        .replace(/\s+/g, "-")
+                        .replace(/-+/g, "-")
+                    );
+                  }}
+                  className="text-[10px] text-[#b07e3a] hover:underline"
+                >
+                  Reset / Auto-generate
+                </button>
+              )}
+            </div>
             <div className="flex items-center">
               <span className="bg-[#0a0e0b] border border-r-0 border-[#1a241e] rounded-l-xl px-3 py-3 text-xs text-[#4a5c50] flex-shrink-0">/p/</span>
-              <input type="text" value={slug} disabled className="flex-1 bg-[#070908]/50 border border-[#1a241e] rounded-r-xl px-4 py-3 text-sm text-white/50 cursor-not-allowed" />
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => handleSlugInputChange(e.target.value)}
+                placeholder="e.g. returns-exchanges"
+                required
+                className="flex-1 bg-[#070908] border border-[#1a241e] rounded-r-xl px-4 py-3 text-sm text-white placeholder-[#4a5c50] focus:outline-none focus:border-[#b07e3a]/60 transition-colors"
+              />
             </div>
-            <p className="text-[10px] text-[#4a5c50]">URL slug cannot be changed after creation to protect SEO links.</p>
+            {slug !== originalSlug ? (
+              <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                Changing the slug will delete the old page (/p/{originalSlug}) and create a new page at /p/{slug}. Old links will break!
+              </p>
+            ) : (
+              <p className="text-[10px] text-[#4a5c50]">Customize the URL path for this page (e.g. /p/returns-exchanges).</p>
+            )}
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="showInNavbar"
+                checked={showInNavbar}
+                onChange={(e) => setShowInNavbar(e.target.checked)}
+                className="h-4 w-4 rounded border-[#1a241e] bg-[#070908] text-[#b07e3a] focus:ring-[#b07e3a]/60 cursor-pointer"
+              />
+              <label htmlFor="showInNavbar" className="text-xs font-bold text-[#a3b2a9] uppercase tracking-wider cursor-pointer select-none">Show in Navbar navigation menu</label>
+            </div>
           </div>
         </div>
 

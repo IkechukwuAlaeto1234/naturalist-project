@@ -12,9 +12,9 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const request = await DataRequest.findOne({ userId: session.user.id }).sort({ createdAt: -1 });
+    const requests = await DataRequest.find({ userId: session.user.id }).sort({ createdAt: -1 });
 
-    return NextResponse.json(request || null, { status: 200 });
+    return NextResponse.json(requests || [], { status: 200 });
   } catch (error) {
     console.error("GET user data request error:", error);
     return NextResponse.json({ error: "Failed to fetch data request status" }, { status: 500 });

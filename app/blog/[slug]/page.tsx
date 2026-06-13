@@ -1,10 +1,13 @@
 import { Metadata } from "next";
 
 import { notFound } from "next/navigation";
-import { CalendarDays, Clock3, ArrowLeft } from "lucide-react";
+import Script from "next/script";
+import { CalendarDays, ArrowLeft } from "lucide-react";
 import { connectToDatabase } from "@/lib/db";
 import { Blog } from "@/models/Blog";
 import BlogShare from "@/components/blog/BlogShare";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
 // Format: May 31, 2026, 08:29 AM
 function formatDateTime(date: string | Date) {
@@ -35,9 +38,34 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     };
   }
 
+  const pageUrl = `${SITE_URL}/blog/${post.slug}`;
+  const ogImage = post.coverImage
+    ? [{ url: post.coverImage, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
+    : [];
+
   return {
     title: `${post.title} | Naturalist Blog`,
     description: post.excerpt,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url: pageUrl,
+      siteName: "Naturalist",
+      type: "article",
+      publishedTime: new Date(post.publishedAt).toISOString(),
+      authors: [post.authorName],
+      tags: post.tags,
+      images: ogImage,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: ogImage.map((img) => img.url),
+    },
   };
 }
 
@@ -80,9 +108,42 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   if (!post) notFound();
 
   const publishedAt = formatDateTime(post.publishedAt);
+  const pageUrl = `${SITE_URL}/blog/${post.slug}`;
+
+  // JSON-LD structured data — parsed by Google, Bing, and rich-preview crawlers
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.excerpt,
+    image: post.coverImage,
+    url: pageUrl,
+    datePublished: new Date(post.publishedAt).toISOString(),
+    dateModified: post.updatedAt ? new Date(post.updatedAt).toISOString() : new Date(post.publishedAt).toISOString(),
+    author: {
+      "@type": "Person",
+      name: post.authorName,
+      jobTitle: post.authorRole || "Naturalist Writer",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Naturalist",
+      url: SITE_URL,
+    },
+    keywords: post.tags?.join(", "),
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": pageUrl,
+    },
+  };
 
   return (
     <div className="bg-white dark:bg-[#0a0d0b] text-foreground transition-colors duration-300">
+      <Script
+        id={`jsonld-blog-${post.slug}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <article className="mx-auto max-w-7xl px-6 sm:px-8 py-10 sm:py-14 pb-32">
         <div className="mx-auto max-w-4xl">
           <a

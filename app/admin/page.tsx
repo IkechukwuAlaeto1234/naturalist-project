@@ -247,7 +247,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs divide-y divide-[#1a241e]">
+              <table className="w-full min-w-[600px] text-left text-xs divide-y divide-[#1a241e]">
                 <thead>
                   <tr className="text-[#a3b2a9] font-bold uppercase tracking-wider">
                     <th className="pb-3 font-semibold">Customer</th>

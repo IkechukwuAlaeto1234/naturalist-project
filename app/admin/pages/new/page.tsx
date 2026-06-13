@@ -155,6 +155,7 @@ export default function NewPagePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
+  const [showInNavbar, setShowInNavbar] = useState(false);
 
   // Auto-generate slug from title
   const handleTitleChange = (v: string) => {
@@ -212,6 +213,7 @@ export default function NewPagePage() {
           metadata: {
             isCustomPage: true,
             slug,
+            showInNavbar,
             heroHeadline,
             heroSubtext,
             heroImage,
@@ -268,6 +270,16 @@ export default function NewPagePage() {
             <div className="flex items-center">
               <span className="bg-[#0a0e0b] border border-r-0 border-[#1a241e] rounded-l-xl px-3 py-3 text-xs text-[#4a5c50] flex-shrink-0">/p/</span>
               <input type="text" value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))} placeholder="returns-exchanges" required className="flex-1 bg-[#070908] border border-[#1a241e] rounded-r-xl px-4 py-3 text-sm text-white placeholder-[#4a5c50] focus:outline-none focus:border-[#b07e3a]/60 transition-colors" />
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <input
+                type="checkbox"
+                id="showInNavbar"
+                checked={showInNavbar}
+                onChange={(e) => setShowInNavbar(e.target.checked)}
+                className="h-4 w-4 rounded border-[#1a241e] bg-[#070908] text-[#b07e3a] focus:ring-[#b07e3a]/60 cursor-pointer"
+              />
+              <label htmlFor="showInNavbar" className="text-xs font-bold text-[#a3b2a9] uppercase tracking-wider cursor-pointer select-none">Show in Navbar navigation menu</label>
             </div>
             <p className="text-[10px] text-[#4a5c50]">Public URL: <span className="text-[#a3b2a9]">/p/{slug || "your-slug"}</span></p>
           </div>

@@ -204,7 +204,7 @@ export default function AdminOrdersPage() {
           {/* Orders list table */}
           <div className="lg:col-span-8 bg-[#0c100e] border border-[#1a241e] rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs divide-y divide-[#1a241e]">
+              <table className="w-full min-w-[800px] text-left text-xs divide-y divide-[#1a241e]">
                 <thead>
                   <tr className="bg-[#0c100e] text-[#a3b2a9] font-bold uppercase tracking-wider">
                     <th className="p-4 sm:p-5">Order #</th>

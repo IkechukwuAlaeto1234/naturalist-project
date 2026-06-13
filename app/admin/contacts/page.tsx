@@ -306,14 +306,14 @@ export default function AdminContactsPage() {
                         <div className="inline-flex gap-2">
                           <a
                             href={`/admin/contacts/${c._id}`}
-                            className="h-8 px-3 rounded-lg border border-[#e2dacd] hover:bg-[#f5f2ed] text-[10px] font-bold uppercase tracking-wider text-[#5e6f64] hover:text-[#141f19] flex items-center gap-1 transition-all"
+                            className="h-8 px-2 sm:px-3 rounded-lg border border-[#e2dacd] hover:bg-[#f5f2ed] text-[10px] font-bold uppercase tracking-wider text-[#5e6f64] hover:text-[#141f19] flex items-center gap-1 transition-all whitespace-nowrap flex-shrink-0"
                           >
                             <Eye className="h-3.5 w-3.5" />
-                            View
+                            <span className="hidden sm:inline">View</span>
                           </a>
                           <button
                             onClick={() => setDeleteTarget({ id: c._id, name: c.name })}
-                            className="h-8 w-8 rounded-lg border border-[#e2dacd] hover:bg-red-50 text-[#8a9e90] hover:text-red-500 flex items-center justify-center transition-all cursor-pointer"
+                            className="h-8 w-8 rounded-lg border border-[#e2dacd] hover:bg-red-50 text-[#8a9e90] hover:text-red-500 flex items-center justify-center transition-all cursor-pointer flex-shrink-0"
                             title="Delete inquiry"
                           >
                             <Trash2 className="h-3.5 w-3.5" />

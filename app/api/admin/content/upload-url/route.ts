@@ -19,9 +19,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { url } = await req.json();
+    let { url } = await req.json();
     if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "url is required" }, { status: 400 });
+    }
+
+    url = url.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
     }
 
     // If it's already a Cloudinary URL or our CDN proxy, return as-is
@@ -29,8 +34,45 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url }, { status: 200 });
     }
 
+    let targetUrl = url;
+
+    // Attempt to detect if it's an HTML page (like Unsplash/Pexels photo page)
+    // and extract the raw image URL.
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get("content-type") || "";
+        if (contentType.includes("text/html")) {
+          const html = await response.text();
+          
+          // Regex to search for og:image or twitter:image meta tags
+          const ogImageMatch = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) ||
+                               html.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+                               
+          const twitterImageMatch = html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i) ||
+                                    html.match(/<meta\s+content=["']([^"']+)["']\s+name=["']twitter:image["']/i);
+
+          const extractedUrl = ogImageMatch ? ogImageMatch[1] : (twitterImageMatch ? twitterImageMatch[1] : null);
+          
+          if (extractedUrl) {
+            targetUrl = extractedUrl.replace(/&amp;/g, "&");
+            console.log(`Extracted direct image URL from page: ${targetUrl}`);
+          }
+        }
+      }
+    } catch (fetchErr) {
+      console.warn("Failed to pre-fetch URL for HTML check, falling back to direct upload:", fetchErr);
+    }
+
     // Upload the external URL directly to Cloudinary as a standard upload asset
-    const result = await cloudinary.uploader.upload(url, {
+    const result = await cloudinary.uploader.upload(targetUrl, {
       folder: "naturalist/pages",
       resource_type: "image",
     });

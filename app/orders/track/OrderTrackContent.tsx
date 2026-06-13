@@ -70,27 +70,33 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), {
 
 /* ─── Countdown ──────────────────────────────────────────────────── */
 function Countdown({ targetDate }: { targetDate: string }) {
-  const [t, setT] = useState({ d: 0, h: 0, m: 0 });
+  const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 });
   useEffect(() => {
     const calc = () => {
       const diff = new Date(targetDate).getTime() - Date.now();
-      if (diff <= 0) return setT({ d: 0, h: 0, m: 0 });
+      if (diff <= 0) return setT({ d: 0, h: 0, m: 0, s: 0 });
       setT({
         d: Math.floor(diff / 86400000),
         h: Math.floor((diff % 86400000) / 3600000),
         m: Math.floor((diff % 3600000) / 60000),
+        s: Math.floor((diff % 60000) / 1000),
       });
     };
     calc();
-    const id = setInterval(calc, 60000);
+    const id = setInterval(calc, 1000);
     return () => clearInterval(id);
   }, [targetDate]);
 
   return (
     <div className="flex items-center gap-3">
-      {[{ v: t.d, l: "Days" }, { v: t.h, l: "Hours" }, { v: t.m, l: "Min" }].map(({ v, l }) => (
-        <div key={l} className="flex flex-col items-center bg-[#faf8f4] border border-[#e2dacd] rounded-xl px-3 py-2 min-w-[52px]">
-          <span className="font-serif text-xl font-black text-[#2d4c38]">{String(v).padStart(2, "0")}</span>
+      {[
+        { v: t.d, l: "Days" },
+        { v: t.h, l: "Hours" },
+        { v: t.m, l: "Min" },
+        { v: t.s, l: "Sec" }
+      ].map(({ v, l }) => (
+        <div key={l} className="flex flex-col items-center bg-[#faf8f4] border border-[#e2dacd] rounded-xl px-3 py-2 min-w-[58px] shadow-sm hover:scale-105 transition-transform duration-300">
+          <span className="font-serif text-xl font-black text-[#2d4c38] tabular-nums tracking-tight">{String(v).padStart(2, "0")}</span>
           <span className="text-[8px] uppercase tracking-widest text-[#8a9e90] font-bold">{l}</span>
         </div>
       ))}
@@ -229,6 +235,7 @@ function TrackContent() {
                 )}
               </div>
               <LeafletMap
+                key={data.routeWaypoints.map(w => `${w.lat},${w.lng}`).join('|')}
                 waypoints={data.routeWaypoints}
                 currentStep={currentStep}
                 totalSteps={STATUS_ORDER.length - 1}

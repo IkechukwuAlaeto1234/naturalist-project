@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "../../context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { X, Plus, Minus, Trash2, ArrowRight, Loader2, ShoppingBag } from "lucide-react";
 
 export default function CartPanel() {
@@ -17,13 +18,20 @@ export default function CartPanel() {
     removeFromCart,
     cartSubtotal,
   } = useCart();
+  const { formatPrice } = useCurrency();
   const [checkingOut, setCheckingOut] = useState(false);
 
   if (!isCartOpen) return null;
 
   const handleCheckoutClick = () => {
-    setIsCartOpen(false);
-    router.push("/checkout");
+    setCheckingOut(true);
+    setTimeout(() => {
+      const token = "chk_" + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      sessionStorage.setItem("naturalist_checkout_token", token);
+      window.dispatchEvent(new Event("naturalist:navigation-start"));
+      setIsCartOpen(false);
+      router.push(`/checkout?token=${token}`);
+    }, 1000);
   };
 
   return (
@@ -124,7 +132,7 @@ export default function CartPanel() {
                       {/* Pricing / Remove */}
                       <div className="flex items-center gap-3">
                         <span className="text-sm font-bold text-primary">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          {formatPrice(item.price * item.quantity)}
                         </span>
                         <button
                           onClick={() => removeFromCart(item.id)}
@@ -147,7 +155,7 @@ export default function CartPanel() {
               <div className="flex items-center justify-between text-base font-medium">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="text-lg font-bold text-primary font-serif">
-                  ${cartSubtotal.toFixed(2)}
+                  {formatPrice(cartSubtotal)}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground leading-normal">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db";
 import { Order } from "@/models/Order";
+import { getRouteWaypoints } from "@/lib/geocoding";
 
 /**
  * GET /api/orders/track?id=NAT-xxx
@@ -30,6 +31,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Order not found. Please check your order ID." }, { status: 404 });
     }
 
+    const resolvedWaypoints = (order.routeWaypoints && order.routeWaypoints.length >= 2)
+      ? order.routeWaypoints
+      : await getRouteWaypoints(
+          order.shippingAddress?.city || "Pretoria",
+          order.shippingAddress?.state || "",
+          order.shippingAddress?.country || "South Africa"
+        ).catch(() => [
+          { lat: 6.4550, lng: 3.3841, label: "Lagos Hub" },
+          { lat: -25.7479, lng: 28.2292, label: `${order.shippingAddress?.city || "Pretoria"}, ${order.shippingAddress?.country || "South Africa"}` }
+        ]);
+
     /* ── Return only safe public fields ── */
     return NextResponse.json({
       orderNumber:       order.orderNumber,
@@ -39,7 +51,7 @@ export async function GET(req: NextRequest) {
       carrier:           order.carrier          ?? null,
       estimatedDelivery: order.estimatedDelivery ?? null,
       statusHistory:     order.statusHistory     ?? [],
-      routeWaypoints:    order.routeWaypoints    ?? [],
+      routeWaypoints:    resolvedWaypoints,
       // Items — name, image, quantity only
       items: order.items.map((item: any) => ({
         name:     item.name,

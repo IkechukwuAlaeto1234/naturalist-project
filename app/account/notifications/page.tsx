@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Bell, Loader2, AlertCircle, CheckCheck } from "lucide-react";
+import { Bell, Loader2, AlertCircle, CheckCheck, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 interface Notification {
   _id: string;
@@ -19,7 +20,7 @@ export default function AllNotificationsPage() {
   const [error, setError]                 = useState("");
 
   useEffect(() => {
-    document.title = "Notifications | Naturalist";
+    setTimeout(() => { document.title = "Notifications | Naturalist"; }, 150);
     fetchAll();
   }, []);
 
@@ -48,6 +49,15 @@ export default function AllNotificationsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
+      {/* Back to Dashboard */}
+      <Link
+        href="/account"
+        className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground uppercase tracking-wider transition-colors"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        Back to Dashboard
+      </Link>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>

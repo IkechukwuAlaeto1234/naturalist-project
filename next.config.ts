@@ -10,8 +10,8 @@ const ContentSecurityPolicy = `
   script-src 'self' 'unsafe-inline' 'unsafe-eval';
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com data:;
-  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://img.icons8.com;
-  connect-src 'self' https://api.cloudinary.com ${isDev ? "ws: wss: *" : ""};
+  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://img.icons8.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://images.unsplash.com https://*.unsplash.com https://cdnjs.cloudflare.com;
+  connect-src 'self' https://api.cloudinary.com https://ipapi.co https://ipinfo.io https://freeipapi.com ${isDev ? "ws: wss: *" : ""};
   frame-ancestors 'self';
   base-uri 'self';
   form-action 'self';
@@ -103,6 +103,14 @@ const nextConfig: NextConfig = {
         // Cloudinary "fetch" delivery type — used when uploading from external URLs
         protocol: "https",
         hostname: "fetch.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.unsplash.com",
       },
       {
         // Allow localhost images during development

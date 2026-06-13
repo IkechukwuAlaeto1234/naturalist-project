@@ -12,7 +12,7 @@ import ShopPage from "@/app/shop/page";
 import BundlesPage from "@/app/bundles/page";
 import StoryPage from "@/app/story/page";
 import SustainabilityPage from "@/app/sustainability/page";
-import BlogIndex from "@/components/blog/BlogIndex";
+import BlogPage from "@/app/blog/page";
 import ContactPage from "@/app/contact/page";
 import FAQPage from "@/app/faq/page";
 import RefundPolicyPage from "@/app/refund-policy/page";
@@ -74,7 +74,7 @@ export default async function DynamicPageRoute({ params }: Props) {
   if (slug === "bundles") return <BundlesPage />;
   if (slug === "story") return <StoryPage />;
   if (slug === "sustainability") return <SustainabilityPage />;
-  if (slug === "blog") return <BlogIndex />;
+  if (slug === "blog") return <BlogPage />;
   if (slug === "contact") return <ContactPage />;
   if (slug === "faq") return <FAQPage />;
   if (slug === "refund-policy") return <RefundPolicyPage />;

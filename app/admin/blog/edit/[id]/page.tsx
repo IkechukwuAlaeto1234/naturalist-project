@@ -108,6 +108,74 @@ export default function AdminEditBlogPage() {
     setFormSections(updated);
   };
 
+  const isExternalUrl = (url: string) => {
+    if (!url) return false;
+    const cleaned = url.trim();
+    if (cleaned.includes("res.cloudinary.com") || cleaned.includes("/cdn/image/") || cleaned.startsWith("/")) {
+      return false;
+    }
+    const hasProtocol = cleaned.startsWith("http://") || cleaned.startsWith("https://");
+    const looksLikeDomain = /^[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)+/.test(cleaned) && !cleaned.includes("localhost");
+    return hasProtocol || looksLikeDomain;
+  };
+
+  const handleProxyUrl = async (type: "cover" | "section", index?: number) => {
+    let url = type === "cover" ? formCoverImage : formSections[index!].image;
+    if (!url) return;
+
+    url = url.trim();
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
+    }
+
+    try {
+      setUploadingTarget({ type, index });
+      setError("");
+
+      const res = await fetch("/api/admin/content/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to proxy image URL.");
+
+      const proxiedUrl = proxyCloudinaryUrl(data.url);
+      
+      if (type === "cover") {
+        setFormCoverImage(proxiedUrl);
+      } else if (type === "section" && index !== undefined) {
+        updateSectionField(index, "image", proxiedUrl);
+      }
+
+      showToast("success", "Image Imported", "External image hosted securely on our CDN.");
+
+      // Log in CDN logs
+      let fileName = "proxied_image.jpg";
+      try {
+        fileName = `proxied_${new URL(url).pathname.split("/").pop() || "image"}.jpg`;
+      } catch {}
+
+      await fetch("/api/admin/cdn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: proxiedUrl,
+          publicId: data.publicId,
+          originalName: fileName,
+          sizeBytes: data.sizeBytes || 0,
+        }),
+      });
+
+    } catch (err: any) {
+      setError(err.message || "Failed to import external image URL.");
+      showToast("error", "Import Failed", err.message || "Could not proxy image.");
+    } finally {
+      setUploadingTarget(null);
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: "cover" | "section", index?: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -368,6 +436,25 @@ export default function AdminEditBlogPage() {
                   />
                 </label>
               </div>
+              {isExternalUrl(formCoverImage) && (
+                <div className="mt-2 flex items-center justify-between p-3 bg-[#b07e3a]/10 border border-[#b07e3a]/20 rounded-xl text-[11px] animate-fade-in text-white/90">
+                  <span className="text-[#a3b2a9]">This is an external URL. Proxy to CDN for public safety?</span>
+                  <button
+                    type="button"
+                    onClick={() => handleProxyUrl("cover")}
+                    disabled={uploadingTarget !== null}
+                    className="px-3 py-1 bg-[#b07e3a] hover:bg-[#c28e47] text-xs font-bold text-[#141f19] uppercase tracking-wider rounded-lg transition-all active:scale-95 flex items-center gap-1 cursor-pointer border-0"
+                  >
+                    {uploadingTarget?.type === "cover" ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin" /> Import...
+                      </>
+                    ) : (
+                      "Proxy Image"
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div 
@@ -502,6 +589,25 @@ export default function AdminEditBlogPage() {
                           />
                         </label>
                       </div>
+                      {isExternalUrl(section.image || "") && (
+                        <div className="mt-2 flex items-center justify-between p-2.5 bg-[#b07e3a]/10 border border-[#b07e3a]/20 rounded-xl text-[10px] animate-fade-in text-white/90">
+                          <span className="text-[#a3b2a9]">External link. Proxy to CDN?</span>
+                          <button
+                            type="button"
+                            onClick={() => handleProxyUrl("section", index)}
+                            disabled={uploadingTarget !== null}
+                            className="px-2.5 py-0.5 bg-[#b07e3a] hover:bg-[#c28e47] text-[10px] font-bold text-[#141f19] uppercase tracking-wider rounded-md transition-all active:scale-95 flex items-center gap-1 cursor-pointer border-0"
+                          >
+                            {uploadingTarget?.type === "section" && uploadingTarget?.index === index ? (
+                              <>
+                                <Loader2 className="h-2.5 w-2.5 animate-spin" /> Import...
+                              </>
+                            ) : (
+                              "Proxy Image"
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                     
                     <div className="space-y-2">

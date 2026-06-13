@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
-const MIN_DISPLAY_TIME = 1000;
-const FADE_DURATION = 300;
+const MIN_DISPLAY_TIME = 1600;
+const FADE_DURATION = 500;
 
 // Inner component that safely reads searchParams — must be inside <Suspense>
 function BrandLoaderInner() {
@@ -15,7 +15,7 @@ function BrandLoaderInner() {
   const [fade, setFade] = useState(false);
 
   const isInitialMount = useRef(true);
-  const navigationStartTimeRef = useRef<number>(Date.now());
+  const navigationStartTimeRef = useRef<number>(0);
   const fadeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const hideTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const failSafeTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -37,6 +37,11 @@ function BrandLoaderInner() {
 
   useEffect(() => {
     if (!visible) return;
+
+    // Set real start time on first client-side run (safe: useEffect is browser-only)
+    if (navigationStartTimeRef.current === 0) {
+      navigationStartTimeRef.current = Date.now();
+    }
 
     if (failSafeTimeoutRef.current) clearTimeout(failSafeTimeoutRef.current);
     if (fadeTimeoutRef.current) clearTimeout(fadeTimeoutRef.current);
@@ -138,18 +143,12 @@ function BrandLoaderInner() {
 
   return (
     <div
-      className={`loader-overlay ${fade ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+      className={`loader-overlay transition-all duration-500 ease-in-out ${
+        fade ? "opacity-0 scale-[1.02] pointer-events-none" : "opacity-100 scale-100"
+      }`}
       id="global-loader"
     >
-      <div className="loader-container animate-pulse">
-        <div className="lds-ring">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-        <div className="loader-text font-sans">Loading...</div>
-      </div>
+      <div className="brand-conic-loader" />
     </div>
   );
 }

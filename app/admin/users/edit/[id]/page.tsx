@@ -120,7 +120,15 @@ export default function AdminEditUserPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update user profile.");
 
-      showToast("success", "Profile Updated", `Override saved for ${name} successfully.`);
+      if (data._sessionInvalidated) {
+        showToast(
+          "success",
+          "Profile Updated + Sessions Cleared",
+          `Override saved for ${name}. Their role/status changed — all active sessions have been invalidated. They will be signed out on next request.`
+        );
+      } else {
+        showToast("success", "Profile Updated", `Override saved for ${name} successfully.`);
+      }
       setPassword("");
       setUser(data);
     } catch (err: any) {
