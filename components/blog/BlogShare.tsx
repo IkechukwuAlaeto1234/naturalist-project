@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Link2, Check } from "lucide-react";
+import { Link2, Check, Share2 } from "lucide-react";
 
 interface BlogShareProps {
   title: string;
@@ -27,15 +27,25 @@ const LinkedinIcon = () => (
   </svg>
 );
 
+const WhatsappIcon = () => (
+  <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.859 0c3.166.001 6.141 1.233 8.378 3.471 2.236 2.237 3.466 5.21 3.463 8.377-.006 6.537-5.332 11.86-11.86 11.86-.003 0-.005 0-.007 0-2.008-.001-3.98-.519-5.733-1.503L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.725 1.45 5.535 0 10.04-4.502 10.046-10.042.003-2.684-1.038-5.207-2.93-7.101C16.539 1.568 14.02 .526 11.863.526c-5.54 0-10.047 4.505-10.052 10.045-.001 1.84.482 3.633 1.4 5.2l-.926 3.38 3.472-.91c1.557.848 3.097 1.258 4.704 1.259h.001zm11.365-7.4c-.08-.13-.29-.21-.61-.37-.32-.16-1.89-.93-2.18-1.04-.29-.11-.5-.16-.71.16-.21.32-.82 1.04-1.01 1.25-.19.21-.38.24-.7.08-.32-.16-1.35-.5-2.58-1.59-.95-.85-1.6-1.9-1.78-2.22-.19-.32-.02-.49.14-.65.15-.15.32-.37.48-.56.16-.18.21-.31.32-.51.11-.2.05-.38-.03-.54-.08-.16-.71-1.72-.97-2.36-.26-.63-.52-.55-.71-.55-.18-.01-.39-.01-.61-.01-.22 0-.58.08-.88.4-.3.32-1.15 1.12-1.15 2.73s1.17 3.17 1.33 3.38c.16.21 2.3 3.52 5.58 4.94.78.34 1.39.54 1.86.69.78.25 1.49.21 2.05.13.62-.09 1.89-.77 2.15-1.51.26-.74.26-1.37.18-1.51z" />
+  </svg>
+);
+
 export default function BlogShare({ title, excerpt }: BlogShareProps) {
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const [supportShare, setSupportShare] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
     if (typeof window !== "undefined") {
       setShareUrl(window.location.href);
+      if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+        setSupportShare(true);
+      }
     }
   }, []);
 
@@ -110,6 +120,17 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
           >
             <LinkedinIcon />
           </a>
+
+          {/* WhatsApp */}
+          <a
+            href={`https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] flex items-center justify-center text-muted-foreground hover:bg-[#b07e3a]/5 transition-all flex-shrink-0"
+            data-tooltip="Share on WhatsApp"
+          >
+            <WhatsappIcon />
+          </a>
         </div>
 
         {/* Copy Link - w-[130px] fixed width to guarantee no layout jumps */}
@@ -132,6 +153,16 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
             </>
           )}
         </button>
+
+        {supportShare && (
+          <button
+            onClick={handleWebShare}
+            className="relative h-10 w-10 rounded-xl bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 hover:border-[#b07e3a] hover:text-[#b07e3a] hover:bg-[#b07e3a]/5 flex items-center justify-center text-muted-foreground transition-all flex-shrink-0 cursor-pointer"
+            data-tooltip="Share via System"
+          >
+            <Share2 className="h-4 w-4" />
+          </button>
+        )}
 
       </div>
     </div>
