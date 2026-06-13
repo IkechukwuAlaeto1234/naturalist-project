@@ -36,46 +36,62 @@ function formatDateTime(date: string | Date) {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  await connectToDatabase();
-  const post = await Blog.findOne({ slug }).lean();
+  try {
+    const { slug } = await params;
+    await connectToDatabase();
+    const post = await Blog.findOne({ slug }).lean();
 
-  if (!post) {
+    if (!post) {
+      return {
+        title: "Blog Post Not Found | Naturalist",
+      };
+    }
+
+    const pageUrl = `${SITE_URL}/blog/${post.slug}`;
+    const coverImageUrl = resolveAbsoluteUrl(post.coverImage ?? "");
+    const ogImage = coverImageUrl
+      ? [{ url: coverImageUrl, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
+      : [];
+
+    // Guard publishedAt — new Date(undefined) throws "Invalid time value" which
+    // Next.js silently catches, wiping ALL metadata and falling back to layout.tsx.
+    const publishedTime = post.publishedAt
+      ? new Date(post.publishedAt).toISOString()
+      : undefined;
+
     return {
-      title: "Blog Post Not Found | Naturalist",
+      title: `${post.title} | Naturalist Blog`,
+      description: post.excerpt ?? undefined,
+      alternates: {
+        canonical: pageUrl,
+      },
+      openGraph: {
+        title: post.title,
+        description: post.excerpt ?? undefined,
+        url: pageUrl,
+        siteName: "Naturalist",
+        type: "article",
+        ...(publishedTime ? { publishedTime } : {}),
+        ...(post.authorName ? { authors: [post.authorName] } : {}),
+        ...(post.tags?.length ? { tags: post.tags } : {}),
+        images: ogImage,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: post.title,
+        description: post.excerpt ?? undefined,
+        images: ogImage.map((img) => img.url),
+      },
+    };
+  } catch (err) {
+    // Log the real error so it shows up in Render logs, then return a safe fallback
+    // instead of letting Next.js silently wipe metadata to layout defaults.
+    console.error("[generateMetadata] blog/[slug] failed:", err);
+    return {
+      title: "Naturalist Blog",
+      description: "Premium organic skincare insights, guides and rituals.",
     };
   }
-
-  const pageUrl = `${SITE_URL}/blog/${post.slug}`;
-  const coverImageUrl = resolveAbsoluteUrl(post.coverImage);
-  const ogImage = coverImageUrl
-    ? [{ url: coverImageUrl, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
-    : [];
-
-  return {
-    title: `${post.title} | Naturalist Blog`,
-    description: post.excerpt,
-    alternates: {
-      canonical: pageUrl,
-    },
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      url: pageUrl,
-      siteName: "Naturalist",
-      type: "article",
-      publishedTime: new Date(post.publishedAt).toISOString(),
-      authors: [post.authorName],
-      tags: post.tags,
-      images: ogImage,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.excerpt,
-      images: ogImage.map((img) => img.url),
-    },
-  };
 }
 
 function renderSectionBody(text: string) {
