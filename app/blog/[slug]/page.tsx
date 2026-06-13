@@ -9,6 +9,14 @@ import BlogShare from "@/components/blog/BlogShare";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
+// OG images must be absolute URLs. coverImage is stored as /cdn/... (relative)
+// after proxyCloudinaryUrl(), so we resolve it here before setting OG tags.
+function resolveAbsoluteUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
+}
+
 // Format: May 31, 2026, 08:29 AM
 function formatDateTime(date: string | Date) {
   const d = new Date(date);
@@ -39,8 +47,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const pageUrl = `${SITE_URL}/blog/${post.slug}`;
-  const ogImage = post.coverImage
-    ? [{ url: post.coverImage, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
+  const coverImageUrl = resolveAbsoluteUrl(post.coverImage);
+  const ogImage = coverImageUrl
+    ? [{ url: coverImageUrl, width: 1200, height: 630, alt: post.coverImageAlt || post.title }]
     : [];
 
   return {
@@ -109,6 +118,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
 
   const publishedAt = formatDateTime(post.publishedAt);
   const pageUrl = `${SITE_URL}/blog/${post.slug}`;
+  const coverImageUrl = resolveAbsoluteUrl(post.coverImage);
 
   // JSON-LD structured data — parsed by Google, Bing, and rich-preview crawlers
   const jsonLd = {
@@ -116,7 +126,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
-    image: post.coverImage,
+    image: coverImageUrl,
     url: pageUrl,
     datePublished: new Date(post.publishedAt).toISOString(),
     dateModified: post.updatedAt ? new Date(post.updatedAt).toISOString() : new Date(post.publishedAt).toISOString(),

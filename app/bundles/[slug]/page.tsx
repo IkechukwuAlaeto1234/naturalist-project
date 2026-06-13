@@ -5,6 +5,14 @@ import BundleDetailClient from "@/components/store/BundleDetailClient";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
+// OG images must be absolute URLs. Images are stored as /cdn/... (relative)
+// after proxyCloudinaryUrl(), so we resolve it here before setting OG tags.
+function resolveAbsoluteUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
+}
+
 export const revalidate = 60;
 
 // ── generateStaticParams ──────────────────────────────────────────────────────
@@ -31,7 +39,7 @@ export async function generateMetadata(
     if (!bundle) return { title: "Bundle Not Found | Naturalist" };
 
     const url = `${SITE_URL}/bundles/${slug}`;
-    const image = bundle.images?.[0] || `${SITE_URL}/og-default.jpg`;
+    const image = resolveAbsoluteUrl(bundle.images?.[0]) || `${SITE_URL}/og-default.jpg`;
     const price = bundle.price ? `$${bundle.price.toFixed(2)}` : "";
     const description = bundle.description
       ? bundle.description.slice(0, 160)
@@ -79,7 +87,7 @@ export default async function BundleDetailPage(
     "@type": "Product",
     name: serialized.name,
     description: serialized.description,
-    image: serialized.images?.[0],
+    image: resolveAbsoluteUrl(serialized.images?.[0]),
     url: `${SITE_URL}/bundles/${slug}`,
     brand: { "@type": "Brand", name: "Naturalist" },
     offers: {

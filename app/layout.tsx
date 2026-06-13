@@ -28,6 +28,20 @@ export const metadata: Metadata = {
       "Premium, sustainable organic skincare crafted with precision.",
     type: "website",
     siteName: "Naturalist",
+    images: [
+      {
+        url: "https://naturalist-project.onrender.com/og-default.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Naturalist — Premium Organic Skincare & Wellness",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Naturalist | Premium Organic Skincare & Wellness",
+    description: "Premium, sustainable organic skincare crafted with precision.",
+    images: ["https://naturalist-project.onrender.com/og-default.jpg"],
   },
 };
 

@@ -6,6 +6,14 @@ import ProductDetailClient from "@/components/store/ProductDetailClient";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
+// OG images must be absolute URLs. Images are stored as /cdn/... (relative)
+// after proxyCloudinaryUrl(), so we resolve it here before setting OG tags.
+function resolveAbsoluteUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
+}
+
 // ── ISR: revalidate every 60s ──────────────────────────────────────────────────
 export const revalidate = 60;
 
@@ -31,7 +39,7 @@ export async function generateMetadata(
     if (!product) return { title: "Product Not Found | Naturalist" };
 
     const url = `${SITE_URL}/shop/${slug}`;
-    const image = product.images?.[0] || `${SITE_URL}/og-default.jpg`;
+    const image = resolveAbsoluteUrl(product.images?.[0]) || `${SITE_URL}/og-default.jpg`;
     const price = product.price ? `$${product.price.toFixed(2)}` : "";
     const description = product.description
       ? product.description.slice(0, 160)
@@ -79,7 +87,7 @@ export default async function ProductDetailPage(
     "@type": "Product",
     name: serialized.name,
     description: serialized.description,
-    image: serialized.images?.[0],
+    image: resolveAbsoluteUrl(serialized.images?.[0]),
     url: `${SITE_URL}/shop/${slug}`,
     brand: { "@type": "Brand", name: "Naturalist" },
     offers: {

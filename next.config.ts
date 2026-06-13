@@ -1,16 +1,17 @@
 import type { NextConfig } from "next";
 
 // ── Content Security Policy ──────────────────────────────────────────────────
-// A strict CSP that allows Google Fonts, Cloudinary images, and self-hosted
-// assets. Inline styles are blocked except for those needed by Next.js itself.
+// A strict CSP that allows Google Fonts, Cloudinary images, self-hosted
+// assets, and Leaflet map requirements (unpkg styles, openstreetmap tiles).
+// Inline styles are blocked except for those needed by Next.js itself.
 // Inline scripts are blocked — all JS must be bundled and served from /self.
 const isDev = process.env.NODE_ENV === "development";
 const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval';
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com;
   font-src 'self' https://fonts.gstatic.com data:;
-  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://img.icons8.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://images.unsplash.com https://*.unsplash.com https://cdnjs.cloudflare.com;
+  img-src 'self' data: blob: https://res.cloudinary.com https://*.cloudinary.com https://img.icons8.com https://lh3.googleusercontent.com https://*.googleusercontent.com https://images.unsplash.com https://*.unsplash.com https://cdnjs.cloudflare.com https://*.openstreetmap.org https://unpkg.com;
   connect-src 'self' https://api.cloudinary.com https://ipapi.co https://ipinfo.io https://freeipapi.com ${isDev ? "ws: wss: *" : ""};
   frame-ancestors 'self';
   base-uri 'self';
@@ -18,7 +19,9 @@ const ContentSecurityPolicy = `
   object-src 'none';
   media-src 'self';
   worker-src 'self' blob:;
-`.replace(/\s{2,}/g, " ").trim();// ── Security Headers ─────────────────────────────────────────────────────────
+`.replace(/\s{2,}/g, " ").trim();
+
+// ── Security Headers ─────────────────────────────────────────────────────────
 // Applied to every response. Prevents clickjacking, MIME sniffing, XSS etc.
 const securityHeaders = [
   // Prevents page from being loaded in an iframe — stops clickjacking attacks
