@@ -40,7 +40,9 @@ export default function BlogShare({ title, excerpt }: BlogShareProps) {
   }, []);
 
   const encodedUrl = encodeURIComponent(shareUrl);
-  const encodedText = encodeURIComponent(`Read "${title}" on Naturalist Skincare - ${excerpt || ""}`);
+  const rawText = `Read "${title}" on Naturalist Skincare${excerpt ? ` - ${excerpt}` : ""}`;
+  const truncatedText = rawText.length > 200 ? rawText.slice(0, 197) + "..." : rawText;
+  const encodedText = encodeURIComponent(truncatedText);
 
   const handleCopyLink = async () => {
     try {
