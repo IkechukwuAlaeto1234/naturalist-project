@@ -18,6 +18,7 @@ import {
   Search
 } from "lucide-react";
 import { proxyCloudinaryUrl } from "@/lib/utils";
+import FormattedDate from "@/components/blog/FormattedDate";
 
 interface BlogSection {
   heading?: string;
@@ -188,7 +189,7 @@ export default function AdminBlogPage() {
                       <span>{b.authorName}</span>
                       <span>·</span>
                       <span className="font-normal text-[#a3b2a9]">
-                        {new Date(b.publishedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        <FormattedDate date={b.publishedAt} type="date" />
                       </span>
                     </div>
 

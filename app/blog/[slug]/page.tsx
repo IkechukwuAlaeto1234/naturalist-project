@@ -6,6 +6,7 @@ import { CalendarDays, ArrowLeft } from "lucide-react";
 import { connectToDatabase } from "@/lib/db";
 import { Blog } from "@/models/Blog";
 import BlogShare from "@/components/blog/BlogShare";
+import FormattedDate from "@/components/blog/FormattedDate";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
@@ -15,24 +16,6 @@ function resolveAbsoluteUrl(url: string): string {
   if (!url) return "";
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
   return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
-}
-
-// Format: May 31, 2026, 08:29 AM
-function formatDateTime(date: string | Date) {
-  const d = new Date(date);
-  const dateFormatted = d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  
-  const timeFormatted = d.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-  });
-
-  return `${dateFormatted}, ${timeFormatted}`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -149,7 +132,6 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
   const post: any = await Blog.findOne({ slug }).lean();
   if (!post) notFound();
 
-  const publishedAt = formatDateTime(post.publishedAt);
   const pageUrl = `${SITE_URL}/blog/${post.slug}`;
   const coverImageUrl = resolveAbsoluteUrl(post.coverImage);
 
@@ -227,7 +209,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
               {/* Date Pill */}
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-[#0c100e] border border-border/60 dark:border-white/10 text-xs font-bold text-muted-foreground">
                 <CalendarDays className="h-3.5 w-3.5 text-[#b07e3a]" />
-                <span className="font-bold">{publishedAt}</span>
+                <span className="font-bold"><FormattedDate date={post.publishedAt} /></span>
               </div>
             </div>
           </header>
@@ -302,7 +284,7 @@ export default async function BlogDetailPage({ params }: { params: Promise<{ slu
                 <div className="mt-4 space-y-4">
                   <div className="flex flex-col gap-1.5 border-b border-border/10 pb-3.5">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Published</span>
-                    <span className="text-sm font-black text-[#2d4c38] dark:text-emerald-400">{publishedAt}</span>
+                    <span className="text-sm font-black text-[#2d4c38] dark:text-emerald-400"><FormattedDate date={post.publishedAt} /></span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Writer Role</span>

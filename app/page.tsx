@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Sparkles, Leaf, Eye, ShieldCheck, ArrowRight, Loader2, CalendarDays, Clock3, MessageCircle, BookOpen } from "lucide-react";
 import ProductCard from "@/components/store/ProductCard";
 import ImageWithSkeleton from "@/components/ui/ImageWithSkeleton";
+import FormattedDate from "@/components/blog/FormattedDate";
 
 // ─── Word Reveal Component ─────────────────────────────────────────────────────
 // Splits text by lines then words; each word slides up with a staggered delay.
@@ -512,17 +513,14 @@ export default function Home() {
                             {post.authorName}
                           </span>
                         </div>
-                        {(() => {
-                          const d    = new Date(post.publishedAt);
-                          const date = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-                          const time = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-                          return (
-                            <div className="flex flex-col items-end text-right flex-shrink-0">
-                              <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">{date}</span>
-                              <span className="text-[9px] opacity-70 font-semibold text-muted-foreground/80 tracking-wide mt-0.5">{time}</span>
-                            </div>
-                          );
-                        })()}
+                        <div className="flex flex-col items-end text-right flex-shrink-0">
+                          <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                            <FormattedDate date={post.publishedAt} type="date" />
+                          </span>
+                          <span className="text-[9px] opacity-70 font-semibold text-muted-foreground/80 tracking-wide mt-0.5">
+                            <FormattedDate date={post.publishedAt} type="time" />
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </a>

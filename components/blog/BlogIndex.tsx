@@ -3,14 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { ArrowRight } from "lucide-react";
-
-function formatDateTimeParts(date: string | Date) {
-  const d = new Date(date);
-  return {
-    date: d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
-  };
-}
+import FormattedDate from "./FormattedDate";
 
 interface BlogIndexProps {
   initialPosts?: any[];
@@ -159,15 +152,14 @@ export default function BlogIndex({ initialPosts = [], pageContent = {} }: BlogI
                         {post.authorName}
                       </span>
                     </div>
-                    {(() => {
-                      const { date, time } = formatDateTimeParts(post.publishedAt);
-                      return (
-                        <div className="flex flex-col items-end text-right flex-shrink-0">
-                          <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">{date}</span>
-                          <span className="text-[9px] opacity-70 font-semibold text-muted-foreground/80 tracking-wide mt-0.5">{time}</span>
-                        </div>
-                      );
-                    })()}
+                    <div className="flex flex-col items-end text-right flex-shrink-0">
+                      <span className="font-bold text-muted-foreground text-[10px] uppercase tracking-wider">
+                        <FormattedDate date={post.publishedAt} type="date" />
+                      </span>
+                      <span className="text-[9px] opacity-70 font-semibold text-muted-foreground/80 tracking-wide mt-0.5">
+                        <FormattedDate date={post.publishedAt} type="time" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
