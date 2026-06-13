@@ -76,9 +76,9 @@ export default async function Image({
   const fonts = await getFonts();
 
   // Clamp text to prevent layout overflow
-  const displayTitle = title.length > 80 ? title.slice(0, 77) + "…" : title;
+  const displayTitle = title.length > 130 ? title.slice(0, 127) + "…" : title;
   const displayExcerpt =
-    excerpt.length > 115 ? excerpt.slice(0, 112) + "…" : excerpt;
+    excerpt.length > 240 ? excerpt.slice(0, 237) + "…" : excerpt;
 
   const hasCover = !!coverImageUrl;
 

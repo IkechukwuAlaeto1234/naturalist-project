@@ -10,7 +10,10 @@ const hostGrotesk = Host_Grotesk({
   weight: ["300", "400", "500", "600", "700", "800"],
 });
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Naturalist | Premium Organic Skincare & Wellness",
   description:
     "Experience premium, sustainable organic skincare crafted with precision. Empowering your natural glow while protecting our planet.",
