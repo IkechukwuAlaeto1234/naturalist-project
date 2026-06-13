@@ -20,6 +20,14 @@ import PrivacyPolicyPage from "@/app/privacy-policy/page";
 import TermsPage from "@/app/terms/page";
 import CookiePolicyPage from "@/app/cookie-policy/page";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
+
+function resolveAbsoluteUrl(url: string): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
+}
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -48,21 +56,57 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     await connectToDatabase();
     const content = await Content.findOne({ key }).lean() as any;
     
+    let title = "";
+    let description = "";
+    
     if (builtInKeys[slug]) {
       const defaultData = builtInKeys[slug];
-      return {
-        title: content?.metadata?.heroHeadline ? `${content.metadata.heroHeadline} | Naturalist` : defaultData.title,
-        description: content?.metadata?.heroSubtext || defaultData.desc,
-      };
+      title = content?.metadata?.heroHeadline ? `${content.metadata.heroHeadline} | Naturalist` : defaultData.title;
+      description = content?.metadata?.heroSubtext || defaultData.desc;
+    } else {
+      if (!content) {
+        title = "Page Not Found | Naturalist";
+        description = "Page not found.";
+      } else {
+        title = `${content.title} | Naturalist`;
+        description = content.metadata?.heroSubtext || `${content.title} — Naturalist`;
+      }
     }
 
-    if (!content) return { title: "Page Not Found | Naturalist" };
+    const pageUrl = `${SITE_URL}/p/${slug}`;
+    const heroImage = content?.metadata?.heroImage || content?.metadata?.image || "";
+    const imageUrl = resolveAbsoluteUrl(heroImage) || `${SITE_URL}/og-default.jpg`;
+
     return {
-      title: `${content.title} | Naturalist`,
-      description: content.metadata?.heroSubtext || `${content.title} — Naturalist`,
+      title,
+      description,
+      alternates: {
+        canonical: pageUrl,
+      },
+      openGraph: {
+        title,
+        description,
+        url: pageUrl,
+        siteName: "Naturalist",
+        type: "website",
+        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [imageUrl],
+      },
     };
   } catch {
-    return { title: "Naturalist" };
+    return {
+      title: "Naturalist",
+      openGraph: {
+        title: "Naturalist",
+        type: "website",
+        images: [{ url: `${SITE_URL}/og-default.jpg`, width: 1200, height: 630 }],
+      },
+    };
   }
 }
 
