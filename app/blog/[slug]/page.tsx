@@ -55,6 +55,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       ? new Date(post.publishedAt).toISOString()
       : undefined;
 
+    // ── Cache-busting for OG image ──────────────────────────────────────
+    // Telegram, Discord, Slack, etc. cache the OG image URL per-URL and don't
+    // expose a manual refresh tool (Telegram cache can persist for days).
+    // By appending the post's updatedAt timestamp as a query param, the OG
+    // image URL automatically changes whenever the post is edited — forcing
+    // every platform to treat it as a brand new image and re-fetch it.
+    // No more manual "?v3" hacks needed.
+    const ogVersion = post.updatedAt
+      ? new Date(post.updatedAt).getTime()
+      : post.publishedAt
+        ? new Date(post.publishedAt).getTime()
+        : Date.now();
+    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}`;
+
     return {
       title: `${post.title} | Naturalist Blog`,
       description: post.excerpt ?? undefined,
@@ -70,13 +84,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         ...(publishedTime ? { publishedTime } : {}),
         ...(post.authorName ? { authors: [post.authorName] } : {}),
         ...(post.tags?.length ? { tags: post.tags } : {}),
-        // OG image is auto-served by app/blog/[slug]/opengraph-image.tsx
+        images: [
+          {
+            url: ogImageUrl,
+            width: 1200,
+            height: 630,
+            alt: post.title,
+          },
+        ],
       },
       twitter: {
         card: "summary_large_image",
         title: post.title,
         description: post.excerpt ?? undefined,
-        // Twitter image auto-picked from opengraph-image.tsx
+        images: [ogImageUrl],
       },
     };
   } catch (err) {

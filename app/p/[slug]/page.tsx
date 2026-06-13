@@ -22,12 +22,6 @@ import CookiePolicyPage from "@/app/cookie-policy/page";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://naturalist-project.onrender.com";
 
-function resolveAbsoluteUrl(url: string): string {
-  if (!url) return "";
-  if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${SITE_URL}${url.startsWith("/") ? url : "/" + url}`;
-}
-
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -74,8 +68,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const pageUrl = `${SITE_URL}/p/${slug}`;
-    const heroImage = content?.metadata?.heroImage || content?.metadata?.image || "";
-    const imageUrl = resolveAbsoluteUrl(heroImage) || `${SITE_URL}/og-default.jpg`;
+
+    // ── Cache-busting for OG image ──────────────────────────────────────
+    // Same pattern as blog/[slug]: append the content's updatedAt timestamp
+    // so the OG image URL changes whenever the page is edited, forcing
+    // Telegram/Discord/etc. to treat it as a brand new image and re-fetch.
+    const ogVersion = content?.updatedAt
+      ? new Date(content.updatedAt).getTime()
+      : Date.now();
+    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}`;
 
     return {
       title,
@@ -89,22 +90,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: pageUrl,
         siteName: "Naturalist",
         type: "website",
-        images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: [imageUrl],
+        images: [ogImageUrl],
       },
     };
   } catch {
+    const pageUrl = `${SITE_URL}/p/${slug}`;
     return {
       title: "Naturalist",
       openGraph: {
         title: "Naturalist",
         type: "website",
-        images: [{ url: `${SITE_URL}/og-default.jpg`, width: 1200, height: 630 }],
+        images: [{ url: `${pageUrl}/opengraph-image`, width: 1200, height: 630 }],
       },
     };
   }

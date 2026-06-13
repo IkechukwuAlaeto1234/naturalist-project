@@ -217,7 +217,13 @@ export default async function Image({
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  // "contain" scales the image to fit entirely within the frame
+                  // without cropping — works gracefully for ANY source aspect
+                  // ratio (wide 16:9 banners, square 1:1 uploads, portrait shots).
+                  // The frame's #ddd5c8 background shows as letterboxing on the
+                  // short axis, which reads as intentional editorial framing
+                  // rather than a crop artifact.
+                  objectFit: "contain",
                 }}
               />
             </div>
@@ -228,6 +234,23 @@ export default async function Image({
     {
       ...size,
       fonts,
+      // Cache-Control headers for the generated OG image response.
+      //
+      // Why this matters for cache-busting:
+      //   The URL now includes a "?v=<updatedAt timestamp>" query param (set in
+      //   generateMetadata in page.tsx). Each unique "v" value points to a
+      //   distinct, immutable image — the content for that exact version never
+      //   changes. So we can cache it aggressively (1 year, immutable) without
+      //   risk of staleness: editing the post produces a NEW "v" and therefore
+      //   a brand new URL, which every platform (Telegram, Discord, etc.) will
+      //   treat as never-seen-before and fetch fresh.
+      //
+      //   This also protects against repeat-render cost: once Telegram (or any
+      //   crawler/browser) has fetched a given "v", it never needs to ask our
+      //   server to regenerate that exact image again.
+      headers: {
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
     }
   );
 }
