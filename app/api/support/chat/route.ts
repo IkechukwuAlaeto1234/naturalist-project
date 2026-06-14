@@ -206,14 +206,17 @@ export async function POST(req: Request) {
     const geminiContents: { role: string; parts: any[] }[] = [];
 
     for (const msg of chatSession.messages) {
-      // Skip system messages and the synthetic intake message
+      // Skip system messages
       if (msg.role === "system") continue;
-      if (msg.role === "user" && msg.content === "Joined support chat.") continue;
 
       const geminiRole = msg.role === "assistant" ? "model" : "user";
       const parts: any[] = [];
 
-      if (msg.content) {
+      if (msg.role === "user" && msg.content === "Joined support chat.") {
+        parts.push({
+          text: `An intake form has been submitted. The customer's name is ${chatSession.name || "Customer"}. Please greet them warmly by name, introduce yourself as Maya from the Naturalist team, and ask how you can help.`,
+        });
+      } else if (msg.content) {
         parts.push({ text: msg.content });
       }
 
@@ -266,6 +269,13 @@ export async function POST(req: Request) {
           geminiContents.push({ role: geminiRole, parts });
         }
       }
+    }
+
+    if (geminiContents.length === 0) {
+      geminiContents.push({
+        role: "user",
+        parts: [{ text: "Hello" }],
+      });
     }
 
     const payload = {
