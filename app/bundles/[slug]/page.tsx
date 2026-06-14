@@ -39,7 +39,7 @@ export async function generateMetadata(
     if (!bundle) return { title: "Bundle Not Found | Naturalist" };
 
     const url = `${SITE_URL}/bundles/${slug}`;
-    const image = resolveAbsoluteUrl(bundle.images?.[0]) || `${SITE_URL}/og-default.jpg`;
+    const image = resolveAbsoluteUrl(bundle.images?.[0]) || `${SITE_URL}/og-default.jpg?v=2`;
     const price = bundle.price ? `$${bundle.price.toFixed(2)}` : "";
     const description = bundle.description
       ? bundle.description.slice(0, 160)

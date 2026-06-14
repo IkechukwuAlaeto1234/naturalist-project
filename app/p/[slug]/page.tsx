@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const ogVersion = content?.updatedAt
       ? new Date(content.updatedAt).getTime()
       : Date.now();
-    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}`;
+    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}&cb=2`;
 
     return {
       title,
@@ -106,7 +106,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: "Naturalist",
         type: "website",
-        images: [{ url: `${pageUrl}/opengraph-image`, width: 1200, height: 630 }],
+        images: [{ url: `${pageUrl}/opengraph-image?cb=2`, width: 1200, height: 630 }],
       },
     };
   }

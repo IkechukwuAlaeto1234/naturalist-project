@@ -15,7 +15,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: "https://naturalist-project.onrender.com/og-default.jpg",
+        url: "https://naturalist-project.onrender.com/og-default.jpg?v=2",
         width: 1200,
         height: 630,
         alt: "Journal | Naturalist",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Journal | Naturalist",
     description: "Naturalist Journal — stories, rituals, and skincare guidance from the brand team.",
-    images: ["https://naturalist-project.onrender.com/og-default.jpg"],
+    images: ["https://naturalist-project.onrender.com/og-default.jpg?v=2"],
   },
 };
 

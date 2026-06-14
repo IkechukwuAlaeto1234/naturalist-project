@@ -50,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       : post.publishedAt
         ? new Date(post.publishedAt).getTime()
         : Date.now();
-    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}`;
+    const ogImageUrl = `${pageUrl}/opengraph-image?v=${ogVersion}&cb=2`;
 
     return {
       title: `${post.title} | Naturalist Blog`,

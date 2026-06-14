@@ -39,7 +39,7 @@ export async function generateMetadata(
     if (!product) return { title: "Product Not Found | Naturalist" };
 
     const url = `${SITE_URL}/shop/${slug}`;
-    const image = resolveAbsoluteUrl(product.images?.[0]) || `${SITE_URL}/og-default.jpg`;
+    const image = resolveAbsoluteUrl(product.images?.[0]) || `${SITE_URL}/og-default.jpg?v=2`;
     const price = product.price ? `$${product.price.toFixed(2)}` : "";
     const description = product.description
       ? product.description.slice(0, 160)

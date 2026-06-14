@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: "Naturalist",
     images: [
       {
-        url: "https://naturalist-project.onrender.com/og-default.jpg",
+        url: "https://naturalist-project.onrender.com/og-default.jpg?v=2",
         width: 1200,
         height: 630,
         alt: "Naturalist — Premium Organic Skincare & Wellness",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Naturalist | Premium Organic Skincare & Wellness",
     description: "Premium, sustainable organic skincare crafted with precision.",
-    images: ["https://naturalist-project.onrender.com/og-default.jpg"],
+    images: ["https://naturalist-project.onrender.com/og-default.jpg?v=2"],
   },
 };
 
