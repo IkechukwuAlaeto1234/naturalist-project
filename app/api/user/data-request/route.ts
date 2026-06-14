@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { DataRequest } from "@/models/DataRequest";
+import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 
 export async function GET() {
@@ -12,7 +14,15 @@ export async function GET() {
 
     await connectToDatabase();
 
-    const requests = await DataRequest.find({ userId: session.user.id }).sort({ createdAt: -1 });
+    let resolvedUserId: mongoose.Types.ObjectId | string = session.user.id;
+    if (!mongoose.Types.ObjectId.isValid(session.user.id) && session.user.email) {
+      const dbUser = await User.findOne({ email: session.user.email.toLowerCase().trim() });
+      if (dbUser) {
+        resolvedUserId = dbUser._id as mongoose.Types.ObjectId;
+      }
+    }
+
+    const requests = await DataRequest.find({ userId: resolvedUserId }).sort({ createdAt: -1 });
 
     return NextResponse.json(requests || [], { status: 200 });
   } catch (error) {
@@ -30,9 +40,17 @@ export async function POST() {
 
     await connectToDatabase();
 
+    let resolvedUserId: mongoose.Types.ObjectId | string = session.user.id;
+    if (!mongoose.Types.ObjectId.isValid(session.user.id) && session.user.email) {
+      const dbUser = await User.findOne({ email: session.user.email.toLowerCase().trim() });
+      if (dbUser) {
+        resolvedUserId = dbUser._id as mongoose.Types.ObjectId;
+      }
+    }
+
     // Check if there's already a pending request
     const existing = await DataRequest.findOne({
-      userId: session.user.id,
+      userId: resolvedUserId,
       status: "pending",
     });
 
@@ -41,7 +59,7 @@ export async function POST() {
     }
 
     const newRequest = await DataRequest.create({
-      userId: session.user.id,
+      userId: resolvedUserId,
       userName: session.user.name,
       userEmail: session.user.email,
       status: "pending",

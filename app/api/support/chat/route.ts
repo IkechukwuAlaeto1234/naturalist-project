@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { connectToDatabase } from "@/lib/db";
 import { SupportChat } from "@/models/SupportChat";
 import { Product } from "@/models/Product";
+import { User } from "@/models/User";
 import { auth } from "@/lib/auth";
 
 const GEMINI_API_URL =
@@ -122,8 +124,22 @@ export async function POST(req: Request) {
     }
 
     // Capture user profile details if logged in or volunteered
-    if (sessionUser?.user?.id) {
-      chatSession.userId = sessionUser.user.id as any;
+    if (sessionUser?.user) {
+      let resolvedUserId: mongoose.Types.ObjectId | undefined = undefined;
+
+      if (sessionUser.user.id && mongoose.Types.ObjectId.isValid(sessionUser.user.id)) {
+        resolvedUserId = new mongoose.Types.ObjectId(sessionUser.user.id);
+      } else if (sessionUser.user.email) {
+        const dbUser = await User.findOne({ email: sessionUser.user.email.toLowerCase().trim() });
+        if (dbUser) {
+          resolvedUserId = dbUser._id as mongoose.Types.ObjectId;
+        }
+      }
+
+      if (resolvedUserId) {
+        chatSession.userId = resolvedUserId;
+      }
+
       if (!chatSession.email && sessionUser.user.email) {
         chatSession.email = sessionUser.user.email;
       }

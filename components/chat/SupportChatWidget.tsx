@@ -371,7 +371,11 @@ export default function SupportChatWidget() {
         }),
       });
 
-      if (!res.ok) throw new Error("Could not deliver message.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Support chat API failed:", errData);
+        throw new Error(errData.error || "Could not deliver message.");
+      }
       const data = await res.json();
       setMessages(data.messages || []);
       setStatus(data.status || "active");

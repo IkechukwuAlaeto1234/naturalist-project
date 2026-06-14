@@ -83,10 +83,25 @@ export const authConfig = {
         return url.startsWith("/") ? `${cleanBase}${url}` : cleanBase;
       }
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user, account, trigger, session }) {
       if (user) {
         const authUser = user as AuthUser;
         token.id = user.id;
+        
+        if (account?.provider === "google" && user.email) {
+          try {
+            const { connectToDatabase } = await import("./db");
+            const { User } = await import("@/models/User");
+            await connectToDatabase();
+            const dbUser = await User.findOne({ email: user.email.toLowerCase().trim() });
+            if (dbUser) {
+              token.id = dbUser._id.toString();
+            }
+          } catch (err) {
+            console.error("Error setting token.id for Google user:", err);
+          }
+        }
+
         token.email = user.email || token.email;
         token.role = resolveUserRole(authUser.role, user.email || token.email);
         token.isVerified = authUser.isVerified || false;

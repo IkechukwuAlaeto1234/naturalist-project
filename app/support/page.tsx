@@ -302,7 +302,11 @@ export default function SupportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId, message: content, attachments: tempAttachments }),
       });
-      if (!res.ok) throw new Error("Failed to send.");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("Support chat API failed:", errData);
+        throw new Error(errData.error || "Failed to send.");
+      }
       const data = await res.json();
       setMessages(data.messages || []);
       setStatus(data.status || "active");
