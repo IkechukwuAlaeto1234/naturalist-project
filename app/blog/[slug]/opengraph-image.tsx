@@ -23,11 +23,14 @@ function base64ToArrayBuffer(b64: string): ArrayBuffer {
   ) as ArrayBuffer;
 }
 
+let cachedFonts: any[] | null = null;
+
 async function getFonts() {
+  if (cachedFonts) return cachedFonts;
   const { FONT_REGULAR, FONT_BOLD } = await import(
     "@/lib/hostGroteskFontData"
   );
-  return [
+  cachedFonts = [
     {
       name: "HostGrotesk",
       data: base64ToArrayBuffer(FONT_REGULAR),
@@ -41,6 +44,7 @@ async function getFonts() {
       style: "normal" as const,
     },
   ];
+  return cachedFonts;
 }
 
 export default async function Image({
@@ -66,7 +70,10 @@ export default async function Image({
       title = post.title || title;
       excerpt = post.excerpt || excerpt;
       if (post.coverImage) {
-        coverImageUrl = resolveAbsoluteUrl(post.coverImage);
+        const absolute = resolveAbsoluteUrl(post.coverImage);
+        coverImageUrl = absolute.includes("/image/upload/")
+          ? absolute.replace("/image/upload/", "/image/upload/w_600,q_75/")
+          : absolute;
       }
     }
   } catch {

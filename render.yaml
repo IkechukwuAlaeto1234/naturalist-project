@@ -32,6 +32,9 @@ services:
       - key: NODE_ENV
         value: production
 
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=400
+
       - key: NPM_CONFIG_PRODUCTION
         value: "false"          # critical: keeps devDeps installed at build time
 

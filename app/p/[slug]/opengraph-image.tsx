@@ -14,11 +14,14 @@ function base64ToArrayBuffer(b64: string): ArrayBuffer {
   ) as ArrayBuffer;
 }
 
+let cachedFonts: any[] | null = null;
+
 async function getFonts() {
+  if (cachedFonts) return cachedFonts;
   const { FONT_REGULAR, FONT_BOLD } = await import(
     "@/lib/hostGroteskFontData"
   );
-  return [
+  cachedFonts = [
     {
       name: "HostGrotesk",
       data: base64ToArrayBuffer(FONT_REGULAR),
@@ -32,6 +35,7 @@ async function getFonts() {
       style: "normal" as const,
     },
   ];
+  return cachedFonts;
 }
 
 // Built-in page defaults — mirrors the keys in app/p/[slug]/page.tsx generateMetadata
